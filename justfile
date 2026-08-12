@@ -48,8 +48,12 @@ kind-up:
 
 # Build proxy image + load into all kind nodes
 kind-load:
-	podman build -t ghcr.io/bobthebot988/llm-proxy:latest .
+	docker build -t ghcr.io/bobthebot988/llm-proxy:latest .
 	kind load docker-image ghcr.io/bobthebot988/llm-proxy:latest --name llm-lab
+
+# Fast offline kind run: reuses local images + GGUF (no re-downloads)
+kind-fast:
+	bash infra/kind-fast.sh
 
 # Install metrics-server in kind (HPA needs it)
 kind-metrics:
@@ -70,3 +74,34 @@ kind-test: kind-up kind-metrics kind-load kind-deploy
 # Tear down kind cluster
 kind-down:
 	kind delete cluster --name llm-lab
+
+# Guard trigger tests (mock inventory, no AWS)
+
+# case 0: max 1 instance
+case-0: case-1-instance
+
+# case 1: max 2 vcpus
+case-1: case-2-vcpus
+
+# case 2: max 1 instance + 2 vcpus
+case-2: case-3-mixed
+
+# alias: max 1 instance (fall0)
+case-1-instance:
+	bash infra/tests/guard-test.sh fall0
+
+# alias: max 2 vcpus (fall1)
+case-2-vcpus:
+	bash infra/tests/guard-test.sh fall1
+
+# alias: mixed (fall2)
+case-3-mixed:
+	bash infra/tests/guard-test.sh fall2
+
+# sanity: default 8/31 must allow + reject oversized
+guard-default:
+	bash infra/tests/guard-test.sh default
+
+# run all guard cases
+case-all: case-0 case-1 case-2
+	@echo "all guard cases passed"

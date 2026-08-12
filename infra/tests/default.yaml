@@ -1,0 +1,4 @@
+# default production limits: 8 instances, 31 vcpus, <=medium
+max_instances: 8
+max_vcpu: 31
+max_type: medium

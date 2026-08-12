@@ -1,0 +1,4 @@
+# case-2-vcpus: max 8 instances, 2 vcpus, <=medium
+max_instances: 8
+max_vcpu: 2
+max_type: medium

@@ -1,0 +1,4 @@
+# case-3-mixed: max 1 instance, 2 vcpus, <=medium
+max_instances: 1
+max_vcpu: 2
+max_type: medium

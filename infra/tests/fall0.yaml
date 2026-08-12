@@ -1,0 +1,4 @@
+# case-1-instance: max 1 instance, 31 vcpus, <=medium
+max_instances: 1
+max_vcpu: 31
+max_type: medium
