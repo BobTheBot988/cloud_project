@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-proxy
+  namespace: default
+  labels:
+    app: llm-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llm-proxy
+  template:
+    metadata:
+      labels:
+        app: llm-proxy
+    spec:
+      initContainers:
+        - name: model-prefetch
+          image: curlimages/curl:8
+          command: ["sh", "-c"]
+          args:
+            - curl -sSL --connect-timeout 10 --max-time 600 --retry 3 -o /models/Qwen3.5-0.8B-UD-Q6_K_XL.gguf https://huggingface.co/unsloth/Qwen3.5-0.8B-MTP-GGUF/resolve/main/Qwen3.5-0.8B-UD-Q6_K_XL.gguf
+          volumeMounts:
+            - name: models
+              mountPath: /models
+      containers:
+        - name: llama-server
+          image: ghcr.io/ggml-org/llama.cpp:server
+          args:
+            - --model
+            - /models/Qwen3.5-0.8B-UD-Q6_K_XL.gguf
+            - --host
+            - 0.0.0.0
+            - --port
+            - "8080"
+            - --threads
+            - "2"
+            - --ctx-size
+            - "2048"
+            - --no-webui
+            - --reasoning
+            - on
+            - --reasoning-budget
+            - "1024"
+            - --temp
+            - "1.0"
+            - --top-k
+            - "20"
+            - --top-p
+            - "0.95"
+            - --min-p
+            - "0.0"
+            - --presence-penalty
+            - "1.5"
+            - --repeat-penalty
+            - "1.25"
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: models
+              mountPath: /models
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 2Gi
+        - name: fastapi-proxy
+          image: ghcr.io/llm-proxy:latest
+          env:
+            - name: LLAMA_CPP_URL
+              value: http://127.0.0.1:8080
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            periodSeconds: 5
+      volumes:
+        - name: models
+          emptyDir: {}

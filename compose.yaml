@@ -1,0 +1,17 @@
+services:
+  llama-server:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    ports:
+      - "8080:8080"
+    volumes:
+      - /home/bob/.cache/huggingface/hub/models--unsloth--Qwen3.5-0.8B-MTP-GGUF/blobs/97e5390ba91cec538a570dde30a8b659bbfaf394284427a3de093495c7982fe1:/models/Qwen3.5-0.8B-UD-Q6_K_XL.gguf
+    command: --model /models/Qwen3.5-0.8B-UD-Q6_K_XL.gguf --host 0.0.0.0 --port 8080 --threads 2 --ctx-size 2048 --no-webui --reasoning on --reasoning-budget 1024 --temp 1.0 --top-k 20 --top-p 0.95 --min-p 0.0 --presence-penalty 1.5 --repeat-penalty 1.25
+
+  proxy:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      LLAMA_CPP_URL: http://llama-server:8080
+    depends_on:
+      - llama-server
