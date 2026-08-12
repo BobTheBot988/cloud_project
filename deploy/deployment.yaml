@@ -20,7 +20,7 @@ spec:
           image: curlimages/curl:8
           command: ["sh", "-c"]
           args:
-            - curl -sSL --connect-timeout 10 --max-time 600 --retry 3 -o /models/Qwen3.5-0.8B-UD-Q6_K_XL.gguf https://huggingface.co/unsloth/Qwen3.5-0.8B-MTP-GGUF/resolve/main/Qwen3.5-0.8B-UD-Q6_K_XL.gguf
+            - curl -sSL --connect-timeout 10 --max-time 600 --retry 3 -o /models/Qwen3.5-2B-UD-IQ2_XXS.gguf https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/main/Qwen3.5-2B-UD-IQ2_XXS.gguf
           volumeMounts:
             - name: models
               mountPath: /models
@@ -29,7 +29,7 @@ spec:
           image: ghcr.io/ggml-org/llama.cpp:server
           args:
             - --model
-            - /models/Qwen3.5-0.8B-UD-Q6_K_XL.gguf
+            - /models/Qwen3.5-2B-UD-IQ2_XXS.gguf
             - --host
             - 0.0.0.0
             - --port
@@ -60,7 +60,7 @@ spec:
               mountPath: /models
           resources:
             requests:
-              cpu: 500m
+              cpu: 2000m
               memory: 1Gi
             limits:
               memory: 2Gi

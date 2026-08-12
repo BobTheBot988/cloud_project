@@ -4,8 +4,8 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - /home/bob/.cache/huggingface/hub/models--unsloth--Qwen3.5-0.8B-MTP-GGUF/blobs/97e5390ba91cec538a570dde30a8b659bbfaf394284427a3de093495c7982fe1:/models/Qwen3.5-0.8B-UD-Q6_K_XL.gguf
-    command: --model /models/Qwen3.5-0.8B-UD-Q6_K_XL.gguf --host 0.0.0.0 --port 8080 --threads 2 --ctx-size 2048 --no-webui --reasoning off --temp 1.0 --top-k 20 --top-p 0.95 --min-p 0.0 --presence-penalty 1.5 --repeat-penalty 1.25
+      - /home/bob/.cache/huggingface/hub/models--unsloth--Qwen3.5-2B-GGUF/blobs/43aedbd2b03a3c2cc39f49ccf74fcd3c394ed0b2a1ede8a30ee652ee9cfc27ef:/models/Qwen3.5-2B-UD-IQ2_XXS.gguf
+    command: --model /models/Qwen3.5-2B-UD-IQ2_XXS.gguf --host 0.0.0.0 --port 8080 --threads 2 --ctx-size 2048 --no-webui --reasoning off --temp 1.0 --top-k 20 --top-p 0.95 --min-p 0.0 --presence-penalty 1.5 --repeat-penalty 1.25
 
   proxy:
     build: .

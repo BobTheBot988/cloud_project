@@ -1,5 +1,22 @@
 # Block 0 — Measurements & evidence (2026-08-12)
 
+## 2.0Bq2 fork — Qwen3.5-2B-UD-IQ2_XXS (IQ2_XXS, 2.0625 bpw, 768MB)
+
+Branch `2.0Bq2`, model swapped in compose.yaml + deploy/deployment.yaml.
+
+| metric | @2 threads | @16 threads |
+|---|---|---|
+| prompt pp32 (tok/s) | 16.47 | 45.30 |
+| decode tg128 (tok/s) | **11.05** | 8.13 (host contended) |
+| HTTP decode pps | 11.56 | — |
+| idle RSS | ~260MB | — |
+
+- **Target ≥21 tok/s: NOT met** (2.4x params vs 0.8B, IQ2 quant cannot compensate).
+- Output quality poor: IQ2_XXS 2.06bpw yields garbled/nonsensical answers (verified live).
+- Same stack otherwise (proxy injection, reasoning off, threads 2, ctx 2048).
+
+**Conclusion:** 2B@IQ2_XXS unsuitable for the ≥21 tok/s + quality target. 0.8B UD-Q6_K_XL (main) remains the choice.
+
 ## Model & image
 
 - Model: `unsloth/Qwen3.5-0.8B-MTP-GGUF:UD-Q6_K_XL` (Qwen3.5-0.8B-UD-Q6_K_XL.gguf, 743.76 MiB / 772.85M params) — LOADED, verified working.
