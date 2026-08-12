@@ -1,0 +1,194 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$DIR/00-env.sh"
+
+type_size() { echo "${1##*.}"; }
+vcpu_of() {
+  case "$1" in
+    t3.nano|t3.micro|t3.small|t3.medium|t3.large) echo 2 ;;
+    t3.xlarge) echo 4 ;;
+    *) echo "FATAL: unknown instance type $1 in vcpu map" >&2; exit 1 ;;
+  esac
+}
+
+tripwire() {
+  [ "$MAX_INSTANCES" -eq 8 ] || { echo "FATAL: MAX_INSTANCES must be 8 (got $MAX_INSTANCES)"; exit 1; }
+  [ "$MAX_VCPU" -eq 31 ] || { echo "FATAL: MAX_VCPU must be 31 (got $MAX_VCPU)"; exit 1; }
+  for t in "$MASTER_TYPE" "$WORKER_TYPE"; do
+    s="$(type_size "$t")"
+    case "$s" in nano|micro|small|medium) ;; *)
+      echo "FATAL: instance type $t exceeds max size medium"; exit 1 ;;
+    esac
+  done
+}
+
+inventory() {
+  "${AWS[@]}" ec2 describe-instances \
+    --filters Name=instance-state-name,Values=running,stopped,pending \
+    --query 'Reservations[].Instances[].{ID:InstanceId,Type:InstanceType,State:State.Name}' \
+    --output json
+}
+
+quota_check() {
+  local inv count vcpu type
+  inv="$(inventory)"
+  count=$(jq 'length' <<<"$inv")
+  vcpu=0
+  while IFS= read -r type; do
+    vcpu=$((vcpu + $(vcpu_of "$type")))
+  done < <(jq -r '.[].Type' <<<"$inv")
+  echo "==> account has $count instances, $vcpu vCPU (running/stopped/pending)"
+  if jq -r '.[].Type' <<<"$inv" | grep -qE '\.(large|xlarge|2xlarge|4xlarge|8xlarge|12xlarge|16xlarge|24xlarge|metal)$'; then
+    echo "FATAL: existing instance exceeds max size medium; refusing (account deactivation risk)"; exit 1
+  fi
+  [ $((count + 3)) -le "$MAX_INSTANCES" ] || { echo "FATAL: would exceed $MAX_INSTANCES instances (have $count, launching 3)"; exit 1; }
+  [ $((vcpu + 2 + 2 + 2)) -le "$MAX_VCPU" ] || { echo "FATAL: would exceed $MAX_VCPU vCPU (have $vcpu, launching 6)"; exit 1; }
+}
+
+ami_latest() {
+  "${AWS[@]}" ec2 describe-images --owners amazon \
+    --filters Name=name,Values='al2023-ami-*-x86_64' Name=architecture,Values=x86_64 \
+    --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text
+}
+
+default_vpc() {
+  "${AWS[@]}" ec2 describe-vpcs --filters Name=isDefault,Values=true \
+    --query 'Vpcs[0].VpcId' --output text
+}
+
+sg_create() {
+  local vpc sg
+  vpc="$(default_vpc)"
+  sg="$("${AWS[@]}" ec2 create-security-group --group-name llm-lab-sg \
+        --description "LLM lab k8s cluster" --vpc-id "$vpc" --query 'GroupId' --output text)"
+  "${AWS[@]}" ec2 authorize-security-group-ingress --group-id "$sg" --ip-permissions \
+    '[
+      {"IpProtocol":"tcp","FromPort":22,"ToPort":22,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]},
+      {"IpProtocol":"tcp","FromPort":6443,"ToPort":6443,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]},
+      {"IpProtocol":"tcp","FromPort":2379,"ToPort":2380,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]},
+      {"IpProtocol":"tcp","FromPort":10250,"ToPort":10252,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]},
+      {"IpProtocol":"udp","FromPort":8472,"ToPort":8472,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]},
+      {"IpProtocol":"tcp","FromPort":30000,"ToPort":32767,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]}
+    ]' >/dev/null
+  echo "$sg"
+}
+
+launch() {
+  local role type az
+  role="$1"; type="$2"; az="$3"
+  "${AWS[@]}" ec2 run-instances --image-id "$AMI" --instance-type "$type" \
+    --placement "AvailabilityZone=$az" --key-name "$KEY_NAME" \
+    --iam-instance-profile "Name=$IAM_PROFILE" --security-group-ids "$SG" \
+    --tag-specifications "ResourceType=instance,Tags=[{Key=cluster,Value=$CLUSTER_TAG},{Key=role,Value=$role},{Key=Name,Value=llm-$role}]" \
+    --query 'Instances[0].InstanceId' --output text
+}
+
+private_ip() {
+  local id ip=""
+  id="$1"
+  for _ in $(seq 1 30); do
+    ip="$("${AWS[@]}" ec2 describe-instances --instance-ids "$id" \
+          --query 'Reservations[0].Instances[0].PrivateIpAddress' --output text 2>/dev/null || true)"
+    if [ -n "$ip" ] && [ "$ip" != "None" ]; then echo "$ip"; return 0; fi
+    sleep 5
+  done
+  echo "FATAL: no private IP for $id"; exit 1
+}
+
+public_ip() {
+  "${AWS[@]}" ec2 describe-instances --instance-ids "$1" \
+    --query 'Reservations[0].Instances[0].PublicIpAddress' --output text
+}
+
+wait_ssh() {
+  local ip
+  ip="$1"
+  for _ in $(seq 1 40); do
+    if ssh -i "$SSH_KEY" -o BatchMode=yes -o StrictHostKeyChecking=accept-new \
+           -o ConnectTimeout=5 "$SSH_USER@$ip" true 2>/dev/null; then
+      return 0
+    fi
+    sleep 5
+  done
+  echo "FATAL: ssh not reachable on $ip"; exit 1
+}
+
+sg_get() {
+  "${AWS[@]}" ec2 describe-security-groups --filters Name=group-name,Values=llm-lab-sg \
+    --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null || echo NONE
+}
+
+main() {
+  exec 9>"$DIR/.launch.lock"
+  flock -n 9 || { echo "FATAL: another launch in progress"; exit 1; }
+  tripwire
+  quota_check
+  echo "==> resolving latest AL2023 AMI"
+  AMI="$(ami_latest)"
+  echo "    AMI=$AMI"
+  echo "==> security group"
+  SG="$(sg_get)"
+  if [ -z "$SG" ] || [ "$SG" = None ] || [ "$SG" = NONE ]; then
+    SG="$(sg_create)"
+    echo "    created SG=$SG"
+  else
+    echo "    reusing SG=$SG"
+  fi
+  echo "==> launching master ($MASTER_TYPE) + 2 workers ($WORKER_TYPE)"
+  MASTER_ID="$(launch master "$MASTER_TYPE" "$AZ1")"
+  W1_ID="$(launch worker "$WORKER_TYPE" "$AZ1")"
+  W2_ID="$(launch worker "$WORKER_TYPE" "$AZ2")"
+  echo "    master=$MASTER_ID worker1=$W1_ID worker2=$W2_ID"
+  echo "==> waiting for private IPs"
+  MASTER_PRIV="$(private_ip "$MASTER_ID")"
+  W1_PRIV="$(private_ip "$W1_ID")"
+  W2_PRIV="$(private_ip "$W2_ID")"
+  MASTER_PUB="$(public_ip "$MASTER_ID")"
+  W1_PUB="$(public_ip "$W1_ID")"
+  W2_PUB="$(public_ip "$W2_ID")"
+  EIP_ALLOC=""
+  if [ "$USE_EIP" = true ]; then
+    EIP_ALLOC="$("${AWS[@]}" ec2 allocate-address --query 'AllocationId' --output text 2>/dev/null || true)"
+    if [ -n "$EIP_ALLOC" ] && [ "$EIP_ALLOC" != None ]; then
+      if ! "${AWS[@]}" ec2 associate-address --allocation-id "$EIP_ALLOC" --instance-id "$MASTER_ID" >/dev/null 2>&1; then
+        echo "    WARN: EIP associate failed"
+        "${AWS[@]}" ec2 release-address --allocation-id "$EIP_ALLOC" >/dev/null 2>&1 || true
+        EIP_ALLOC=""
+      fi
+    else
+      EIP_ALLOC=""
+    fi
+    if [ -n "$EIP_ALLOC" ]; then
+      "${AWS[@]}" ec2 create-tags --resources "$EIP_ALLOC" --tags "Key=cluster,Value=$CLUSTER_TAG" >/dev/null 2>&1 || true
+      MASTER_PUB="$(public_ip "$MASTER_ID")"
+      echo "    EIP=$MASTER_PUB"
+    else
+      echo "    WARN: EIP unavailable, using auto public IP"
+    fi
+  fi
+  echo "==> waiting for ssh on all nodes"
+  wait_ssh "$MASTER_PUB"; wait_ssh "$W1_PUB"; wait_ssh "$W2_PUB"
+  cat > "$DIR/.cluster-ips" <<EOF
+MASTER_PUB=$MASTER_PUB
+MASTER_PRIV=$MASTER_PRIV
+WORKER1_PUB=$W1_PUB
+WORKER1_PRIV=$W1_PRIV
+WORKER2_PUB=$W2_PUB
+WORKER2_PRIV=$W2_PRIV
+MASTER_ID=$MASTER_ID
+W1_ID=$W1_ID
+W2_ID=$W2_ID
+EIP_ALLOC=${EIP_ALLOC:-}
+SG=$SG
+EOF
+  echo "==> nodes up, ssh ready"
+  printf '%-8s %-12s %s\n' role instance ip
+  printf '%-8s %-12s %s\n' master "$MASTER_TYPE" "$MASTER_PUB"
+  printf '%-8s %-12s %s\n' worker "$WORKER_TYPE" "$W1_PUB"
+  printf '%-8s %-12s %s\n' worker "$WORKER_TYPE" "$W2_PUB"
+  echo "==> next: just cluster-up (bootstrap)"
+}
+
+main

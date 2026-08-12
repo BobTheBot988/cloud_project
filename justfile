@@ -24,3 +24,20 @@ up:
 # Tear down the local stack
 down:
 	podman-compose -f compose.yaml down
+
+# Launch EC2 cluster (quota-guarded), run 01-launch.sh
+launch:
+	bash infra/01-launch.sh
+
+# Full cluster bring-up: launch -> bootstrap master+workers -> verify
+cluster-up: launch
+	bash infra/bootstrap-all.sh
+	bash infra/02-verify.sh
+
+# Verify cluster health via master
+cluster-verify:
+	bash infra/02-verify.sh
+
+# Terminate cluster, release EIP, delete SG (budget safety)
+cluster-down:
+	bash infra/03-down.sh
