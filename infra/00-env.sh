@@ -20,6 +20,6 @@ MAX_TYPE=medium
 
 USE_EIP=true
 POD_CIDR=10.244.0.0/16
-K8S_VERSION=1.31
+K8S_VERSION=1.36
 
 AWS=(aws --profile "$PROFILE" --region "$REGION")

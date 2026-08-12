@@ -82,7 +82,7 @@ just cluster-down     # 03-down.sh
 
 ## bootstrap.sh master (AL2023 recipe)
 
-1. Add k8s dnf repo (pkgs.k8s.io, `el9` path, v1.31)
+1. Add k8s dnf repo (pkgs.k8s.io, `el9` path, v1.36)
 2. `dnf install -y kubelet kubeadm kubectl` (pin version), `systemctl enable --now kubelet`
 3. `dnf install -y containerd` (bundled in AL2023 repos), patch `/etc/containerd/config.toml` -> `systemd_cgroup = true`, `systemctl enable --now containerd`
 4. **SELinux:** `setenforce 0` + `/etc/selinux/config` -> `disabled` (AL2023 enforces by default; required for kubelet)

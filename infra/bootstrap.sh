@@ -4,7 +4,7 @@ set -euo pipefail
 ROLE="${1:-}"
 [ "$ROLE" = master ] || [ "$ROLE" = worker ] || { echo "usage: bootstrap.sh master|worker [join-cmd]"; exit 1; }
 JOIN_CMD="${2:-}"
-K8S_VERSION=1.31
+K8S_VERSION=1.36
 
 echo "==> [$ROLE] AL2023 kubeadm node setup"
 
