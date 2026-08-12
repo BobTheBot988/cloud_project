@@ -48,8 +48,8 @@ kind-up:
 
 # Build proxy image + load into all kind nodes
 kind-load:
-	podman build -t ghcr.io/llm-proxy:latest .
-	kind load docker-image ghcr.io/llm-proxy:latest --name llm-lab
+	podman build -t ghcr.io/bobthebot988/llm-proxy:latest .
+	kind load docker-image ghcr.io/bobthebot988/llm-proxy:latest --name llm-lab
 
 # Install metrics-server in kind (HPA needs it)
 kind-metrics:
@@ -62,7 +62,7 @@ kind-deploy:
 	kubectl apply -f deploy/
 
 # Full kind test: up -> metrics -> load -> deploy -> wait ready -> curl NodePort
-kind-test: kind-up kind-metrics kind-deploy kind-load
+kind-test: kind-up kind-metrics kind-load kind-deploy
 	kubectl rollout status deployment/llm-proxy --timeout=900s
 	kubectl get pods -o wide
 	curl -s http://127.0.0.1:30080/health

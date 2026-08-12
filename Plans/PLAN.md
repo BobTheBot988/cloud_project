@@ -9,7 +9,7 @@
 | image  | `ghcr.io/ggml-org/llama.cpp:server` (build 10380; tag `latest` removed from GHCR) |
 | proxy  | FastAPI thin: `GET /health`, `POST /generate` -> `:8080`, env `LLAMA_CPP_URL` + `SYSTEM_PROMPT` |
 | pod    | sidecar: llama-server + fastapi-proxy, shared emptyDir; initContainer prefetch GGUF |
-| HPA    | cpu avg, `min 1 max 3` (see MEASURE.md: 2000m/pod on 2x t3.medium caps at 2 pods — decide max 2 or 3rd worker) |
+| HPA    | cpu avg, `min 1 max 2` (2000m/pod on 2x t3.medium = 2 pods max; verified scaling on kind) |
 | infra  | master `t3.small`, 2x worker `t3.medium`, Amazon Linux 2023, us-east-1, k8s v1.36 |
 | quotas | hard caps enforced in code: <=8 instances, <=31 vCPU, instance size <= medium (Learner Lab) |
 | target | >=21 tok/s gen; LLM decode-driven CPU -> real scaling signal |
@@ -56,10 +56,10 @@ curl http://127.0.0.1:30080/health                 # via NodePort
 
 ## Block 2 — Deploy + HPA (1 session)
 
+- Proxy image pushed to GHCR (`ghcr.io/bobthebot988/llm-proxy:latest`, private) — pull via imagePullSecrets `ghcr-cred` (create on AWS: `kubectl create secret docker-registry ghcr-cred --docker-server=ghcr.io --docker-username=BobTheBot988 --docker-password=<PAT>`).
 - Apply Deployment -> `curl` via NodePort -> "pods ready".
 - Apply Service + HPA -> `kubectl get hpa` shows data (debug Metrics Server _now_ if not).
-- Locust 2-5 fake users -> confirm scaling visibly starts.
-- Push proxy image to GHCR (blocked on AWS nodes pulling it).
+- Locust 2-5 fake users -> confirm scaling visibly starts (kind already proved scale-out at 91%/60%).
 
 ## Block 3 — Experimental runs (1-2 sessions, budget-frugal)
 
