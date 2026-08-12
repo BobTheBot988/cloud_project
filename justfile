@@ -41,3 +41,32 @@ cluster-verify:
 # Terminate cluster, release EIP, delete SG (budget safety)
 cluster-down:
 	bash infra/03-down.sh
+
+# Create local kind cluster (validates deploy/ manifests, needs stable net)
+kind-up:
+	kind create cluster --config kind-config.yaml
+
+# Build proxy image + load into all kind nodes
+kind-load:
+	podman build -t ghcr.io/llm-proxy:latest .
+	kind load docker-image ghcr.io/llm-proxy:latest --name llm-lab
+
+# Install metrics-server in kind (HPA needs it)
+kind-metrics:
+	kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+	kubectl -n kube-system patch deployment metrics-server --type=json -p '[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+	kubectl -n kube-system rollout status deployment/metrics-server --timeout=120s
+
+# Apply deploy/ manifests in kind
+kind-deploy:
+	kubectl apply -f deploy/
+
+# Full kind test: up -> metrics -> load -> deploy -> wait ready -> curl NodePort
+kind-test: kind-up kind-metrics kind-deploy kind-load
+	kubectl rollout status deployment/llm-proxy --timeout=900s
+	kubectl get pods -o wide
+	curl -s http://127.0.0.1:30080/health
+
+# Tear down kind cluster
+kind-down:
+	kind delete cluster --name llm-lab
