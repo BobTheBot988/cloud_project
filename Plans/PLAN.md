@@ -23,32 +23,7 @@
 
 ## Block 0 — Local dev + test (out of AWS, ~2-3 days)
 
-Build/test all here; arrive at AWS with everything working.
-
-1. ~~**Model fetch**~~ — DONE. Model present at cache path; verified loadable on build 10380.
-2. ~~**Local llama-server**~~ — DONE (compose runs it on :8080, mounted GGUF):
-
-   ```
-   --host 0.0.0.0 --port 8080 --threads 2 --ctx-size 2048 --no-webui --reasoning off \
-   --temp 1.0 \
-   --top-k 20 \
-   --top-p 0.95 \
-   --min-p 0.0 \
-   --presence-penalty 1.5 \
-   --repeat-penalty 1.25
-   ```
-
-   Note: `--reasoning`/`--spec-type draft-mtp` do not exist as PLAN flags. Use `--reasoning off` (budget flag dropped; off = fast simple answers). Build 10380 (tag `server`) required for arch `qwen35`; older `server-b4738` rejects it. System prompt injected by proxy (`SYSTEM_PROMPT` env, prepended unless client sends one).
-
-   ~~Test `/health`, `/v1/chat/completions`.~~ — DONE.
-
-3. ~~**FastAPI proxy**~~ — DONE. `app/main.py`, env `LLAMA_CPP_URL`, /health probe, /generate passthrough + streaming + error map + 60s timeout.
-4. ~~**Tests**~~ — DONE. `tests/test_proxy.py` 9/9 pass (unit, mocked upstream).
-5. ~~**Measure**~~ — DONE. See `MEASURE.md`: 25.8 tok/s @2thr (≥21 target met), idle ~345MB. requests.cpu llama-server `2000m`, proxy `100m`. Quant: UD-Q6_K_XL kept.
-6. ~~**Docker/compose**~~ — DONE. `compose.yaml` + `Dockerfile` run llama-server+proxy via podman-compose (k8s dry run). Proxy image push deferred -> GHCR (Block 2).
-7. ~~**Locust**~~ — DONE. `locustfile.py`, headless sanity vs compose: 0 errors.
-8. ~~**Pre-write YAML**~~ — DONE (unapplied): `deploy/deployment.yaml`, `service.yaml`, `hpa.yaml`.
-9. ~~**Sizing evidence**~~ — DONE. `MEASURE.md` -> t3.medium worker, threads 2.
+COMPLETED 2026-08-12. Full as-built record + locked decisions + final YAML sketch: see `Plans/Block0.md`. Evidence: `MEASURE.md`, `tests/`, `compose.yaml`, `deploy/`.
 
 ## Block 1 — Cluster setup (1 session)
 
