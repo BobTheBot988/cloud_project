@@ -56,7 +56,12 @@ curl http://127.0.0.1:30080/health                 # via NodePort
 
 ## Block 2 — Deploy + HPA (1 session)
 
-- Proxy image pushed to GHCR (`ghcr.io/bobthebot988/llm-proxy:latest`, private) — pull via imagePullSecrets `ghcr-cred` (create on AWS: `kubectl create secret docker-registry ghcr-cred --docker-server=ghcr.io --docker-username=BobTheBot988 --docker-password=<PAT>`).
+- Proxy image pushed to GHCR (`ghcr.io/bobthebot988/llm-proxy:latest`, private) — pull via imagePullSecrets `ghcr-cred`. Token lives in `infra/.ghcr-token` (gitignored). On AWS create the secret:
+  ```
+  kubectl create secret docker-registry ghcr-cred \
+    --docker-server=ghcr.io --docker-username=BobTheBot988 \
+    --docker-password="$(cat infra/.ghcr-token)"
+  ```
 - Apply Deployment -> `curl` via NodePort -> "pods ready".
 - Apply Service + HPA -> `kubectl get hpa` shows data (debug Metrics Server _now_ if not).
 - Locust 2-5 fake users -> confirm scaling visibly starts (kind already proved scale-out at 91%/60%).

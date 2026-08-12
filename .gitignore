@@ -13,3 +13,6 @@ __pycache__/
 
 # Runtime cluster state
 infra/.cluster-ips
+
+# GHCR registry token (never commit)
+infra/.ghcr-token
