@@ -42,3 +42,5 @@ podman-compose -f compose.yaml up -d --build
 - `just test` — proxy unit tests
 - `just test-prompt "your question"` — stream one generation
 - `just launch / cluster-up / cluster-verify / cluster-down` — EC2 cluster lifecycle
+- `just kind-fast` — offline local kind run (reuses images + GGUF, no downloads)
+- `just case-all` / `just guard-default` — quota-guard trigger tests (mock inventory, no AWS)

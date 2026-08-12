@@ -69,7 +69,7 @@ Image: "ghcr.io/bobthebot988/llm-proxy:latest" with ID "72bd3715e0b8e1c452c84c61
 Image: "ghcr.io/bobthebot988/llm-proxy:latest" with ID "72bd3715e0b8e1c452c84c61a51c413fe452acd9c9dd84f090290093f98c68ad" not yet present on node "llm-lab-control-plane", loading...
 ```
 
-Proxy image also pushed to GHCR: `ghcr.io/bobthebot988/llm-proxy:latest` (private, used on AWS via `imagePullSecrets ghcr-cred`).
+Proxy image also pushed to GHCR: `ghcr.io/bobthebot988/llm-proxy:latest` — since made **public** (anonymous pull, no `imagePullSecrets` needed on AWS).
 
 ## Deploy
 
@@ -140,9 +140,14 @@ llm-proxy-bccbf58cf-s9zd7   0/2   Init:0/1   0   70s     10.244.1.4   llm-lab-wo
 
 1. `curlimages/curl:8` tag does not exist (404 on Docker Hub) → pinned `curlimages/curl:8.21.0`.
 2. YAML boolean trap: unquoted `off` in `--reasoning off` args parsed as bool → quoted `"off"`.
-3. Missing `ghcr-cred` imagePullSecret → private GHCR pull 401 → created secret in cluster; on AWS create with `kubectl create secret docker-registry ghcr-cred --docker-server=ghcr.io --docker-username=BobTheBot988 --docker-password=<PAT>`.
+3. Proxy image was not public → GHCR anonymous pull 401 (`ghcr-cred` secret workaround) → resolved by making the package **public** on GitHub Packages; `imagePullSecrets` removed from the deployment.
 4. Stale ReplicaSet after manifest edit (old `curl:8` pod looped ImagePullBackOff) → deleted old RS.
 5. HPA `maxReplicas` 3 → 2 (2000m/pod on 2x t3.medium).
+
+## Post-test follow-ups
+
+- `infra/kind-fast.sh` + `deploy/deployment-kind-fast.yaml`: offline fast path — reuses the local llama-server image + GGUF (copied into kind nodes, hostPath mount, no initContainer download). Pod Ready in ~8s vs ~8min.
+- Guard trigger tests: `infra/tests/` + just recipes `case-0/1/2`, `guard-default`, `case-all` (mocked inventory, no AWS).
 
 ## Conclusion
 

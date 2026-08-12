@@ -11,9 +11,9 @@ University project: scale an LLM inference service (Qwen3.5-0.8B via llama.cpp) 
 | `compose.yaml` + `Dockerfile` | local llama-server + proxy (k8s dry-run), podman-compose |
 | `locustfile.py` | Locust load, PROMPT_POOL ramp, POST /generate |
 | `deploy/` | k8s manifests: deployment (sidecar, initContainer prefetch), deployment-kind-fast (hostPath GGUF, kind only), service (NodePort 30080), hpa (cpu 60%, min 1 max 2) |
-| `infra/` | EC2 lifecycle scripts (quota-guarded), see `Plans/Block1.md` |
+| `infra/` | EC2 lifecycle scripts (quota-guarded) + `guards.sh` (shared guard logic), `kind-fast.sh` (offline kind run), `tests/` (guard trigger tests), see `Plans/Block1.md` |
 | `kind-config.yaml` | local kind cluster (control-plane + 2 workers, NodePort 30080) |
-| `justfile` | recipes: test, test-prompt, up/down, launch/cluster-up/cluster-verify/cluster-down |
+| `justfile` | recipes: test, test-prompt, up/down, launch/cluster-up/cluster-verify/cluster-down, kind-up/load/metrics/deploy/test/fast/down, case-0/1/2 + aliases, guard-default, case-all |
 | `MEASURE.md` | perf evidence (25.8 tok/s @2thr, 2B fork rejected) |
 | `.opencode/agent/` | swarm-builder + swarm-reviewer subagents (deepseek/deepseek-v4-flash, variant minimal) |
 
@@ -59,6 +59,8 @@ uv sync                       # install deps (incl dev: pytest locust)
 just test                     # pytest
 just test-prompt "..."        # stream one generation via proxy
 just up / down                # compose stack
+just kind-fast                # offline kind run (reuses images + GGUF)
+just case-all / guard-default # quota-guard trigger tests (mock inventory)
 just launch / cluster-up / cluster-verify / cluster-down   # EC2 lifecycle
 ```
 
