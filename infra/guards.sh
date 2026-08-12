@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
-
+# Purpose: quota guards against Learner Lab hard caps. inventory() lists
+# existing instances; quota_check() refuses launches that would breach
+# MAX_INSTANCES/MAX_VCPU/MAX_TYPE. Sourced by 01-launch.sh, exercised by
+# tests/guard-test.sh.
+# boiler plate: instance family size from type suffix
 type_size() { echo "${1##*.}"; }
 
+# quota guard: vCPU per t3 instance type
 vcpu_of() {
   case "$1" in
     t3.nano|t3.micro|t3.small|t3.medium|t3.large) echo 2 ;;
@@ -10,6 +15,7 @@ vcpu_of() {
   esac
 }
 
+# quota guard: list running/stopped/pending instances as JSON (input for quota_check)
 inventory() {
   "${AWS[@]}" ec2 describe-instances \
     --filters Name=instance-state-name,Values=running,stopped,pending \
@@ -17,6 +23,7 @@ inventory() {
     --output json
 }
 
+# quota guard: abort if existing size/count/vCPU would exceed hard caps
 quota_check() {
   local inv count vcpu type
   inv="$(inventory)"

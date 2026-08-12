@@ -1,6 +1,11 @@
+# Locust load generator for the proxy: posts OpenAI-compat /generate
+# requests with prompts sampled from PROMPT_POOL.
+
+# boiler plate
 from locust import HttpUser, task, between
 import random
 
+# boiler plate
 PROMPT_POOL = [
     "List the top three benefits of managed Kubernetes in production.",
     "Explain the difference between horizontal and vertical scaling for a stateless web service behind a load balancer.",
@@ -17,6 +22,7 @@ PROMPT_POOL = [
 class LLMUser(HttpUser):
     wait_time = between(0.5, 2.0)
 
+    # Locust task: sends a non-streaming generation request with a random prompt.
     @task
     def generate(self):
         self.client.post("/generate", json={

@@ -1,3 +1,4 @@
+# Purpose: shrink Docker build context — exclude venv, caches, git, tests, deploy config.
 .venv
 __pycache__
 .git

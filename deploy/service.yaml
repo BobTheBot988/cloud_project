@@ -1,3 +1,5 @@
+# Purpose: NodePort Service for llm-proxy — external entry point on port 30080.
+# boiler plate
 apiVersion: v1
 kind: Service
 metadata:
@@ -5,10 +7,12 @@ metadata:
   namespace: default
   labels:
     app: llm-proxy
+# boiler plate
 spec:
   type: NodePort
   selector:
     app: llm-proxy
+# NodePort mapping: host port 30080 -> proxy container 8000 (matches kind-config extraPortMappings)
   ports:
     - name: http
       port: 80

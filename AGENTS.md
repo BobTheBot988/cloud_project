@@ -10,7 +10,7 @@ University project: scale an LLM inference service (Qwen3.5-0.8B via llama.cpp) 
 | `tests/test_proxy.py` | pytest, httpx MockTransport, 11 tests |
 | `compose.yaml` + `Dockerfile` | local llama-server + proxy (k8s dry-run), podman-compose |
 | `locustfile.py` | Locust load, PROMPT_POOL ramp, POST /generate |
-| `deploy/` | k8s manifests: deployment (sidecar, initContainer prefetch), service (NodePort 30080), hpa (cpu 60%, min 1 max 3) |
+| `deploy/` | k8s manifests: deployment (sidecar, initContainer prefetch), deployment-kind-fast (hostPath GGUF, kind only), service (NodePort 30080), hpa (cpu 60%, min 1 max 2) |
 | `infra/` | EC2 lifecycle scripts (quota-guarded), see `Plans/Block1.md` |
 | `kind-config.yaml` | local kind cluster (control-plane + 2 workers, NodePort 30080) |
 | `justfile` | recipes: test, test-prompt, up/down, launch/cluster-up/cluster-verify/cluster-down |

@@ -1,10 +1,16 @@
+# Purpose: local kind cluster — 1 control-plane + 2 workers, NodePort 30080 exposed for service.yaml.
+# boiler plate
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+# boiler plate
 name: llm-lab
+# nodes: 2 workers give headroom for HPA scaling
 nodes:
   - role: control-plane
+# NodePort mapping: expose node port 30080 on host so the NodePort Service is reachable
     extraPortMappings:
       - containerPort: 30080
         hostPort: 30080
+# boiler plate
   - role: worker
   - role: worker

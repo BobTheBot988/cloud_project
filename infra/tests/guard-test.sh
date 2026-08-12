@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
+# Purpose: verify quota_check against the current quota config. Loads
+# MAX_* from <config>.yaml, mocks AWS inventory, and asserts the guard
+# aborts or allows for each expected trigger case.
 set -uo pipefail
 
+# boiler plate: resolve paths and required config arg
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$DIR/../.." && pwd)"
 CONFIG="${1:?usage: guard-test.sh <fall0|fall1|fall2|default>}"
@@ -11,6 +15,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
   echo "FATAL: no config $CONFIG_FILE"; exit 1
 fi
 
+# boiler plate: export quota caps from the config yaml via python
 eval "$("$PY" - "$CONFIG_FILE" <<'EOF'
 import sys, yaml
 c = yaml.safe_load(open(sys.argv[1]))
@@ -20,9 +25,11 @@ print(f'export MAX_TYPE={c["max_type"]}')
 EOF
 )"
 
+# boiler plate: source real env + guards (inventory() is overridden below)
 source "$REPO/infra/00-env.sh"
 source "$REPO/infra/guards.sh"
 
+# boiler plate: mock inventory() reads from a temp file
 MOCK_INV_FILE="$(mktemp)"
 trap 'rm -f "$MOCK_INV_FILE"' EXIT
 
@@ -30,6 +37,7 @@ inventory() {
   cat "$MOCK_INV_FILE"
 }
 
+# test helper: assert guard aborts with the given mock inventory
 expect_abort() {
   local name="$1" inv="$2"
   printf '%s' "$inv" > "$MOCK_INV_FILE"
@@ -41,6 +49,7 @@ expect_abort() {
   fi
 }
 
+# test helper: assert guard allows with the given mock inventory
 expect_pass() {
   local name="$1" inv="$2"
   printf '%s' "$inv" > "$MOCK_INV_FILE"
@@ -52,6 +61,7 @@ expect_pass() {
   fi
 }
 
+# test scenarios: per-config trigger expectations (abort for lowered limits, allow/reject for default)
 fail=0
 echo "== guard-test: $CONFIG (max_instances=$MAX_INSTANCES max_vcpu=$MAX_VCPU max_type=$MAX_TYPE)"
 

@@ -1,3 +1,8 @@
+# FastAPI proxy for llama.cpp: exposes /health readiness probe and
+# /generate, forwarding to the upstream OpenAI-compatible endpoint
+# with system prompt injection, streaming, and error mapping.
+
+# boiler plate
 import json
 import os
 
@@ -5,6 +10,7 @@ import httpx
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
+# boiler plate
 LLAMA_CPP_URL = os.environ.get("LLAMA_CPP_URL", "http://127.0.0.1:8080")
 SYSTEM_PROMPT = os.environ.get(
     "SYSTEM_PROMPT",
@@ -13,21 +19,25 @@ SYSTEM_PROMPT = os.environ.get(
 PROBE_TIMEOUT = 2.0
 GEN_TIMEOUT = 300.0
 
+# boiler plate
 app = FastAPI()
 client = httpx.AsyncClient(timeout=httpx.Timeout(GEN_TIMEOUT))
 
 
+# boiler plate
 @app.on_event("startup")
 async def startup():
     global client
     client = httpx.AsyncClient(timeout=httpx.Timeout(GEN_TIMEOUT))
 
 
+# boiler plate
 @app.on_event("shutdown")
 async def shutdown():
     await client.aclose()
 
 
+# Health probe: ok only when the upstream /health responds 200.
 @app.get("/health")
 async def health():
     try:
@@ -39,6 +49,9 @@ async def health():
     return JSONResponse({"status": "unavailable"}, status_code=503)
 
 
+# /generate handler: parses the request body, injects the system prompt
+# when absent, proxies to llama.cpp (streaming or not), and maps
+# upstream failures to 400/502/504.
 @app.post("/generate")
 async def generate(request: Request):
     try:
@@ -68,6 +81,8 @@ async def generate(request: Request):
         return JSONResponse({"error": "upstream unavailable"}, status_code=502)
 
 
+# Streams upstream bytes to the client; emits an error chunk and
+# closes the connection if the stream fails.
 async def _iter_stream(r: httpx.Response):
     try:
         async for chunk in r.aiter_bytes():
@@ -78,6 +93,7 @@ async def _iter_stream(r: httpx.Response):
         await r.aclose()
 
 
+# Parses upstream bytes as JSON, falling back to raw text on failure.
 def _decode(content: bytes):
     try:
         return json.loads(content)

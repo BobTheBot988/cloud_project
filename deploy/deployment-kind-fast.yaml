@@ -1,3 +1,5 @@
+# Purpose: local kind Deployment (fast variant) — llama-server + proxy sidecars, GGUF from host /models, no prefetch.
+# boiler plate
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -5,6 +7,7 @@ metadata:
   namespace: default
   labels:
     app: llm-proxy
+# boiler plate
 spec:
   replicas: 1
   selector:
@@ -15,9 +18,12 @@ spec:
       labels:
         app: llm-proxy
     spec:
+      # containers: llama-server inference sidecar + fastapi-proxy frontend
       containers:
+      # llama-server: llama.cpp backend on 8080; flags mirror compose.yaml
         - name: llama-server
           image: ghcr.io/ggml-org/llama.cpp:server
+          # boiler plate — reuse locally cached image on kind nodes
           imagePullPolicy: IfNotPresent
           args:
             - --model
@@ -45,36 +51,46 @@ spec:
             - "1.5"
             - --repeat-penalty
             - "1.25"
+          # boiler plate
           ports:
             - containerPort: 8080
+          # volumeMounts: shared /models volume backed by host directory
           volumeMounts:
             - name: models
               mountPath: /models
+          # resources: CPU/memory requests — HPA scales on cpu utilization vs requests
           resources:
             requests:
               cpu: 2000m
               memory: 1Gi
             limits:
               memory: 2Gi
+        # fastapi-proxy: OpenAI-compat frontend, forwards to llama-server on loopback
         - name: fastapi-proxy
           image: ghcr.io/bobthebot988/llm-proxy:latest
+          # boiler plate — reuse locally cached image on kind nodes
           imagePullPolicy: IfNotPresent
+          # env: upstream URL + system prompt injected when client sends none
           env:
             - name: LLAMA_CPP_URL
               value: http://127.0.0.1:8080
             - name: SYSTEM_PROMPT
               value: "Always interpret the user prompt without any ambiguity, what the user prompted you is what he meant no other meaning, Always answer in a simple manner"
+          # boiler plate
           ports:
             - containerPort: 8000
+          # boiler plate
           resources:
             requests:
               cpu: 100m
               memory: 128Mi
+          # readinessProbe: /health returns 200 only when llama-server is reachable
           readinessProbe:
             httpGet:
               path: /health
               port: 8000
             periodSeconds: 5
+      # volumes: hostPath mount of preloaded /models (kind workers only — no host mounts in prod)
       volumes:
         - name: models
           hostPath:
