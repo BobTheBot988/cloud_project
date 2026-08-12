@@ -35,7 +35,7 @@ Rules: read PLAN.md first; update it + the relevant Block file when implementati
 - Learner Lab hard caps enforced in `infra/01-launch.sh`: <=8 instances, <=31 vCPU, size <= medium. Never weaken; account deactivation = total loss.
 - SSH: KeyName `vockey`, identity `~/.ssh/labsuser.pem` (fresh from AWS Details each session).
 - AWS creds are temporary (Access Key/Secret/Session Token) — re-fetch every session.
-- GHCR token: `infra/.ghcr-token` (gitignored, chmod 600) — used for `podman login`/push and the `ghcr-cred` k8s secret. If a token is ever pasted in chat/logs, rotate it (github.com/settings/tokens) and replace the file.
+- GHCR token: `infra/.ghcr-token` (gitignored, chmod 600) — used only for `podman login`/push (proxy image is **public**, nodes pull anonymously, no imagePullSecrets). If a token is ever pasted in chat/logs, rotate it (github.com/settings/tokens) and replace the file.
 - Local container runtime is podman (docker CLI is a podman alias); use podman-compose.
 - Swarm pattern: spawn swarm-builder per artifact, swarm-reviewer for audits.
 

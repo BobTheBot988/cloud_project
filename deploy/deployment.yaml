@@ -15,8 +15,6 @@ spec:
       labels:
         app: llm-proxy
     spec:
-      imagePullSecrets:
-        - name: ghcr-cred
       initContainers:
         - name: model-prefetch
           image: curlimages/curl:8.21.0

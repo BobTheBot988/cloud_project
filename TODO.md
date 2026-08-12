@@ -11,17 +11,16 @@ Status snapshot (2026-08-12). Order: as listed.
 ## Block 1 — cluster setup (next session)
 
 - [x] Kind test on this host — PASSED (kind-up/load/metrics/deploy): pods 2/2 Ready, `/health` + `/generate` via NodePort 30080, HPA targets live, **scale-out verified** (91%/60% -> 2 replicas)
-- [x] Proxy image pushed to GHCR (`ghcr.io/bobthebot988/llm-proxy:latest`, private) — imagePullSecrets `ghcr-cred` in deployment
+- [x] Proxy image pushed to GHCR (`ghcr.io/bobthebot988/llm-proxy:latest`, **public** — anonymous pull, no secret needed)
 - [ ] AWS Academy: Start Lab -> copy creds + labsuser.pem -> `aws sts get-caller-identity` OK
 - [ ] `just cluster-up` -> 3 nodes Ready + `kubectl top node` (Metrics Server)
-- [ ] On AWS create `ghcr-cred` secret (see PLAN Block 2) before applying deploy/
 - [ ] Confirm quota guards trigger test (8 inst / 31 vCPU / <=medium)
 
 ## Block 2 — deploy + HPA (on AWS)
 
 - [x] HPA `max` decided: **2** (fits 2x t3.medium at 2000m) — `deploy/hpa.yaml`
-- [x] Proxy image pushed to GHCR (`ghcr.io/bobthebot988/llm-proxy:latest`, private) — needs `ghcr-cred` secret on cluster
-- [ ] Apply Deployment/Service/HPA on AWS (+ create `ghcr-cred` secret)
+- [x] Proxy image pushed to GHCR (`ghcr.io/bobthebot988/llm-proxy:latest`, **public** — anonymous pull)
+- [ ] Apply Deployment/Service/HPA on AWS
 - [ ] `kubectl get hpa` shows cpu targets; debug Metrics Server NOW if not
 - [ ] Locust 2-5 users -> confirm scaling visibly starts (kind already verified scale-out)
 
