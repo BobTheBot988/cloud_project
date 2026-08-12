@@ -6,8 +6,12 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
 LLAMA_CPP_URL = os.environ.get("LLAMA_CPP_URL", "http://127.0.0.1:8080")
+SYSTEM_PROMPT = os.environ.get(
+    "SYSTEM_PROMPT",
+    "Always interpret the user prompt without any ambiguity, what the user prompted you is what he meant no other meaning, Always answer in a simple manner",
+)
 PROBE_TIMEOUT = 2.0
-GEN_TIMEOUT = 60.0
+GEN_TIMEOUT = 300.0
 
 app = FastAPI()
 client = httpx.AsyncClient(timeout=httpx.Timeout(GEN_TIMEOUT))
@@ -41,6 +45,11 @@ async def generate(request: Request):
         body = await request.json()
     except Exception:
         return JSONResponse({"error": "invalid json"}, status_code=400)
+    if body.get("messages") and not any(m.get("role") == "system" for m in body["messages"]):
+        body = {
+            **body,
+            "messages": [{"role": "system", "content": SYSTEM_PROMPT}, *body["messages"]],
+        }
     headers = {"Content-Type": "application/json"}
     url = f"{LLAMA_CPP_URL}/v1/chat/completions"
     try:

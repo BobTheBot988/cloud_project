@@ -40,9 +40,7 @@ spec:
             - "2048"
             - --no-webui
             - --reasoning
-            - on
-            - --reasoning-budget
-            - "1024"
+            - off
             - --temp
             - "1.0"
             - --top-k
@@ -71,6 +69,8 @@ spec:
           env:
             - name: LLAMA_CPP_URL
               value: http://127.0.0.1:8080
+            - name: SYSTEM_PROMPT
+              value: "Always interpret the user prompt without any ambiguity, what the user prompted you is what he meant no other meaning, Always answer in a simple manner"
           ports:
             - containerPort: 8000
           resources:

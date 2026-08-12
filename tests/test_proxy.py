@@ -116,3 +116,39 @@ def test_generate_invalid_json_returns_400(monkeypatch):
     resp = client.post("/generate", content=b"{not json", headers={"Content-Type": "application/json"})
     assert resp.status_code == 400
     assert resp.json() == {"error": "invalid json"}
+
+
+def test_generate_injects_system_prompt_first(monkeypatch):
+    upstream_body = {"choices": [{"message": {"content": "ok"}}]}
+    user_message = {"role": "user", "content": "hi"}
+
+    async def handler(request):
+        messages = json.loads(request.content)["messages"]
+        assert messages[0] == {"role": "system", "content": main.SYSTEM_PROMPT}
+        assert messages[1] == user_message
+        return httpx.Response(200, json=upstream_body)
+
+    client = _test_client(monkeypatch, handler)
+    resp = client.post("/generate", json={"messages": [user_message]})
+    assert resp.status_code == 200
+    assert resp.json() == upstream_body
+
+
+def test_generate_does_not_double_inject_when_system_message_present(monkeypatch):
+    upstream_body = {"choices": [{"message": {"content": "ok"}}]}
+    client_system = {"role": "system", "content": "client own system prompt"}
+    user_message = {"role": "user", "content": "hi"}
+
+    async def handler(request):
+        messages = json.loads(request.content)["messages"]
+        system_messages = [m for m in messages if m.get("role") == "system"]
+        assert len(system_messages) == 1
+        assert system_messages[0] == client_system
+        return httpx.Response(200, json=upstream_body)
+
+    client = _test_client(monkeypatch, handler)
+    resp = client.post(
+        "/generate", json={"messages": [client_system, user_message]}
+    )
+    assert resp.status_code == 200
+    assert resp.json() == upstream_body

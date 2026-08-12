@@ -29,7 +29,7 @@ Build/test all here; arrive at AWS with everything working.
 2. ~~**Local llama-server**~~ — DONE (compose runs it on :8080, mounted GGUF):
 
    ```
-   --host 0.0.0.0 --port 8080 --threads 2 --ctx-size 2048 --no-webui --reasoning on --reasoning-budget 1024 \
+   --host 0.0.0.0 --port 8080 --threads 2 --ctx-size 2048 --no-webui --reasoning off \
    --temp 1.0 \
    --top-k 20 \
    --top-p 0.95 \
@@ -38,7 +38,7 @@ Build/test all here; arrive at AWS with everything working.
    --repeat-penalty 1.25
    ```
 
-   Note: `--reasoning` and `--spec-type draft-mtp` do not exist in server builds; use `--reasoning on --reasoning-budget 1024`. Build 10380 (tag `server`) required for arch `qwen35`; older `server-b4738` rejects it.
+   Note: `--reasoning`/`--spec-type draft-mtp` do not exist as PLAN flags. Use `--reasoning off` (budget flag dropped; off = fast simple answers). Build 10380 (tag `server`) required for arch `qwen35`; older `server-b4738` rejects it. System prompt injected by proxy (`SYSTEM_PROMPT` env, prepended unless client sends one).
 
    ~~Test `/health`, `/v1/chat/completions`.~~ — DONE.
 
