@@ -17,6 +17,7 @@
 - Region us-east-1 (Learner Lab allows us-east-1 + us-west-2 only; one `REGION` var)
 - AZs us-east-1a / us-east-1b
 - LabInstanceProfile (pre-created in lab) attached to every node
+- SSH: launch with `KeyName=vockey`, identity = `~/.ssh/labsuser.pem` (from AWS Details); `SSH_KEY` var in `00-env.sh`
 - Elastic IP on master (stable ssh + kubeconfig); `USE_EIP=false` fallback = public IP (changes on stop/start)
 
 ## Learner Lab constraints (enforced in code)
@@ -63,8 +64,8 @@ Tripwire: refuse to run if `MAX_INSTANCES != 8` or `MAX_VCPU != 31` (no silent w
 
 | File | Purpose |
 |---|---|
-| `00-env.sh` | vars: PROFILE, REGION, AZs, instance types, AMI lookup, SSH pubkey, quota constants + vCPU map |
-| `01-launch.sh` | quota guards -> SG -> launch master + 2 workers (LabInstanceProfile + user-data pubkey, tags `cluster=llm-lab`, `role=`) -> EIP -> wait SSH -> print IP table |
+| `00-env.sh` | vars: PROFILE, REGION, AZs, instance types, AMI lookup, SSH_KEY, quota constants + vCPU map |
+| `01-launch.sh` | quota guards -> SG -> launch master + 2 workers (KeyName=vockey, LabInstanceProfile, tags `cluster=llm-lab`, `role=`) -> EIP -> wait SSH -> print IP table |
 | `bootstrap.sh master` | AL2 kubeadm setup + init + Flannel + Metrics Server; prints join token+hash |
 | `bootstrap.sh worker` | AL2 deps + `kubeadm join` |
 | `02-verify.sh` | `kubectl get nodes -o wide` Ready; `kubectl get pods -A` Running; `kubectl top node` (Metrics Server proof) |
