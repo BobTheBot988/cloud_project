@@ -9,7 +9,7 @@
 | image  | `ghcr.io/ggml-org/llama.cpp:server` (build 10380; tag `latest` removed from GHCR) |
 | proxy  | FastAPI thin: `GET /health`, `POST /generate` -> `:8080`, env `LLAMA_CPP_URL` + `SYSTEM_PROMPT` |
 | pod    | sidecar: llama-server + fastapi-proxy, shared emptyDir; initContainer prefetch GGUF |
-| HPA    | cpu avg, `min 1 max 2` (2000m/pod on 2x t3.medium = 2 pods max; verified scaling on kind) |
+| HPA    | cpu avg, `min 1 max 2` (1700m+100m=1800m/pod on 2x t3.medium = 2 pods max; verified scaling on AWS 2026-08-17) |
 | infra  | master `t3.small`, 2x worker `t3.medium`, Amazon Linux 2023, us-east-1, k8s v1.36 |
 | quotas | hard caps enforced in code: <=8 instances, <=31 vCPU, instance size <= medium (Learner Lab) |
 | target | >=21 tok/s gen; LLM decode-driven CPU -> real scaling signal |
@@ -85,7 +85,7 @@ Deployment:
       llama-server: image ghcr.io/ggml-org/llama.cpp:server (build 10380)
                     args: --model /models/*.gguf --host 0.0.0.0 --port 8080 --threads 2
                           --ctx-size 2048 --no-webui --reasoning off + sampling flags
-                    resources: requests cpu 2000m mem 1Gi
+                    resources: requests cpu 1700m mem 1Gi (1800m total w/ proxy: fits t3.medium)
       fastapi-proxy: image ghcr.io/llm-proxy (env LLAMA_CPP_URL=http://127.0.0.1:8080,
                     SYSTEM_PROMPT=...) resources: requests cpu 100m
     readinessProbe: /health

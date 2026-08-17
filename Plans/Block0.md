@@ -11,7 +11,7 @@ Status: done 2026-08-12. Everything built/tested locally; AWS untouched.
 | image  | `ghcr.io/ggml-org/llama.cpp:server` (build 10380; tag `latest` removed from GHCR) |
 | proxy  | FastAPI thin: `GET /health`, `POST /generate` -> `:8080`, env `LLAMA_CPP_URL` |
 | pod    | sidecar: llama-server + fastapi-proxy, shared emptyDir; initContainer prefetch GGUF |
-| HPA    | cpu avg, `min 1 max 3` (see MEASURE.md: 2000m/pod on 2x t3.medium caps at 2 pods — decide max 2 or 3rd worker) |
+| HPA    | cpu avg, `min 1 max 2` (2000m/pod rejected by scheduler on AWS: daemonsets take 200m → use 1700m+100m=1800m/pod) |
 | infra  | master `t3.small`, 2x worker `t3.medium` (us-east-1/us-west-2, LabInstanceProfile, <=9 inst, <=32 vCPU, <=large) |
 | target | >=21 tok/s gen; LLM decode-driven CPU -> real scaling signal |
 
@@ -34,7 +34,7 @@ Status: done 2026-08-12. Everything built/tested locally; AWS untouched.
    Notes: `--reasoning`/`--spec-type draft-mtp` are NOT server flags. Use `--reasoning off`. Build 10380 (tag `server`) required for arch `qwen35`; `server-b4738` rejects it. System prompt injected by proxy (`SYSTEM_PROMPT` env, prepended unless client sends one).
 3. **FastAPI proxy** — `app/main.py`: env `LLAMA_CPP_URL`, `/health` upstream probe, `/generate` passthrough + streaming + error map (504/502/400), timeout 300s.
 4. **Tests** — `tests/test_proxy.py` 11/11 pass (mocked upstream, incl. system-prompt injection).
-5. **Measure** — `MEASURE.md`: 25.8 tok/s @2thr (>=21 met), idle ~345MB. requests.cpu llama-server `2000m`, proxy `100m`. Quant: UD-Q6_K_XL kept. (2B IQ2 fork measured too: 11 tok/s, quality poor — rejected.)
+5. **Measure** — `MEASURE.md`: 25.8 tok/s @2thr (>=21 met), idle ~345MB. requests.cpu llama-server `2000m` → **corrected to `1700m` on AWS** (t3.medium allocatable 2000m − 200m daemonsets = 1800m max/pod), proxy `100m`. Quant: UD-Q6_K_XL kept. (2B IQ2 fork measured too: 11 tok/s, quality poor — rejected.)
 6. **Docker/compose** — `compose.yaml` + `Dockerfile` run llama-server+proxy via podman-compose (k8s dry run). Proxy image push deferred -> GHCR (Block 2).
 7. **Locust** — `locustfile.py`, headless sanity vs compose: 0 errors.
 8. **Pre-write YAML** — `deploy/deployment.yaml`, `service.yaml`, `hpa.yaml` (unapplied).
@@ -50,7 +50,7 @@ Deployment:
       llama-server: image ghcr.io/ggml-org/llama.cpp:server (build 10380)
                     args: --model /models/*.gguf --host 0.0.0.0 --port 8080 --threads 2
                           --ctx-size 2048 --no-webui --reasoning off + sampling flags
-                    resources: requests cpu 2000m mem 1Gi
+                    resources: requests cpu 1700m mem 1Gi (1800m total w/ proxy; 2000m rejected by scheduler)
       fastapi-proxy: image <ghcr>/llm-proxy (env LLAMA_CPP_URL=http://127.0.0.1:8080,
                     SYSTEM_PROMPT=...) resources: requests cpu 100m
     readinessProbe: /health

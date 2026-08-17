@@ -127,10 +127,10 @@ today but not guaranteed forever.
 `--block-device-mappings`:
 
 ```json
-[{"DeviceName":"/dev/xvda","Ebs":{"VolumeSize":20,"VolumeType":"gp3","DeleteOnTermination":true}}]
+[{"DeviceName":"/dev/xvda","Ebs":{"VolumeSize":40,"VolumeType":"gp3","DeleteOnTermination":true}}]
 ```
 
-20GB gp3 root volume, auto-deleted on termination — well under the 100GB cap,
+40GB gp3 root volume, auto-deleted on termination — well under the 100GB cap,
 a compliant type, and no disk leaks between sessions.
 
 ---
@@ -172,7 +172,7 @@ discipline in point 1 + `just cluster-down` every session.
 | File | Change |
 |---|---|
 | `infra/guards.sh` | + `tagged_ids()`, + `sweep_stale()` |
-| `infra/01-launch.sh` | call `sweep_stale` pre-quota-check; SG self-referencing for internal ports; explicit 20GB gp3 EBS |
+| `infra/01-launch.sh` | call `sweep_stale` pre-quota-check; SG self-referencing for internal ports; explicit 40GB gp3 EBS |
 | `infra/03-down.sh` | + tagged-EIP leak sweep |
 | `infra/04-cost.sh` | **new** — spend + estimated run cost |
 | `infra/tests/guard-test.sh` | + sweep_stale cases (abort live cluster / sweep stale / no-op) |

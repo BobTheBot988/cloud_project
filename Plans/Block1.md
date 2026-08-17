@@ -71,7 +71,7 @@ Stale-instance sweep (`sweep_stale`, see `Plans/HARDENING.md` §1):
 |---|---|
 | `00-env.sh` | vars: PROFILE, REGION, AZs, instance types, AMI lookup, SSH_KEY, quota constants + vCPU map |
 | `guards.sh` | quota guards + `tagged_ids()`/`sweep_stale()` (sourced, no side effects) |
-| `01-launch.sh` | tripwire + sweep + quota guards -> SG (self-ref internal rules) -> launch master + 2 workers (KeyName=vockey, LabInstanceProfile, tags `cluster=llm-lab`, `role=`, 20GB gp3 EBS) -> EIP -> wait SSH -> print IP table |
+| `01-launch.sh` | tripwire + sweep + quota guards -> SG (self-ref internal rules) -> launch master + 2 workers (KeyName=vockey, LabInstanceProfile, tags `cluster=llm-lab`, `role=`, 40GB gp3 EBS) -> EIP -> wait SSH -> print IP table |
 | `bootstrap.sh master` | AL2 kubeadm setup + init + Flannel + Metrics Server; prints join token+hash |
 | `bootstrap.sh worker` | AL2 deps + `kubeadm join` |
 | `02-verify.sh` | `kubectl get nodes -o wide` Ready; `kubectl get pods -A` Running; `kubectl top node` (Metrics Server proof) |

@@ -67,7 +67,7 @@ launch() {
   "${AWS[@]}" ec2 run-instances --image-id "$AMI" --instance-type "$type" \
     --placement "AvailabilityZone=$az" --key-name "$KEY_NAME" \
     --iam-instance-profile "Name=$IAM_PROFILE" --security-group-ids "$SG" \
-    --block-device-mappings '[{"DeviceName":"/dev/xvda","Ebs":{"VolumeSize":20,"VolumeType":"gp3","DeleteOnTermination":true}}]' \
+    --block-device-mappings '[{"DeviceName":"/dev/xvda","Ebs":{"VolumeSize":40,"VolumeType":"gp3","DeleteOnTermination":true}}]' \
     --tag-specifications "ResourceType=instance,Tags=[{Key=cluster,Value=$CLUSTER_TAG},{Key=role,Value=$role},{Key=Name,Value=llm-$role}]" \
     --query 'Instances[0].InstanceId' --output text
 }

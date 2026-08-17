@@ -66,10 +66,12 @@ spec:
           volumeMounts:
             - name: models
               mountPath: /models
-          # resources: CPU/memory requests — HPA scales on cpu utilization vs requests
+          # resources: CPU/memory requests — HPA scales on cpu utilization vs requests.
+          # 1700m+100m=1800m/pod: fits a t3.medium (2000m allocatable - 200m daemonsets),
+          # and 2 pods fill exactly 2 workers. (2000m originally rejected by scheduler.)
           resources:
             requests:
-              cpu: 2000m
+              cpu: 1700m
               memory: 1Gi
             limits:
               memory: 2Gi

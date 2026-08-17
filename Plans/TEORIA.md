@@ -111,7 +111,7 @@ Il cloud = computing come "utilità pubblica" (come l'elettricità): accedi
 | Concetto | Nel nostro progetto |
 |---|---|
 | **Immagini** | `ghcr.io/ggml-org/llama.cpp:server` (build 10380, ~100MB) e `ghcr.io/bobthebot988/llm-proxy:latest` (pubblica su GHCR) |
-| **cgroups** | I `resources.requests.cpu` di k8s (motore **2000m**, proxy **100m**) diventano limiti cgroup nel kernel: il motore si "assesta" su 2 vCPU |
+| **cgroups** | I `resources.requests.cpu` di k8s (motore **1700m**, proxy **100m**) diventano limiti cgroup nel kernel: il motore si "assesta" su 2 vCPU |
 | **Volumi** | In k8s usiamo **emptyDir** (cartella condivisa effimera tra sidecar, per il modello GGUF 791MB) — come il "writable layer": se il pod muore, si ricarica |
 | **Bind mount** | `kind-fast.sh` monta il GGUF già scaricato dall'host nei nodi kind (hostPath) → stessa idea dei bind mounts (e stesso problema SELinux `:Z`, vedi `Plans/HARDENING.md`) |
 | **Overlay network** | La rete di pod in k8s usa **Flannel con VXLAN** = esattamente il driver **overlay** di Docker ma multi-host |
@@ -141,7 +141,7 @@ Il cloud = computing come "utilità pubblica" (come l'elettricità): accedi
 - Le **EC2 sono VM**: il nostro "kernel" è AL2023 sopra l'hypervisor di AWS
   (Nitro). Kubernetes poi ci gira **dentro** le VM.
 - Il *master t3.small* e i *worker t3.medium* sono dimensionati come VM da 2
-  vCPU/4GB → tutta la nostra progettazione (threads 2, request 2000m) dipende
+  vCPU/4GB → tutta la nostra progettazione (threads 2, request 1700m) dipende
   da quanta CPU ci dà la VM.
 - Bonus: **kind** crea "nodi k8s" che sono a loro volta container → una
   virtualizzazione dentro l'altra.
@@ -185,7 +185,7 @@ Il cloud = computing come "utilità pubblica" (come l'elettricità): accedi
 | **Oggetto spec/status** | Il `Deployment` ha `replicas: 2` (spec). Se un pod muore, il controller allinea status → ne riparte uno nuovo (**self-healing**) |
 | **API server** | Il `kubectl apply -f deploy/` parla con l'API server del master |
 | **etcd** | Sul master t3.small: lo storage distribuito (usa **Raft**, famiglia di consenso come Paxos del cap. 6) |
-| **Scheduler** | Decide che i 2 pod con request 2000m stanno sui 2 worker (ogni worker ha 2 vCPU) |
+| **Scheduler** | Decide che i 2 pod con request 1700m stanno sui 2 worker (ogni worker ha 2 vCPU) |
 | **kubelet** | Su ogni worker: tiene vivi i container del pod |
 | **kube-proxy** | Instrada il traffico verso il Service NodePort |
 | **container-runtime** | `containerd` (quello che installa il nostro `bootstrap.sh`) |
@@ -271,7 +271,7 @@ NoSQL = niente ACID, modello BASE (Dynamo, BigTable).
 |---|---|
 | **Elasticità** | L'HPA è la nostra elasticità: alloca/rilascia pod in base alla domanda in tempo reale |
 | **Scalabilità vs elasticità** | Il cluster "scalabile" lo sarebbe comunque (aggiungi worker); l'elasticità sta nel farlo **da solo e in fretta** dentro il cluster (pod) |
-| **Funzione di matching** | Noi la stimiamo con le **misure**: 2 thread → ~26 tok/s, un pod richiede 2000m; più carico → più pod |
+| **Funzione di matching** | Noi la stimiamo con le **misure**: 2 thread → ~26 tok/s, un pod richiede 1700m; più carico → più pod |
 | **Asimmetria up/down** | L'HPA scala **su** subito (pochi secondi) e scala **giù** con prudenza (finestra di stabilizzazione, ~5 min) per non oscillare — è la stessa asimmetria del corso |
 | **Speed** | "Quanto è veloce a passare da sotto-provisioned a ok": nel nostro caso dipende dal tempo di avvio del pod (immagine + modello) |
 | **Precision** | Un target 60% è "impreciso per design": se la domanda esige 3 pod ma ne abbiamo max 2 → sotto-provisioned; se 1 pod basta per il 10% → over-provisioned. L'ADI (cap. 9) misura proprio questo |

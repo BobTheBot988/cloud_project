@@ -56,7 +56,7 @@ Un **pod** di Kubernetes contiene DUE programmi che lavorano insieme
 
 - Prima che il pod parta, un **initContainer** scarica il modello (GGUF,
   791 MB) in una cartella condivisa (`emptyDir`).
-- Il proxy chiede 100m di CPU, il motore AI 2000m (= 2 vCPU: satura il worker
+- Il proxy chiede 100m di CPU, il motore AI 1700m (= 2 vCPU: satura il worker
   quando lavora → segnale perfetto per l'HPA).
 - `Service` NodePort porta **30080** per testare con `curl`.
 
@@ -81,7 +81,7 @@ Un **pod** di Kubernetes contiene DUE programmi che lavorano insieme
 | **Immagine** | `ghcr.io/ggml-org/llama.cpp:server` — build **10380** |
 | **Proxy** | FastAPI: `GET /health`, `POST /generate` → `:8080`; env `LLAMA_CPP_URL` |
 | **Pod** | sidecar (motore + proxy) + emptyDir condiviso + initContainer che scarica il GGUF |
-| **HPA** | CPU media, target **60%**, `min 1 max 2` (2 pod × 2000m = pieni i 2 worker) |
+| **HPA** | CPU media, target **60%**, `min 1 max 2` (2 pod × 1700m = pieni i 2 worker) |
 | **Infra** | master `t3.small`, **2× worker `t3.medium`**, us-east-1, Amazon Linux 2023, k8s v1.36 |
 | **Quota** | ≤8 istanze, ≤31 vCPU, dimensione ≤ medium (il lab permette 9/32/large: stiamo sotto) |
 | **Obiettivo** | ≥21 token/sec di generazione |
@@ -137,13 +137,13 @@ esiste più.
 ### Sizing (perché t3.medium)
 
 - Worker `t3.medium` (2 vCPU, 4 GB), motore con `--threads 2` → ~26 tok/s.
-- `requests.cpu`: motore **2000m**, proxy **100m**.
-- HPA `max 2`: con 2 worker a 2000m/pod, 2 pod riempiono tutta la capacità.
+- `requests.cpu`: motore **1700m**, proxy **100m**.
+- HPA `max 2`: con 2 worker a 1700m/pod, 2 pod riempiono tutta la capacità.
   (max 3 non è schedulabile senza un terzo worker o senza abbassare a 1000m.)
 
 ---
 
-## 5. Block 1 — Cluster AWS (COMPLETO, run da fare)
+## 5. Block 1 — Cluster AWS (COMPLETO, run AWS fatto il 17-08-2026)
 
 ### Le macchine
 
@@ -198,7 +198,9 @@ statici kubeadm/kubelet/kubectl (stesso flusso).
 
 ---
 
-## 6. Block 2 — Manifesti k8s (pronti e testati su kind)
+## 6. Block 2 — Deploy + HPA (COMPLETO, provato su AWS il 17-08-2026)
+
+### Fase 1: validazione su kind (locale, gratis)
 
 I file in `deploy/` sono stati provati su un mini-cluster locale (**kind**),
 prima di spendere un centesimo su AWS:
@@ -206,7 +208,7 @@ prima di spendere un centesimo su AWS:
 - installate le metriche, scaricato il modello, pod partito, `/health` ok via
   porta 30080 e **generazione testo vera**.
 - con Locust abbiamo **spinto la CPU al 91%** (target 60%) e l'HPA ha **scalato
-  da 1 a 2 pod da solo**. È la dimostrazione che vogliamo, già provata.
+  da 1 a 2 pod da solo**.
 
 Bug trovati e corretti proprio grazie a kind: tag immagine `curl:8` inesistente,
 trappola YAML sul valore `off`, metrics-server mancante, service/hpa dimenticati
@@ -214,6 +216,45 @@ nel percorso veloce, bug di subshell nel primo test.
 
 Modalità veloce: `just kind-fast` riusa immagine e modello già scaricati (pod
 pronto in ~8s invece di ~8min).
+
+### Fase 2: sessione AWS reale (17-08-2026)
+
+Cluster: 1 master `t3.small` + 2 worker `t3.medium`, k8s v1.36.3, AL2023.
+
+| Test | Esito |
+|---|---|
+| `just cluster-up` (guard + bootstrap + verify) | ✅ 3 nodi Ready, Flannel + Metrics Server attivi |
+| Deploy manifesti (`deployment/service/hpa`) | ✅ applicati |
+| Pod (initContainer GGUF 791MB + sidecar) | ✅ `2/2 Running` |
+| `curl :30080/health` (NodePort) | ✅ HTTP 200 |
+| `curl /generate` (generazione vera via AWS) | ✅ risposta del modello |
+| Locust 3 utenti × 180s | ✅ 24 richieste, **0 errori** |
+| **HPA scale-out 1→2** | ✅ **`cpu 50%/60% → New size: 2`** |
+| `just cluster-down` | ✅ 0 istanze, 0 EIP, account pulito |
+
+Evento HPA registrato (evidenza):
+
+```
+Normal  SuccessfulRescale  2m42s  New size: 2; reason: cpu resource
+       utilization (percentage of request) above target
+```
+
+### Due correzioni emerse solo su AWS (su kind non si vedevano)
+
+1. **CPU del motore: 2000m → 1700m.** Il pod chiedeva 2100m (2000+100) ma un
+   t3.medium ha **2000m allocabili** e i DaemonSet (kube-proxy/flannel) ne
+   usano già 200m → il pod restava *Pending* ("Insufficient cpu"). Con 1700m
+   + 100m = **1800m/pod** sta su un worker e 2 pod riempiono esattamente i 2
+   worker. Aggiornati `deploy/deployment.yaml`, `Plans/PLAN.md`, `Block0.md`,
+   `RESOCONTO.md`, `TEORIA.md`.
+2. **EBS: 20GB → 40GB.** Il volume esplicito 20GB era più piccolo dello
+   snapshot dell'AMI (30GB) → `RunInstances` rifiutato. Corretto in
+   `infra/01-launch.sh` + documenti (40GB gp3, sempre sotto il cap di 100GB).
+
+### Da completare in una prossima sessione
+
+- Dimostrare lo **scale-in** (senza carico per ~10 min → l'HPA torna a 1 pod
+  grazie alla finestra di stabilizzazione).
 
 ### Registro immagini
 
@@ -240,7 +281,7 @@ Abbiamo letto le norme del lab (vedi §10) e aggiunto protezioni. Dettagli in
 3. **Pulizia EIP** — a fine sessione si rilasciano **tutti** gli IP elastici
    taggati dal progetto, anche se il file di stato è sparito (crash). Un EIP
    allocato non associato fattura comunque (~0,005 $/h).
-4. **Disco esplicito** — root **20 GB gp3**, dentro il limite di 100 GB e tipo
+4. **Disco esplicito** — root **40 GB gp3**, dentro il limite di 100 GB e tipo
    consentito (no io1/io2), cancellato alla terminazione.
 5. **`just cost`** — prima di spendere, controlli la spesa degli ultimi 14
    giorni (Cost Explorer) e il costo stimato di un run (~**0,42 $** per ~4h).
@@ -276,22 +317,15 @@ Tutti i test dei guard continuano a passare con le nuove regole
 | Blocco | Stato |
 |---|---|
 | Block 0 — sistema locale + prove | ✅ COMPLETO |
-| Block 1 — script cluster + guard | ✅ COMPLETO (testato; run AWS da fare) |
-| Block 2 — deploy + HPA su AWS | 🟡 Pronto (validato su kind); da fare la sessione AWS |
+| Block 1 — script cluster + guard | ✅ COMPLETO (testato; run AWS fatto) |
+| Block 2 — deploy + HPA su AWS | ✅ **COMPLETO (provato dal vivo il 17-08-2026)** |
 | Block 3 — esperimenti di carico | ⬜ Da fare |
 | Block 4 — analisi + relazione | ⬜ Da fare |
 
-**Prossimo passo concreto:** avviare il Learner Lab, caricare credenziali
-fresche e `labsuser.pem`, poi:
-
-```
-just cost               # (opzionale) controllo spesa
-just cluster-up         # crea cluster su AWS + bootstrap + verify
-kubectl apply -f deploy/   # deploy del servizio
-curl http://<master>:30080/health
-# Locust 2-5 utenti → verificare che l'HPA scali da solo
-just cluster-down       # SEMPRE a fine sessione
-```
+**Prossimo passo:** Block 3 — 5 run sperimentali ≥15 min (ramp-up → stabile →
+ramp-down) con collector `kubectl top pods` + Locust CSV; chiudere ogni sessione
+con `just cluster-down`. In una sessione futura si può anche completare la
+dimostrazione dello **scale-in** (senza carico per ~10 min → HPA torna a 1).
 
 ---
 
@@ -322,7 +356,7 @@ Citazioni dalle istruzioni ufficiali (`Plans/Learner Lab instruction.md`):
 | ≥20 istanze = ban | impossibile: max 8 + sweep automatico delle residue |
 | Budget | `just cost` + terminate ogni sessione + costo per run minuscolo (~0,10 $/h) |
 | Auto-restart istanze | `03-down.sh` **termina** (mai solo stop) + sweep in `01-launch.sh` |
-| EBS | volume esplicito 20 GB gp3 (≤100 GB, tipo consentito) |
+| EBS | volume esplicito 40 GB gp3 (≤100 GB, tipo consentito) |
 | EIP residui | sweep EIP taggati in `03-down.sh` |
 
 ---
