@@ -52,6 +52,17 @@ for alloc in ${ALLOCS} ${EIP_ALLOC:-}; do
   "${AWS[@]}" ec2 release-address --allocation-id "$alloc" >/dev/null 2>&1 || true
 done
 
+# teardown: leak guard — release ANY EIP still tagged cluster=$CLUSTER_TAG
+# (e.g. a crash before .cluster-ips was written). Allocated EIPs bill even
+# when unassociated, so leftover tagged ones must never survive a teardown.
+TAGGED_EIPS="$("${AWS[@]}" ec2 describe-addresses --filters Name=tag:cluster,Values="$CLUSTER_TAG" \
+  --query 'Addresses[].AllocationId' --output text 2>/dev/null || true)"
+for alloc in $TAGGED_EIPS; do
+  [ -n "$alloc" ] || continue
+  echo "==> releasing leaked tagged EIP $alloc"
+  "${AWS[@]}" ec2 release-address --allocation-id "$alloc" >/dev/null 2>&1 || true
+done
+
 # teardown: delete llm-lab-sg (from state file or AWS lookup)
 SG="$(grep -s '^SG=' "$DIR/.cluster-ips" 2>/dev/null | cut -d= -f2 || true)"
 if [ -z "$SG" ] || [ "$SG" = None ]; then

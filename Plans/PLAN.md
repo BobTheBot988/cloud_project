@@ -31,17 +31,18 @@ As-built record + locked decisions + final YAML sketch: `Plans/Block0.md`. Evide
 Scripts committed in `infra/`, driven by `just`. Manual session runbook: `Plans/BLOCK1-SETUP.md`.
 
 - `00-env.sh` — vars + quota constants (8/31/<=medium) + vCPU map + tripwire
-- `01-launch.sh` — quota guards -> SG -> launch master+workers (vockey, LabInstanceProfile, tags) -> EIP -> wait SSH
+- `01-launch.sh` — quota guards + stale-instance sweep -> SG -> launch master+workers (vockey, LabInstanceProfile, tags) -> EIP -> wait SSH
 - `bootstrap.sh master|worker` — AL2023: k8s repo v1.36 -> kubelet/kubeadm/kubectl -> containerd (systemd_cgroup) -> SELinux off -> swapoff -> sysctl -> firewalld off -> `kubeadm init` -> Flannel -> Metrics Server
 - `bootstrap-all.sh` — orchestrate master + workers, join-token extraction, exact-word Ready gate
 - `02-verify.sh` — nodes/pods/`kubectl top node` (Metrics Server proof)
-- `03-down.sh` — terminate (EIP captured pre-terminate), release EIP, delete SG
+- `03-down.sh` — terminate (EIP captured pre-terminate), release EIP + tagged-EIP leak sweep, delete SG
+- `04-cost.sh` — budget sanity check (Cost Explorer spend + estimated run cost)
 
-SG ports: `22, 6443, 2379-2380, 10250-10252, 8472/udp, 30000-32767` (NodePort range).
+SG ports: public `22, 6443, 30000-32767`; internal `2379-2380, 10250-10252, 8472/udp` are **self-referencing** (SG-internal only).
 
-just recipes: `launch`, `cluster-up`, `cluster-verify`, `cluster-down`.
+just recipes: `launch`, `cluster-up`, `cluster-verify`, `cluster-down`, `cost`.
 
-Quota guards never bypass: count ALL running/stopped/pending instances, fail-closed vCPU map, size ceiling, tripwire on constants, flock serialization.
+Quota guards never bypass: count ALL running/stopped/pending instances, fail-closed vCPU map, size ceiling, tripwire on constants, flock serialization. `sweep_stale` terminates our `stopped` instances left from a prior session (the lab auto-restarts them next session — budget/quota trap) and aborts launch if a live cluster is running. Full rationale: `Plans/HARDENING.md`.
 
 ## Testing locally (kind)
 

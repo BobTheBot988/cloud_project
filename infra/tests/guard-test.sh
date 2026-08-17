@@ -81,4 +81,38 @@ if [ "$fail" -eq 0 ]; then
 else
   echo "== $CONFIG: FAILURES DETECTED"
 fi
+
+# sweep_stale: refuses launch if a live cluster exists; allows (and sweeps)
+# stale stopped instances from a prior session. tagged_ids() is mocked.
+tagged_ids() {
+  case "$1" in
+    running,pending) printf '%s' "$MOCK_RUNNING" ;;
+    stopped) printf '%s' "$MOCK_STOPPED" ;;
+  esac
+}
+expect_sweep_abort() {
+  local name="$1"
+  if ( sweep_stale ) >/dev/null 2>&1; then
+    echo "FAIL [$name]: expected ABORT, sweep passed"
+    return 1
+  else
+    echo "PASS [$name]: sweep aborts"
+  fi
+}
+expect_sweep_pass() {
+  local name="$1"
+  if ( sweep_stale ) >/dev/null 2>&1; then
+    echo "PASS [$name]: sweep allows"
+  else
+    echo "FAIL [$name]: expected allow, sweep aborted"
+    return 1
+  fi
+}
+MOCK_RUNNING="i-1"; MOCK_STOPPED=""
+expect_sweep_abort "live running cluster refuses launch" || fail=1
+MOCK_RUNNING=""; MOCK_STOPPED="i-9 i-10"
+expect_sweep_pass "stale stopped instances are swept" || fail=1
+MOCK_RUNNING=""; MOCK_STOPPED=""
+expect_sweep_pass "no tagged instances" || fail=1
+
 exit $fail

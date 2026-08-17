@@ -35,7 +35,11 @@ default_vpc() {
     --query 'Vpcs[0].VpcId' --output text
 }
 
-# SG creation: create llm-lab-sg and open ssh/k8s-api/etcd/kubelet/overlay/nodeport
+# SG creation: create llm-lab-sg. Public ports (22 ssh, 6443 k8s API,
+# 30000-32767 NodePort) are open to the world (needed for admin + tests);
+# internal cluster ports (etcd, kubelet, Flannel) allow traffic ONLY from
+# the SG itself (self-referencing) so a compromised node can't pivot to the
+# rest of the internet or other lab resources.
 sg_create() {
   local vpc sg
   vpc="$(default_vpc)"
@@ -45,11 +49,14 @@ sg_create() {
     '[
       {"IpProtocol":"tcp","FromPort":22,"ToPort":22,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]},
       {"IpProtocol":"tcp","FromPort":6443,"ToPort":6443,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]},
-      {"IpProtocol":"tcp","FromPort":2379,"ToPort":2380,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]},
-      {"IpProtocol":"tcp","FromPort":10250,"ToPort":10252,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]},
-      {"IpProtocol":"udp","FromPort":8472,"ToPort":8472,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]},
       {"IpProtocol":"tcp","FromPort":30000,"ToPort":32767,"IpRanges":[{"CidrIp":"0.0.0.0/0"}]}
     ]' >/dev/null
+  "${AWS[@]}" ec2 authorize-security-group-ingress --group-id "$sg" --ip-permissions \
+    "[
+      {\"IpProtocol\":\"tcp\",\"FromPort\":2379,\"ToPort\":2380,\"UserIdGroupPairs\":[{\"GroupId\":\"$sg\"}]},
+      {\"IpProtocol\":\"tcp\",\"FromPort\":10250,\"ToPort\":10252,\"UserIdGroupPairs\":[{\"GroupId\":\"$sg\"}]},
+      {\"IpProtocol\":\"udp\",\"FromPort\":8472,\"ToPort\":8472,\"UserIdGroupPairs\":[{\"GroupId\":\"$sg\"}]}
+    ]" >/dev/null
   echo "$sg"
 }
 
@@ -60,6 +67,7 @@ launch() {
   "${AWS[@]}" ec2 run-instances --image-id "$AMI" --instance-type "$type" \
     --placement "AvailabilityZone=$az" --key-name "$KEY_NAME" \
     --iam-instance-profile "Name=$IAM_PROFILE" --security-group-ids "$SG" \
+    --block-device-mappings '[{"DeviceName":"/dev/xvda","Ebs":{"VolumeSize":20,"VolumeType":"gp3","DeleteOnTermination":true}}]' \
     --tag-specifications "ResourceType=instance,Tags=[{Key=cluster,Value=$CLUSTER_TAG},{Key=role,Value=$role},{Key=Name,Value=llm-$role}]" \
     --query 'Instances[0].InstanceId' --output text
 }
@@ -110,6 +118,9 @@ main() {
   flock -n 9 || { echo "FATAL: another launch in progress"; exit 1; }
   # tripwire + quota guard: hard Learner Lab caps before any API calls
   tripwire
+  # sweep: terminate stale stopped instances from a prior session (the lab
+  # auto-restarts them next session); abort if a live cluster is running
+  sweep_stale || exit 1
   quota_check || exit 1
   echo "==> resolving latest AL2023 AMI"
   AMI="$(ami_latest)"

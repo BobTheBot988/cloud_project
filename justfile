@@ -42,6 +42,10 @@ cluster-verify:
 cluster-down:
 	bash infra/03-down.sh
 
+# Show recent account spend + estimated run cost (budget sanity check)
+cost:
+	bash infra/04-cost.sh
+
 # Create local kind cluster (validates deploy/ manifests, needs stable net)
 kind-up:
 	kind create cluster --config kind-config.yaml

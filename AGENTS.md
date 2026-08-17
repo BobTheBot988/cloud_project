@@ -11,7 +11,7 @@ University project: scale an LLM inference service (Qwen3.5-0.8B via llama.cpp) 
 | `compose.yaml` + `Dockerfile` | local llama-server + proxy (k8s dry-run), podman-compose |
 | `locustfile.py` | Locust load, PROMPT_POOL ramp, POST /generate |
 | `deploy/` | k8s manifests: deployment (sidecar, initContainer prefetch), deployment-kind-fast (hostPath GGUF, kind only), service (NodePort 30080), hpa (cpu 60%, min 1 max 2) |
-| `infra/` | EC2 lifecycle scripts (quota-guarded) + `guards.sh` (shared guard logic), `kind-fast.sh` (offline kind run), `tests/` (guard trigger tests), see `Plans/Block1.md` |
+| `infra/` | EC2 lifecycle scripts (quota-guarded) + `guards.sh` (shared guard logic + `sweep_stale`), `kind-fast.sh` (offline kind run), `tests/` (guard trigger tests), see `Plans/Block1.md` and `Plans/HARDENING.md` |
 | `kind-config.yaml` | local kind cluster (control-plane + 2 workers, NodePort 30080) |
 | `justfile` | recipes: test, test-prompt, up/down, launch/cluster-up/cluster-verify/cluster-down, kind-up/load/metrics/deploy/test/fast/down, case-0/1/2 + aliases, guard-default, case-all |
 | `MEASURE.md` | perf evidence (25.8 tok/s @2thr, 2B fork rejected) |
@@ -32,7 +32,8 @@ Rules: read PLAN.md first; update it + the relevant Block file when implementati
 - Image `ghcr.io/ggml-org/llama.cpp:server` build 10380 (tag `latest` gone; older builds reject arch `qwen35`).
 - llama-server flags: `--reasoning off` (no `--reasoning`/`--spec-type`/`--reasoning-budget` in server builds).
 - k8s v1.36 via pkgs.k8s.io el9 rpm on AL2023 (not RHEL; static-binary fallback if rpm set fails).
-- Learner Lab hard caps enforced in `infra/01-launch.sh`: <=8 instances, <=31 vCPU, size <= medium. Never weaken; account deactivation = total loss.
+- Learner Lab hard caps enforced in `infra/01-launch.sh`: <=8 instances, <=31 vCPU, size <= medium. Never weaken; account deactivation = total loss. `sweep_stale` also terminates our `stopped` instances from prior sessions (lab auto-restarts them) and blocks launch if a live cluster is running.
+- Learner Lab safety hardening (SG self-referencing, EIP leak sweep, `just cost`): `Plans/HARDENING.md`.
 - SSH: KeyName `vockey`, identity `~/.ssh/labsuser.pem` (fresh from AWS Details each session).
 - AWS creds are temporary (Access Key/Secret/Session Token) — re-fetch every session.
 - GHCR: proxy image `ghcr.io/bobthebot988/llm-proxy:latest` is **public** — nodes pull anonymously, no imagePullSecrets, no registry token needed.

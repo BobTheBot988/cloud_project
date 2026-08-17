@@ -23,6 +23,34 @@ inventory() {
     --output json
 }
 
+# quota guard: list our tagged instance IDs in the given states
+# (space-separated; used by sweep_stale)
+tagged_ids() {
+  local states="$1"
+  "${AWS[@]}" ec2 describe-instances \
+    --filters Name=tag:cluster,Values="$CLUSTER_TAG" \
+              Name=instance-state-name,Values="$states" \
+    --query 'Reservations[].Instances[].InstanceId' --output text 2>/dev/null || true
+}
+
+# quota guard: refuse launch if a live cluster exists; terminate stale
+# stopped instances from a prior session. The lab AUTO-RESTARTS stopped
+# instances on the next session start, which would silently burn budget
+# and count toward the instance/vCPU caps — so stale ones must die first.
+sweep_stale() {
+  local running stopped
+  running="$(tagged_ids running,pending)"
+  if [ -n "${running//[[:space:]]/}" ]; then
+    echo "FATAL: live cluster instances found ($running); run 'just cluster-down' first"
+    return 1
+  fi
+  stopped="$(tagged_ids stopped)"
+  if [ -n "${stopped//[[:space:]]/}" ]; then
+    echo "==> terminating stale stopped instance(s) from a prior session: $stopped"
+    "${AWS[@]}" ec2 terminate-instances --instance-ids $stopped >/dev/null 2>&1 || true
+  fi
+}
+
 # quota guard: abort if existing size/count/vCPU would exceed hard caps
 quota_check() {
   local inv count vcpu type

@@ -44,7 +44,8 @@
 
 ## Security Group ports
 
-`22` (ssh), `6443` (API), `2379-2380` (etcd, master), `10250-10252` (kubelet), `8472/udp` (Flannel VXLAN), `30000-32767` (NodePort range — needed for Block 2 curl test)
+Public (admin + Block 2 tests): `22` (ssh), `6443` (API), `30000-32767` (NodePort range).
+Internal (self-referencing — SG-internal only, see `Plans/HARDENING.md` §2): `2379-2380` (etcd, master), `10250-10252` (kubelet), `8472/udp` (Flannel VXLAN).
 
 ## Hard quota guards (in `00-env.sh` + `01-launch.sh`)
 
@@ -60,16 +61,22 @@ Before ANY `run-instances`, abort with printed inventory if:
 
 Tripwire: refuse to run if `MAX_INSTANCES != 8` or `MAX_VCPU != 31` (no silent weakening).
 
+Stale-instance sweep (`sweep_stale`, see `Plans/HARDENING.md` §1):
+- live cluster running -> abort launch ("run `just cluster-down` first");
+- our `stopped` instances left from a prior session -> terminate (lab auto-restarts them next session).
+
 ## infra/ scripts
 
 | File | Purpose |
 |---|---|
 | `00-env.sh` | vars: PROFILE, REGION, AZs, instance types, AMI lookup, SSH_KEY, quota constants + vCPU map |
-| `01-launch.sh` | quota guards -> SG -> launch master + 2 workers (KeyName=vockey, LabInstanceProfile, tags `cluster=llm-lab`, `role=`) -> EIP -> wait SSH -> print IP table |
+| `guards.sh` | quota guards + `tagged_ids()`/`sweep_stale()` (sourced, no side effects) |
+| `01-launch.sh` | tripwire + sweep + quota guards -> SG (self-ref internal rules) -> launch master + 2 workers (KeyName=vockey, LabInstanceProfile, tags `cluster=llm-lab`, `role=`, 20GB gp3 EBS) -> EIP -> wait SSH -> print IP table |
 | `bootstrap.sh master` | AL2 kubeadm setup + init + Flannel + Metrics Server; prints join token+hash |
 | `bootstrap.sh worker` | AL2 deps + `kubeadm join` |
 | `02-verify.sh` | `kubectl get nodes -o wide` Ready; `kubectl get pods -A` Running; `kubectl top node` (Metrics Server proof) |
-| `03-down.sh` | quota-guarded TERMINATE by tag; release EIP; delete SG |
+| `03-down.sh` | TERMINATE by tag; release EIP + tagged-EIP leak sweep; delete SG |
+| `04-cost.sh` | budget sanity check: Cost Explorer spend (14d) + estimated run cost |
 
 ## just recipes (replace run.sh)
 
@@ -78,6 +85,7 @@ just cluster-up       # 01-launch -> bootstrap master -> bootstrap workers -> 02
 just launch           # 01-launch.sh only
 just cluster-verify   # 02-verify.sh
 just cluster-down     # 03-down.sh
+just cost             # 04-cost.sh — budget sanity check
 ```
 
 ## bootstrap.sh master (AL2023 recipe)
