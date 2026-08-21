@@ -14,6 +14,7 @@ REPO="$(cd "$DIR/.." && pwd)"
 source "$DIR/00-env.sh"
 
 RUNS="${RUNS:-5}"
+RUN_START="${RUN_START:-1}"
 U_MAX="${U_MAX:-20}"
 SIZE="${SIZE:-mix}"
 TARGET="${TARGET:-http://127.0.0.1:8000}"
@@ -82,7 +83,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-for i in $(seq 1 "$RUNS"); do
+for i in $(seq "$RUN_START" "$RUNS"); do
   CUR_RUN_DIR="$REPO/data/raw/$SCENARIO/run_$i"
   CUR_SCENARIO="$SCENARIO"
   CUR_RUN="$i"

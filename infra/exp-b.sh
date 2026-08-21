@@ -15,6 +15,7 @@ REPO="$(cd "$DIR/.." && pwd)"
 source "$DIR/00-env.sh"
 
 RUNS="${RUNS:-5}"
+RUN_START="${RUN_START:-1}"
 LEVELS="${LEVELS:-10 20 30 40 50}"
 STEADY_MIN="${STEADY_MIN:-8}"
 SIZE="${SIZE:-mix}"
@@ -96,7 +97,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-RUN_INDEX=0
+RUN_INDEX=$((RUN_START - 1))
 for level in $LEVELS; do
   echo "==> Test B level $level users"
   for i in $(seq 1 "$RUNS"); do
