@@ -51,6 +51,8 @@ spec:
             - "1.5"
             - --repeat-penalty
             - "1.25"
+            - --parallel
+            - "2"
           # boiler plate
           ports:
             - containerPort: 8080

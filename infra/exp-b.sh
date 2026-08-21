@@ -67,7 +67,7 @@ run_locust() {
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
       "$REPO/locustfile.py" "$LOADGEN:/tmp/exp/"
     ssh "${SSH_OPTS[@]}" "$LOADGEN" \
-      "cd /tmp/exp && SIZE=$(q "$SIZE") locust -f locustfile.py --headless --host $(q "$TARGET") -u $(q "$users") -r 5 --run-time $(q "${STEADY_MIN}m") --exit-code-on-error 0 --csv /tmp/exp/locust"
+      "cd /tmp/exp && export PATH=/tmp/exp/.venv/bin:\$HOME/.local/bin:\$PATH && SIZE=$(q "$SIZE") locust -f locustfile.py --headless --host $(q "$TARGET") -u $(q "$users") -r 5 --run-time $(q "${STEADY_MIN}m") --exit-code-on-error 0 --csv /tmp/exp/locust"
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
       "$LOADGEN:/tmp/exp/locust_stats.csv" "$LOADGEN:/tmp/exp/locust_failures.csv" "$run_dir/"
     if ! test -s "$run_dir/locust_stats.csv" || ! test -s "$run_dir/locust_failures.csv"; then

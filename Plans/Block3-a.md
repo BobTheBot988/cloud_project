@@ -51,6 +51,7 @@ Full pipeline validated against a live kind cluster (2 workers, HPA, real model)
 - **Bug found & fixed:** `replicas.csv` was gluing samples into one line (`kubectl` jsonpath emits no trailing newline) → collector now `printf '%s\n'` + explicit `&&`/`||` so failure counting still works.
 - **Bug found & fixed (readiness flap):** under CPU saturation the proxy `/health` upstream probe (2s timeout) failed → pod NotReady → empty endpoints → NodePort `Connection refused` → mass request failures at exactly the moment scale-out matters. Fixed: proxy `PROBE_TIMEOUT` 2s→10s + k8s readinessProbe `periodSeconds 10 / timeoutSeconds 5 / failureThreshold 3`. Re-verified on kind: both pods stay Ready at ~100% CPU, 0 refused. **Requires pushing the rebuilt proxy image to GHCR before AWS** (needs a PAT with `write:packages`; the gh CLI token lacks that scope).
 - **Lesson:** exp scripts default `TARGET` to the local compose proxy (`:8000`) — always pass `TARGET=http://<node>:30080` for cluster runs (the ban-guard allows loopback, so the wrong-port mistake isn't caught; verified the whole pipeline against `:8000` produces all-refused data).
+- **Lesson (AWS, Session 1):** llama-server default `--parallel 1` → concurrent load returns 503 (busy) + 502/504 → error storm (65% at U_MAX=20). Fixed: `--parallel 2` in all llama-server manifests (deploy + kind-fast + compose). Re-verified 0 failures under load. U_MAX tuned 20→12 (10 users already saturate a worker; 20 risks 300s timeout tails on the queue).
 
 ## AWS Session runbook (Side A — Sessions 1-2)
 
