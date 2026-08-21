@@ -41,3 +41,35 @@ Compose up → 1-user locust ~20s per bucket (small/medium/large) against local 
 - `AGENTS.md`: repo layout (`locustfile.py` buckets+mix, `ramp_shape.py`, `infra/collect.sh`, `infra/exp-a.sh`, `infra/exp-b.sh`, `data/` layout) + Commands (`exp-a`, `exp-b`, `collect`, `exp-smoke`).
 - `Plans/PLAN.md`: Block 3 status → Phase 0 prep done, recipes listed.
 - `Plans/RESOCONTO.md` §9 + §8: Block 3 in progress; command table += new recipes.
+
+## Rehearsal on kind (done, de-risks AWS sessions)
+
+Full pipeline validated against a live kind cluster (2 workers, HPA, real model):
+
+- **Test A (shortened):** collector captured `replicas` **1→2** scale-out, per-pod CPU (toppods.csv), HPA current/target (hpa.csv), and the `SuccessfulRescale` event in events.csv; locust_stats.csv shows real LLM latencies (avg ~20s, large buckets), 42 reqs / 1 transient fail (HPA churn from a manual scale, not the run).
+- **Test B (shortened):** 16 reqs, 0 failures, level metadata in notes.md, HPA scale events captured.
+- **Bug found & fixed:** `replicas.csv` was gluing samples into one line (`kubectl` jsonpath emits no trailing newline) → collector now `printf '%s\n'` + explicit `&&`/`||` so failure counting still works.
+- **Bug found & fixed (readiness flap):** under CPU saturation the proxy `/health` upstream probe (2s timeout) failed → pod NotReady → empty endpoints → NodePort `Connection refused` → mass request failures at exactly the moment scale-out matters. Fixed: proxy `PROBE_TIMEOUT` 2s→10s + k8s readinessProbe `periodSeconds 10 / timeoutSeconds 5 / failureThreshold 3`. Re-verified on kind: both pods stay Ready at ~100% CPU, 0 refused. **Requires pushing the rebuilt proxy image to GHCR before AWS** (needs a PAT with `write:packages`; the gh CLI token lacks that scope).
+- **Lesson:** exp scripts default `TARGET` to the local compose proxy (`:8000`) — always pass `TARGET=http://<node>:30080` for cluster runs (the ban-guard allows loopback, so the wrong-port mistake isn't caught; verified the whole pipeline against `:8000` produces all-refused data).
+
+## AWS Session runbook (Side A — Sessions 1-2)
+
+Pre-session (fresh Learner Lab):
+1. Re-fetch AWS creds + `~/.ssh/labsuser.pem` (per-session). `just cost` before spending.
+2. **Push the rebuilt proxy image to GHCR** (readiness fix): `docker login ghcr.io -u BobTheBot988 --password-stdin` (PAT with `write:packages`, not the gh token) then `docker push ghcr.io/bobthebot988/llm-proxy:latest`. Nodes pull anonymously.
+3. `just cluster-up` → 3 nodes Ready (Metrics Server + HPA active).
+4. `kubectl apply -f deploy/` → pod `2/2 Running`, `/health` 200 via `:30080`, `kubectl get endpoints llm-proxy` non-empty, `kubectl get hpa` shows a CPU target (not `<unknown>`).
+5. Load-gen node must be up with `locust` installed and `locustfile.py` reachable via `LOADGEN=<user>@<host>` (Person B's `loadgen-up`).
+
+Session 1 — Test A (operator A):
+- `TARGET=http://<master>:30080 LOADGEN=<user>@<host> U_MAX=20 RUNS=5 just exp-a`
+- Runs ~27 min each (~2.3h). Monitor once: `kubectl get hpa -w` + collector files.
+- Watch scale-in: drain phase holds zero load ≥10 min → expect `2→1` in `replicas.csv` + `SuccessfulRescale ... below target` event.
+- **Handoff:** `git add -f data/raw/testA/` + commit → B processes plot 1 + scale latencies while A runs Session 2.
+
+Session 2 — Test B (operator A):
+- `TARGET=http://<master>:30080 LOADGEN=<user>@<host> LEVELS="10 20 30 40 50" STEADY_MIN=8 RUNS=5 just exp-b`
+- ~3.3h (trim: `STEADY_MIN=6` or fewer levels to fit 3h; N≥5 is the hard requirement).
+- **Handoff:** `git add -f data/raw/testB/` + commit → B produces plots 2-4; **cluster handoff to B for Test C** after `just cluster-down`.
+
+Both sessions: `just cluster-down` at end (budget rule), account clean (0 instances, 0 EIP).

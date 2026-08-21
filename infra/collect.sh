@@ -54,7 +54,9 @@ collect_loop() {
     else
       fails=$((fails + 1))
     fi
-    if kc get deploy llm-proxy -o jsonpath='{.status.replicas}' | sed "s/^/$ts /" >> "$RUN_DIR/replicas.csv"; then
+    # jsonpath emits no trailing newline — add one so samples don't glue
+    if reps=$(kc get deploy llm-proxy -o jsonpath='{.status.replicas}'); then
+      printf '%s\n' "$reps" | sed "s/^/$ts /" >> "$RUN_DIR/replicas.csv"
       fails=0
     else
       fails=$((fails + 1))

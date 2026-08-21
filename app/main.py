@@ -16,7 +16,7 @@ SYSTEM_PROMPT = os.environ.get(
     "SYSTEM_PROMPT",
     "Always interpret the user prompt without any ambiguity, what the user prompted you is what he meant no other meaning, Always answer in a simple manner",
 )
-PROBE_TIMEOUT = 2.0
+PROBE_TIMEOUT = 10.0
 GEN_TIMEOUT = 300.0
 
 # boiler plate

@@ -84,12 +84,15 @@ spec:
             requests:
               cpu: 100m
               memory: 128Mi
-          # readinessProbe: /health returns 200 only when llama-server is reachable
+          # readinessProbe: /health returns 200 only when llama-server is reachable;
+# tolerant threshold so CPU saturation during scale-out doesn't flap Ready
           readinessProbe:
             httpGet:
               path: /health
               port: 8000
-            periodSeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
       # volumes: hostPath mount of preloaded /models (kind workers only — no host mounts in prod)
       volumes:
         - name: models
