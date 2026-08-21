@@ -5,7 +5,6 @@ test:
 	.venv/bin/python -m pytest tests/ -q
 
 # Stream one generation through the proxy with a custom prompt
-# Env: SIZE (small|medium|large|mix) — picks prompt from that bucket
 # Usage: just test-prompt "your question here"
 test-prompt prompt:
 	curl -s http://127.0.0.1:8000/generate -H 'Content-Type: application/json' \

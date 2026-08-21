@@ -165,7 +165,7 @@ Locust: `--headless -u <U_max> -r <rate> -t <time> --csv runA_<i>` (or a custom 
 **Plot:** `Pods_avgAcrossRuns(t)` and `PodCPU_percent_avgAcrossRuns(t)` vs time on one chart, with the 60% target line and the load curve — one figure showing 1→2 then 2→1.
 
 ### Test B — Load–capacity curve (throughput & response time vs intensity)
-Run several **fixed-intensity** steady loads (e.g. 5, 10, 20, 30, 40 req/s), each held long enough to collect stable datapoints (~10 min), N× each (N ≥ 5). Use the **mix** workload.
+Run several **fixed-intensity** steady loads (e.g. 10, 20, 30, 40, 50 users (≈ 5-25 req/s at the mix; actual req/s measured from Locust CSV)), each held long enough to collect stable datapoints (~10 min), N× each (N ≥ 5). Use the **mix** workload.
 
 **Data to collect** (per intensity level, per run — take the *steady window* only):
 
@@ -254,7 +254,7 @@ PDF "How to test availability": while a steady load runs, **kill a pod** (`kubec
      sleep 60
    done
    ```
-4. Launch Locust from the **in-AWS** load-gen node with the scenario profile, `--csv run_<scenario>_<i>`.
+4. Launch Locust from the **in-AWS** load-gen node with the scenario profile, `--csv <run_dir>/locust` (writes `locust_stats.csv` + `locust_failures.csv`).
 5. On finish: pull Locust CSVs + `toppods/replicas/hpa` CSVs + CloudWatch export (console or CLI).
 6. Repeat N× per scenario (N ≥ 5, target 5–10).
 7. `just cluster-down` → 0 instances, 0 EIP, account clean.

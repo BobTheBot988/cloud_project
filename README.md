@@ -44,3 +44,5 @@ podman-compose -f compose.yaml up -d --build
 - `just launch / cluster-up / cluster-verify / cluster-down` — EC2 cluster lifecycle
 - `just kind-fast` — offline local kind run (reuses images + GGUF, no downloads)
 - `just case-all` / `just guard-default` — quota-guard trigger tests (mock inventory, no AWS)
+- `just exp-smoke` — local size-bucket smoke gate (compose)
+- `just exp-a` / `just exp-b` / `just collect` — Block 3 experiments (Test A ramp / Test B sweep / metric collector)

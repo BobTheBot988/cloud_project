@@ -7,6 +7,7 @@
 from locust import HttpUser, task, between
 import random
 import os
+import sys
 
 # boiler plate
 SIZE_BUCKETS = {
@@ -41,7 +42,10 @@ SIZE_BUCKETS = {
 MIX_POOL = [("small", 0.5), ("medium", 0.3), ("large", 0.2)]
 
 # size selection: `SIZE` env in {small,medium,large,mix}, default mix
-SIZE = os.environ.get("SIZE", "mix")
+SIZE = os.environ.get("SIZE") or "mix"
+
+if SIZE not in set(SIZE_BUCKETS) | {"mix"}:
+    sys.exit(f"FATAL: SIZE must be one of small|medium|large|mix (got '{SIZE}')")
 
 
 def pick_request():

@@ -10,9 +10,18 @@ REPO="$(cd "$DIR/.." && pwd)"
 TARGET="${TARGET:-http://127.0.0.1:8000}"
 PY="$REPO/.venv/bin/python"
 BURST_SECS=20
+COMPOSE_UP=0
+TMP_DIR=""
+
+cleanup() {
+  [ "$COMPOSE_UP" = 1 ] && podman-compose -f "$REPO/compose.yaml" down
+  [ -n "$TMP_DIR" ] && rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
 
 echo "==> compose up"
 podman-compose -f "$REPO/compose.yaml" up -d --build
+COMPOSE_UP=1
 
 echo "==> waiting for proxy /health"
 ok=0
@@ -26,9 +35,14 @@ fail=0
 for size in small medium large; do
   echo "==> smoke SIZE=$size ($BURST_SECS s, 1 user)"
   tmp=$(mktemp -d)
+  TMP_DIR="$tmp"
   SIZE="$size" .venv/bin/locust -f "$REPO/locustfile.py" --headless \
-    --host "$TARGET" -u 1 -r 1 --run-time "${BURST_SECS}s" --csv "$tmp/locust" >"$tmp/locust.out" 2>&1
-  "$PY" - "$tmp/locust_stats.csv" <<'PYEOF' || fail=1
+    --host "$TARGET" -u 1 -r 1 --run-time "${BURST_SECS}s" --csv "$tmp/locust" >"$tmp/locust.out" 2>&1 || fail=1
+  if [ ! -f "$tmp/locust_stats.csv" ]; then
+    echo "FAIL: locust produced no stats CSV (crash?)"
+    fail=1
+  else
+    "$PY" - "$tmp/locust_stats.csv" <<'PYEOF' || fail=1
 import sys, csv
 rows = list(csv.DictReader(open(sys.argv[1])))
 reqs = sum(int(r["Request Count"]) for r in rows)
@@ -38,15 +52,20 @@ if reqs == 0 or fails > 0:
     print("FAIL: no requests or failures detected")
     sys.exit(1)
 PYEOF
+  fi
   # verify a real non-empty generation via the API
   PYTHONPATH="$REPO" SIZE="$size" "$PY" - "$size" "$TARGET" <<'PYEOF' || fail=1
-import sys, urllib.request, json
+import sys, urllib.request, json, urllib.error
 size, target = sys.argv[1], sys.argv[2]
 from locustfile import pick_request
 prompt, max_tokens = pick_request()
 body = json.dumps({"messages": [{"role": "user", "content": prompt}], "max_tokens": max_tokens, "stream": False}).encode()
 req = urllib.request.Request(target + "/generate", data=body, headers={"Content-Type": "application/json"})
-resp = json.load(urllib.request.urlopen(req, timeout=120))
+try:
+    resp = json.load(urllib.request.urlopen(req, timeout=300))
+except (urllib.error.URLError, urllib.error.HTTPError) as e:
+    print(f"FAIL: generate request error: {e}")
+    sys.exit(1)
 content = resp["choices"][0]["message"]["content"]
 if not content.strip():
     print(f"FAIL: empty generation for size={size}")
@@ -58,6 +77,7 @@ done
 
 echo "==> compose down"
 podman-compose -f "$REPO/compose.yaml" down
+COMPOSE_UP=0
 
 if [ "$fail" = 0 ]; then
   echo "==> exp-smoke PASS (all buckets ok)"

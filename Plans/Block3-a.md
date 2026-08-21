@@ -9,9 +9,9 @@ Companion to `Plans/Block3.md` (metrics/procedure source of truth) and `Plans/Bl
 | `locustfile.py` (mod) | `SIZE_BUCKETS`: small/medium/large prompts + `max_tokens` 32/128/256; `MIX_POOL` weights P(s)=0.5, P(m)=0.3, P(l)=0.2; `SIZE` env (default `mix`); `generate()` draws prompt + max_tokens from selected bucket |
 | `ramp_shape.py` (new) | `LoadTestShape` for Test A: warm-up 60s @1u → ramp 180s 1→U_MAX → steady 600s → ramp-down 180s→0 → drain 600s (scale-in window). U_MAX from env (default 20); durations env-overridable (WARMUP_SECS/RAMP_SECS/STEADY_SECS/RAMPDOWN_SECS/DRAIN_SECS) for dev iterations. Total ~27min/run |
 | `infra/collect.sh` (new) | 1/min loop → `data/raw/<scenario>/run_<i>/{toppods,replicas,hpa}.csv` (epoch-ts prefixed) + `events.csv` snapshot at stop + notes.md. `start`/`stop` modes, `INTERVAL` env. kubectl auto-detect: `.cluster-ips` present → ssh-master form; else local `kubectl` (kind) |
-| `infra/exp-a.sh` (new) | Test A: per run → collector start → locust headless (`--shape ramp_shape`, mix, `--csv data/raw/testA/run_<i>/locust`) → collector stop → events → notes.md. N runs. Env: `RUNS`, `U_MAX`, `TARGET`, `LOADGEN` |
+| `infra/exp-a.sh` (new) | Test A: per run → collector start → locust headless (`locust -f locustfile.py,ramp_shape.py`, mix, `--csv data/raw/testA/run_<i>/locust`) → collector stop → events → notes.md. N runs. Env: `RUNS`, `U_MAX`, `TARGET`, `LOADGEN` |
 | `infra/exp-b.sh` (new) | Test B: for each level in `LEVELS` → N runs fixed-intensity steady. Env: `LEVELS` (default `10 20 30 40 50`, **users**), `STEADY_MIN` (default 8), `RUNS`, `TARGET`, `LOADGEN` |
-| `justfile` (mod) | Add `exp-a`, `exp-b`, `collect`, `collect-stop`, `exp-smoke`; `SIZE` env support on `test-prompt` |
+| `justfile` (mod) | Add `exp-a`, `exp-b`, `collect`, `collect-stop`, `exp-smoke`; (test-prompt SIZE support dropped — recipe uses a CLI prompt) |
 | `.gitignore` (mod) | Ignore `data/raw/`, `data/processed/`, `plots/`, `tables/`; commit `data/raw/.gitkeep` |
 
 ## Key design decisions
@@ -21,6 +21,7 @@ Companion to `Plans/Block3.md` (metrics/procedure source of truth) and `Plans/Bl
 3. **kubectl auto-detect in collector** — `infra/.cluster-ips` exists → ssh-master (`02-verify.sh` pattern, sourced from `00-env.sh`); else local `kubectl` for kind smoke. No env fiddling.
 4. **HPA CPU% from `kubectl get hpa` field directly** — no 1700m formula at collect time (that's plots-side, Person B).
 5. **Locust shape wiring (locust 2.46):** `--shape` flag removed — the shape auto-detects from loaded files, so Test A runs `locust -f locustfile.py,ramp_shape.py`. `--exit-code-on-error 0` so request failures (which are data in experiments) don't fail the run. Locust writes `locust_stats.csv` / `locust_failures.csv` (not `_requests.csv`).
+6. **Review-fix pass:** SIZE/ramp env validation; ban-guard rejects loopback-TARGET+LOADGEN and parses host (no false FATALs on localhost variants); exp scripts + smoke have trap EXIT cleanup; collector has preflight probe, rerun protection (FORCE=1), events fetched once; CSV pull verified non-empty (`test -s`).
 
 ## Phase 0 gate: `just exp-smoke`
 

@@ -29,7 +29,7 @@ Both people commit/pull raw data through this layout so processing "just works" 
 
 ```
 data/raw/<scenario>/<run_i>/
-  locust_requests.csv   locust_failures.csv      # Locust CSVs
+  locust_stats.csv      locust_failures.csv      # Locust CSVs
   toppods.csv           replicas.csv             # collector output
   hpa.csv               events.csv               # kubectl get events
   notes.md                                      # run metadata: start/stop ts, U_max, size mix
@@ -38,7 +38,7 @@ plots/                                          # final figures (PNG)
 tables/                                         # R3 tables (CSV)
 ```
 
-Rule: the session operator commits `data/raw/` **at the end of their own session** (before teardown), the other person pulls and processes. Never overwrite another person's processed data — each owns their scenario's `processed/` output.
+Rule: the session operator commits `data/raw/` **at the end of their own session** (before teardown), the other person pulls and processes — note `data/raw/*` is gitignored except `.gitkeep`, so commit with `git add -f data/raw/` (or `git add -f data/raw/<scenario>/`). Never overwrite another person's processed data — each owns their scenario's `processed/` output.
 
 ## Timeline — the relay
 

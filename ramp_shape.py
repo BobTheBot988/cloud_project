@@ -15,14 +15,28 @@
 # boiler plate
 from locust import LoadTestShape
 import os
+import sys
 
-# boiler plate
-U_MAX = int(os.environ.get("U_MAX", "20"))
-WARMUP_SECS = int(os.environ.get("WARMUP_SECS", "60"))
-RAMP_SECS = int(os.environ.get("RAMP_SECS", "180"))
-STEADY_SECS = int(os.environ.get("STEADY_SECS", "600"))
-RAMPDOWN_SECS = int(os.environ.get("RAMPDOWN_SECS", "180"))
-DRAIN_SECS = int(os.environ.get("DRAIN_SECS", "600"))
+
+def _posint(name, default, minimum):
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        sys.exit(f"FATAL: {name} must be an integer >= {minimum} (got '{raw}')")
+    if value < minimum:
+        sys.exit(f"FATAL: {name} must be an integer >= {minimum} (got '{raw}')")
+    return value
+
+
+U_MAX = _posint("U_MAX", 20, 1)
+WARMUP_SECS = _posint("WARMUP_SECS", 60, 0)
+RAMP_SECS = _posint("RAMP_SECS", 180, 0)
+STEADY_SECS = _posint("STEADY_SECS", 600, 0)
+RAMPDOWN_SECS = _posint("RAMPDOWN_SECS", 180, 0)
+DRAIN_SECS = _posint("DRAIN_SECS", 600, 0)
 
 # boiler plate
 PHASES = [
