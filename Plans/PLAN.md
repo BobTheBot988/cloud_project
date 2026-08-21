@@ -64,6 +64,11 @@ curl http://127.0.0.1:30080/health                 # via NodePort
 
 ## Block 3 — Experimental runs (1-2 sessions, budget-frugal)
 
+Status: **Phase 0 prep done (Person A)** — tooling live, AWS sessions pending.
+
+- Split: two-person relay per `Plans/Block3-WORKSPLIT.md`; Phase 0 plan in `Plans/Block3-a.md`.
+- Person A tooling: `locustfile.py` size buckets + mix (0.5/0.3/0.2), `ramp_shape.py` (Test A ramp), `infra/collect.sh` (per-min kubectl collector), `infra/exp-a.sh` (ramp), `infra/exp-b.sh` (intensity sweep), `just exp-smoke` (local gate, verified).
+- Data layout: `data/raw/<scenario>/run_<i>/{toppods,replicas,hpa,events}.csv` + `locust_*.csv` + `notes.md`.
 - Collector: `kubectl top pods` at interval + Locust CSV -> `run_1`, `run_2`, ...
 - 5 solid runs >=15 min (ramp-up -> stable -> ramp-down). Shut instances after.
 

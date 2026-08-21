@@ -309,6 +309,10 @@ Tutti i test dei guard continuano a passare con le nuove regole
 | `just cluster-down` | **Distrugge tutto** (obbligatorio a fine sessione) |
 | `just cost` | Controllo spesa + costo stimato run |
 | `just case-all` / `just guard-default` | Test dei guard di sicurezza (mock, niente AWS) |
+| `just exp-smoke` | Prova locale dei bucket small/medium/large (compose) |
+| `just exp-a` | **Test A** rampa continua (U_MAX/RUNS/TARGET/LOADGEN) |
+| `just exp-b` | **Test B** curva carico-capacità (LEVELS/RUNS/STEADY_MIN) |
+| `just collect` / `collect-stop` | Collector kubectl (top pods/replicas/hpa/events) su `data/raw/` |
 
 ---
 
@@ -319,13 +323,16 @@ Tutti i test dei guard continuano a passare con le nuove regole
 | Block 0 — sistema locale + prove | ✅ COMPLETO |
 | Block 1 — script cluster + guard | ✅ COMPLETO (testato; run AWS fatto) |
 | Block 2 — deploy + HPA su AWS | ✅ **COMPLETO (provato dal vivo il 17-08-2026)** |
-| Block 3 — esperimenti di carico | ⬜ Da fare |
+| Block 3 — esperimenti di carico | 🟡 IN CORSO (tooling Phase 0 pronto; sessioni AWS da fare) |
 | Block 4 — analisi + relazione | ⬜ Da fare |
 
-**Prossimo passo:** Block 3 — 5 run sperimentali ≥15 min (ramp-up → stabile →
-ramp-down) con collector `kubectl top pods` + Locust CSV; chiudere ogni sessione
-con `just cluster-down`. In una sessione futura si può anche completare la
-dimostrazione dello **scale-in** (senza carico per ~10 min → HPA torna a 1).
+**Prossimo passo (Block 3, persona A):** tooling pronto — `locustfile.py` con
+bucket small/medium/large + mix, `ramp_shape.py` (Test A), `collect.sh`
+(collettore kubectl), `exp-a.sh`/`exp-b.sh` (orchestratori), `just exp-smoke`
+(verificato). Prossime sessioni AWS: `just cluster-up` → deploy → Test A
+(rampa, ≥15 min, N≥5) → Test B (5 livelli × N) → `just cluster-down`. Load-gen
+**dentro AWS** (`LOADGEN`), mai battere il NodePort dall'esterno. Due persone
+in parallelo: vedi `Plans/Block3-WORKSPLIT.md` + `Plans/Block3-a.md`.
 
 ---
 

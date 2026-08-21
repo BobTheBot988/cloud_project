@@ -9,9 +9,11 @@ University project: scale an LLM inference service (Qwen3.5-0.8B via llama.cpp) 
 | `app/main.py` | FastAPI proxy: `GET /health` (upstream probe 200/503), `POST /generate` (OpenAI-compat passthrough, streaming, error map, 300s timeout). Env: `LLAMA_CPP_URL`, `SYSTEM_PROMPT` (injected unless client sends one) |
 | `tests/test_proxy.py` | pytest, httpx MockTransport, 11 tests |
 | `compose.yaml` + `Dockerfile` | local llama-server + proxy (k8s dry-run), podman-compose |
-| `locustfile.py` | Locust load, PROMPT_POOL ramp, POST /generate |
+| `locustfile.py` | Locust load: size buckets small/medium/large (max_tokens 32/128/256) + weighted mix pool (0.5/0.3/0.2), `SIZE` env (default `mix`), POST /generate |
+| `ramp_shape.py` | Test A `LoadTestShape`: warm-up→ramp→steady→ramp-down→drain (~27min, env-overridable durations) |
 | `deploy/` | k8s manifests: deployment (sidecar, initContainer prefetch), deployment-kind-fast (hostPath GGUF, kind only), service (NodePort 30080), hpa (cpu 60%, min 1 max 2) |
-| `infra/` | EC2 lifecycle scripts (quota-guarded) + `guards.sh` (shared guard logic + `sweep_stale`), `kind-fast.sh` (offline kind run), `tests/` (guard trigger tests), see `Plans/Block1.md` and `Plans/HARDENING.md` |
+| `infra/` | EC2 lifecycle scripts (quota-guarded) + `guards.sh` (shared guard logic + `sweep_stale`), `kind-fast.sh` (offline kind run), `tests/` (guard trigger tests), Block 3: `collect.sh` (kubectl metric collector), `exp-a.sh`/`exp-b.sh` (Test A/B orchestrators), `exp-smoke.sh` (local gate), see `Plans/Block1.md`, `Plans/HARDENING.md`, `Plans/Block3.md` |
+| `data/raw/` | Block 3 per-run CSVs: `run_<i>/{toppods,replicas,hpa,events}.csv`, `locust_stats.csv`, `notes.md` (gitignored; layout in `Plans/Block3-WORKSPLIT.md` + `Block3-a.md`) |
 | `kind-config.yaml` | local kind cluster (control-plane + 2 workers, NodePort 30080) |
 | `justfile` | recipes: test, test-prompt, up/down, launch/cluster-up/cluster-verify/cluster-down, kind-up/load/metrics/deploy/test/fast/down, case-0/1/2 + aliases, guard-default, case-all |
 | `MEASURE.md` | perf evidence (25.8 tok/s @2thr, 2B fork rejected) |
@@ -62,6 +64,9 @@ just test-prompt "..."        # stream one generation via proxy
 just up / down                # compose stack
 just kind-fast                # offline kind run (reuses images + GGUF)
 just case-all / guard-default # quota-guard trigger tests (mock inventory)
+just exp-smoke                # local size-bucket smoke gate (compose)
+just exp-a / exp-b            # Block 3 Test A ramp / Test B sweep (AWS: set LOADGEN + TARGET)
+just collect / collect-stop   # kubectl metric collector start/stop
 just launch / cluster-up / cluster-verify / cluster-down   # EC2 lifecycle
 ```
 

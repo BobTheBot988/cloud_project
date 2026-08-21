@@ -5,6 +5,7 @@ test:
 	.venv/bin/python -m pytest tests/ -q
 
 # Stream one generation through the proxy with a custom prompt
+# Env: SIZE (small|medium|large|mix) — picks prompt from that bucket
 # Usage: just test-prompt "your question here"
 test-prompt prompt:
 	curl -s http://127.0.0.1:8000/generate -H 'Content-Type: application/json' \
@@ -109,3 +110,29 @@ guard-default:
 # run all guard cases
 case-all: case-0 case-1 case-2
 	@echo "all guard cases passed"
+
+# Block 3 experiments (Person A: scaling & intensity)
+
+# Test A: continuous ramp (warm-up->ramp->steady->ramp-down->drain), N runs
+# Env: RUNS, U_MAX, SIZE, TARGET, LOADGEN (required for AWS, in-AWS load-gen)
+exp-a:
+	bash infra/exp-a.sh
+
+# Test B: fixed-intensity sweep, N runs per level
+# Env: RUNS, LEVELS (users), STEADY_MIN, SIZE, TARGET, LOADGEN
+exp-b:
+	bash infra/exp-b.sh
+
+# Start the kubectl metric collector (foreground loop; write to data/raw)
+# Usage: just collect <scenario> <run>
+collect scenario run:
+	bash infra/collect.sh start {{scenario}} {{run}}
+
+# Stop the metric collector + snapshot events
+# Usage: just collect-stop <scenario> <run>
+collect-stop scenario run:
+	bash infra/collect.sh stop {{scenario}} {{run}}
+
+# Phase 0 smoke: compose up -> size-bucket burst test -> non-empty gen -> down
+exp-smoke:
+	bash infra/exp-smoke.sh
