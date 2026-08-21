@@ -47,3 +47,5 @@ Step-by-step todo for running the cluster. Do Phases A+B once per session; Phase
 - Credentials die with the session; Phase B repeats each session.
 - Quota guards enforced in `01-launch.sh` — no console clicking needed.
 - Budget: AWS Budgets lags 8-12h; always `cluster-down` before ending the session.
+- **Region varies per session.** The Learner Lab token is region-scoped (us-east-1 OR us-west-2). If the token says `us-west-2`, run with overrides: `REGION=us-west-2 AZ1=us-west-2a AZ2=us-west-2b just cluster-up` (and set the profile region to us-west-2). `00-env.sh` defaults us-east-1.
+- **Keypair may not exist in the session region.** If `01-launch.sh` fails with `InvalidKeyPair.NotFound 'vockey'`, import it once: derive the public key (`ssh-keygen -y -f ~/.ssh/labsuser.pem`), base64-encode it, then `aws ec2 import-key-pair --key-name vockey --public-key-material <base64> --region <REGION>`. Persists across sessions in that region.
