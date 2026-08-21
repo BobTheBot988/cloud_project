@@ -184,6 +184,7 @@ W1_ID=$W1_ID
 W2_ID=$W2_ID
 EIP_ALLOC=${EIP_ALLOC:-}
 SG=$SG
+REGION=$REGION
 EOF
   echo "==> nodes up, ssh ready"
   # boiler plate: summary table of nodes

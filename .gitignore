@@ -17,6 +17,7 @@ infra/.cluster-ips
 # Block 3 experiment data + outputs (committed layout via data/.gitkeep)
 data/raw/*
 !data/raw/.gitkeep
+data/raw/**/.collect.*
 data/processed/
 plots/
 tables/
