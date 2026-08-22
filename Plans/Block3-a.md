@@ -77,9 +77,9 @@ Both sessions: `just cluster-down` at end (budget rule), account clean (0 instan
 
 ## Results (Sessions 1-2, AWS us-west-2)
 
-**Test A — N=5 complete** (`data/raw/testA/run_1..5`). All runs show scale-out 1→2 (CPU crossing 60%) AND scale-in 2→1 (drain, ≥10min zero load) in `replicas.csv`, `hpa.csv` (current/target), and `SuccessfulRescale` events. Requests/runs: 230/255/243/242/172, failures 11/34/26/18/0 (run_5 clean). Avg response times 30-72s (mix, large bucket dominates). U_MAX=12, `--parallel 2`.
+**Test A — N=5 complete** (`data/raw/testA/run_1..5`). All runs show scale-out 1→2 (CPU crossing 60%) AND scale-in 2→1 (drain, ≥10min zero load) in `replicas.csv`; `SuccessfulRescale` events in runs 2-5 (run_1's `events.csv` was lost to the ssh hang). Totals: 1142 reqs, 89 fails (**7.8%**, per-run 0-13%; run_5 clean at 0%). Avg response 35-49s, p95 72-90s. U_MAX=12, `--parallel 2`.
 
-**Test B — 24 runs** (`data/raw/testB/run_1..24`). STEADY_MIN=6. Levels 10/20/30/40 users = 5 runs each (N=5); **level 50 = N=3** (runs 21-23 — runs 24-25 lost to a network blip + lab teardown; sandbox gone, not recoverable; documented deviation). Errors (503/502/504) rise with intensity: level 10 ~0-78%, level 40 ~20-65%, level 50 ~30-86% — saturation at max 2 pods is a real bottleneck finding.
+**Test B — 24 runs** (`data/raw/testB/run_1..24`). STEADY_MIN=6. Levels 10/20/30/40 users = 5 runs each (N=5); **level 50 = N=3** (runs 21-23 — runs 24-25 lost to a network blip + lab teardown; sandbox gone, not recoverable; documented deviation). Totals: 1704 reqs, 616 fails (**36%** overall). Error rate noisy per run but trends up with intensity: 10u 0-35% (run_1 outlier 91%), 20u 0-55%, 30u 0-34%, 40u 29-68%, 50u 32-75%. Failure split: 503 busy=260, 504 timeout=221, 502=135. **p95 pins at 300s** (proxy timeout) at high intensity → compute saturation at max 2 pods; pods steady at 2 for all levels ≥10 users (maxReplicas cap).
 
 **Gotcha fixed on the fly:** exp-b `RUN_START` resume must keep `RUNS` = per-level runs (5), not the total grid — a `RUNS=25` resume replayed wrong levels and mislabeled runs (stray `run_24` is level 10, not level 50; see `HANDOFF.md`).
 

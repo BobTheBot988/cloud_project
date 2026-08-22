@@ -12,6 +12,25 @@ Your job: **plots 1-4 + `sanity`** from the Test A/B data, then your **Test C/D*
 
 Per-run metadata (level, params) is in each `notes.md`. **Trust `notes.md`, not the run number**, for level mapping.
 
+## What the tests measure + results
+
+**Test A — elasticity (continuous ramp).** Purpose: prove the HPA actually autoscales — scale **out 1→2** when CPU crosses the 60% target under growing load, hold 2 pods under sustained load, and scale **back 2→1** after load drops (≥10 min idle drain). Workload: mix (small/medium/large), U_MAX=12 users.
+
+**Test B — load-capacity curve.** Purpose: for each fixed intensity level (10/20/30/40/50 users, mix workload, 6-min steady) measure how throughput, latency (p50/p95), pod count and error rate behave — locate the saturation point of the 2-pod deployment.
+
+**Results (verified from `data/raw/`):**
+
+| | Test A (N=5) | Test B (24 runs) |
+|---|---|---|
+| Requests | 1142 | 1704 |
+| Failures | 89 (**7.8%**, 0-13% per run) | 616 (**36%** overall) |
+| Scale evidence | **1→2→1 in every run** (`replicas.csv`); `SuccessfulRescale` events in runs 2-5 (run 1 lost its `events.csv` to an ssh hang) | 2 pods steady at all levels ≥10 users — HPA scales, then caps at `maxReplicas 2` |
+| Latency | avg 35-49s, p95 72-90s | avg 30-271s; **p95 pinned at 300s** (the proxy request timeout) under heavy load |
+| Errors by level | — | 10u: 0-35% (run_1 outlier 91%) · 20u: 0-55% · 30u: 0-34% · 40u: 29-68% · 50u: 32-75% |
+| Failure types | — | 503 busy=260 · 504 timeout=221 · 502=135 |
+
+**Takeaway:** error rate generally rises with intensity but is noisy per run; at 40-50 users it is consistently ≥29% with p95 at the 300s timeout — **compute saturation at max 2 pods**. The 503s = llama-server busy (slots exhausted), 504s = requests exceeding the 300s gen timeout under queueing. Report these as real results, don't hide them.
+
 ## ⚠️ Watch out for (learned the hard way)
 
 1. **`SIZE` env is import-time, default `mix`.** Your `exp-c` MUST set `SIZE=small|medium|large` per run or you silently get mix → wrong Test C data. `SIZE=` (empty) also falls back to mix now.
