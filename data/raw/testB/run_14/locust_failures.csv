@@ -1,0 +1,3 @@
+Method,Name,Error,Occurrences
+POST,/generate,HTTPError('503 Server Error: Service Unavailable for url: /generate'),21
+POST,/generate,HTTPError('502 Server Error: Bad Gateway for url: /generate'),14

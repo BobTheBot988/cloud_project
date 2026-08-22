@@ -1,0 +1,7 @@
+17m   Normal    Pulled      pod/llm-proxy-857bf6d79d-vb4kw   Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+17m   Normal    Created     pod/llm-proxy-857bf6d79d-vb4kw   Container created
+17m   Normal    Started     pod/llm-proxy-857bf6d79d-vb4kw   Container started
+16m   Normal    Created     pod/llm-proxy-857bf6d79d-9gm2k   Container created
+16m   Normal    Started     pod/llm-proxy-857bf6d79d-9gm2k   Container started
+16m   Normal    Pulled      pod/llm-proxy-857bf6d79d-9gm2k   Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+16m   Warning   Unhealthy   pod/llm-proxy-857bf6d79d-9gm2k   Readiness probe failed: HTTP probe failed with statuscode: 503

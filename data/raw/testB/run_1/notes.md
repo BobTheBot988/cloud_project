@@ -1,0 +1,80 @@
+# scenario=testB run=1
+collect_start=1787351129
+interval_sec=60
+run=1
+run_start=1787351132
+test=TestB(steady)
+level_users=10 steady_min=6 size=mix
+target=http://172.31.28.201:30080 loadgen=ec2-user@52.33.163.126
+runs_total=5
+collect_stop=1787351527
+--- events ---
+45m   Normal    Starting                       node/ip-172-31-28-201.us-west-2.compute.internal   
+41m   Normal    Starting                       node/ip-172-31-38-45.us-west-2.compute.internal    
+42m   Normal    Starting                       node/ip-172-31-30-49.us-west-2.compute.internal    
+45m   Normal    Starting                       node/ip-172-31-28-201.us-west-2.compute.internal   Starting kubelet.
+45m   Normal    NodeAllocatableEnforced        node/ip-172-31-28-201.us-west-2.compute.internal   Updated Node Allocatable limit across pods
+45m   Normal    NodeHasSufficientMemory        node/ip-172-31-28-201.us-west-2.compute.internal   Node ip-172-31-28-201.us-west-2.compute.internal status is now: NodeHasSufficientMemory
+45m   Normal    NodeHasNoDiskPressure          node/ip-172-31-28-201.us-west-2.compute.internal   Node ip-172-31-28-201.us-west-2.compute.internal status is now: NodeHasNoDiskPressure
+45m   Normal    NodeHasSufficientPID           node/ip-172-31-28-201.us-west-2.compute.internal   Node ip-172-31-28-201.us-west-2.compute.internal status is now: NodeHasSufficientPID
+45m   Normal    RegisteredNode                 node/ip-172-31-28-201.us-west-2.compute.internal   Node ip-172-31-28-201.us-west-2.compute.internal event: Registered Node ip-172-31-28-201.us-west-2.compute.internal in Controller
+45m   Normal    NodeReady                      node/ip-172-31-28-201.us-west-2.compute.internal   Node ip-172-31-28-201.us-west-2.compute.internal status is now: NodeReady
+42m   Normal    NodeAllocatableEnforced        node/ip-172-31-30-49.us-west-2.compute.internal    Updated Node Allocatable limit across pods
+42m   Warning   InvalidDiskCapacity            node/ip-172-31-30-49.us-west-2.compute.internal    invalid capacity 0 on image filesystem
+42m   Normal    NodeHasSufficientPID           node/ip-172-31-30-49.us-west-2.compute.internal    Node ip-172-31-30-49.us-west-2.compute.internal status is now: NodeHasSufficientPID
+42m   Normal    NodeHasNoDiskPressure          node/ip-172-31-30-49.us-west-2.compute.internal    Node ip-172-31-30-49.us-west-2.compute.internal status is now: NodeHasNoDiskPressure
+42m   Normal    NodeHasSufficientMemory        node/ip-172-31-30-49.us-west-2.compute.internal    Node ip-172-31-30-49.us-west-2.compute.internal status is now: NodeHasSufficientMemory
+42m   Normal    RegisteredNode                 node/ip-172-31-30-49.us-west-2.compute.internal    Node ip-172-31-30-49.us-west-2.compute.internal event: Registered Node ip-172-31-30-49.us-west-2.compute.internal in Controller
+42m   Normal    NodeReady                      node/ip-172-31-30-49.us-west-2.compute.internal    Node ip-172-31-30-49.us-west-2.compute.internal status is now: NodeReady
+41m   Normal    NodeHasSufficientMemory        node/ip-172-31-38-45.us-west-2.compute.internal    Node ip-172-31-38-45.us-west-2.compute.internal status is now: NodeHasSufficientMemory
+41m   Normal    NodeHasNoDiskPressure          node/ip-172-31-38-45.us-west-2.compute.internal    Node ip-172-31-38-45.us-west-2.compute.internal status is now: NodeHasNoDiskPressure
+41m   Normal    NodeHasSufficientPID           node/ip-172-31-38-45.us-west-2.compute.internal    Node ip-172-31-38-45.us-west-2.compute.internal status is now: NodeHasSufficientPID
+41m   Normal    NodeAllocatableEnforced        node/ip-172-31-38-45.us-west-2.compute.internal    Updated Node Allocatable limit across pods
+41m   Warning   InvalidDiskCapacity            node/ip-172-31-38-45.us-west-2.compute.internal    invalid capacity 0 on image filesystem
+41m   Normal    RegisteredNode                 node/ip-172-31-38-45.us-west-2.compute.internal    Node ip-172-31-38-45.us-west-2.compute.internal event: Registered Node ip-172-31-38-45.us-west-2.compute.internal in Controller
+41m   Normal    NodeReady                      node/ip-172-31-38-45.us-west-2.compute.internal    Node ip-172-31-38-45.us-west-2.compute.internal status is now: NodeReady
+40m   Normal    Scheduled                      pod/llm-proxy-857bf6d79d-9gm2k                     Successfully assigned default/llm-proxy-857bf6d79d-9gm2k to ip-172-31-38-45.us-west-2.compute.internal
+40m   Normal    ScalingReplicaSet              deployment/llm-proxy                               Scaled up replica set llm-proxy-857bf6d79d from 0 to 1
+40m   Normal    SuccessfulCreate               replicaset/llm-proxy-857bf6d79d                    Created pod: llm-proxy-857bf6d79d-9gm2k
+40m   Normal    Pulling                        pod/llm-proxy-857bf6d79d-9gm2k                     Pulling image "curlimages/curl:8.21.0"
+40m   Normal    Started                        pod/llm-proxy-857bf6d79d-9gm2k                     Container started
+40m   Normal    Created                        pod/llm-proxy-857bf6d79d-9gm2k                     Container created
+40m   Normal    Pulled                         pod/llm-proxy-857bf6d79d-9gm2k                     Successfully pulled image "curlimages/curl:8.21.0" in 1.63s (1.63s including waiting). Image size: 10652192 bytes.
+40m   Normal    Pulling                        pod/llm-proxy-857bf6d79d-9gm2k                     Pulling image "ghcr.io/ggml-org/llama.cpp:server"
+40m   Normal    Pulled                         pod/llm-proxy-857bf6d79d-9gm2k                     Successfully pulled image "ghcr.io/ggml-org/llama.cpp:server" in 16.655s (16.655s including waiting). Image size: 307655741 bytes.
+40m   Normal    Pulling                        pod/llm-proxy-857bf6d79d-9gm2k                     Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
+40m   Normal    Pulled                         pod/llm-proxy-857bf6d79d-9gm2k                     Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 5.214s (5.214s including waiting). Image size: 64752814 bytes.
+40m   Normal    Created                        pod/llm-proxy-857bf6d79d-9gm2k                     Container created
+40m   Normal    Started                        pod/llm-proxy-857bf6d79d-9gm2k                     Container started
+40m   Warning   Unhealthy                      pod/llm-proxy-857bf6d79d-9gm2k                     Readiness probe failed: Get "http://10.244.2.2:8000/health": dial tcp 10.244.2.2:8000: connect: connection refused
+39m   Warning   FailedGetResourceMetric        horizontalpodautoscaler/llm-proxy                  failed to get cpu utilization: did not receive metrics for targeted pods (pods might be unready)
+39m   Warning   FailedComputeMetricsReplicas   horizontalpodautoscaler/llm-proxy                  invalid metrics (1 invalid out of 1), first error is: failed to get cpu resource metric value: failed to get cpu utilization: did not receive metrics for targeted pods (pods might be unready)
+34m   Normal    ScalingReplicaSet              deployment/llm-proxy                               Scaled up replica set llm-proxy-857bf6d79d from 1 to 2
+34m   Normal    Scheduled                      pod/llm-proxy-857bf6d79d-hrj5h                     Successfully assigned default/llm-proxy-857bf6d79d-hrj5h to ip-172-31-30-49.us-west-2.compute.internal
+34m   Normal    SuccessfulCreate               replicaset/llm-proxy-857bf6d79d                    Created pod: llm-proxy-857bf6d79d-hrj5h
+34m   Normal    SuccessfulRescale              horizontalpodautoscaler/llm-proxy                  New size: 2; reason: cpu resource utilization (percentage of request) above target
+34m   Normal    Pulling                        pod/llm-proxy-857bf6d79d-hrj5h                     Pulling image "curlimages/curl:8.21.0"
+34m   Normal    Pulled                         pod/llm-proxy-857bf6d79d-hrj5h                     Successfully pulled image "curlimages/curl:8.21.0" in 1.715s (1.715s including waiting). Image size: 10652192 bytes.
+34m   Normal    Created                        pod/llm-proxy-857bf6d79d-hrj5h                     Container created
+34m   Normal    Started                        pod/llm-proxy-857bf6d79d-hrj5h                     Container started
+33m   Normal    Pulling                        pod/llm-proxy-857bf6d79d-hrj5h                     Pulling image "ghcr.io/ggml-org/llama.cpp:server"
+33m   Normal    Pulling                        pod/llm-proxy-857bf6d79d-hrj5h                     Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
+33m   Normal    Created                        pod/llm-proxy-857bf6d79d-hrj5h                     Container created
+33m   Normal    Pulled                         pod/llm-proxy-857bf6d79d-hrj5h                     Successfully pulled image "ghcr.io/ggml-org/llama.cpp:server" in 16.814s (16.814s including waiting). Image size: 307655741 bytes.
+33m   Normal    Started                        pod/llm-proxy-857bf6d79d-hrj5h                     Container started
+33m   Normal    Started                        pod/llm-proxy-857bf6d79d-hrj5h                     Container started
+33m   Warning   Unhealthy                      pod/llm-proxy-857bf6d79d-hrj5h                     Readiness probe failed: Get "http://10.244.1.3:8000/health": dial tcp 10.244.1.3:8000: connect: connection refused
+33m   Normal    Created                        pod/llm-proxy-857bf6d79d-hrj5h                     Container created
+33m   Normal    Pulled                         pod/llm-proxy-857bf6d79d-hrj5h                     Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 6.413s (6.413s including waiting). Image size: 64752814 bytes.
+13m   Normal    Killing                        pod/llm-proxy-857bf6d79d-hrj5h                     Stopping container fastapi-proxy
+13m   Normal    SuccessfulDelete               replicaset/llm-proxy-857bf6d79d                    Deleted pod: llm-proxy-857bf6d79d-hrj5h
+13m   Normal    Killing                        pod/llm-proxy-857bf6d79d-hrj5h                     Stopping container llama-server
+13m   Normal    SuccessfulRescale              horizontalpodautoscaler/llm-proxy                  New size: 1; reason: All metrics below target
+13m   Normal    ScalingReplicaSet              deployment/llm-proxy                               Scaled down replica set llm-proxy-857bf6d79d from 2 to 1
+29s   Normal    Pulled                         pod/llm-proxy-857bf6d79d-9gm2k                     Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+29s   Normal    Started                        pod/llm-proxy-857bf6d79d-9gm2k                     Container started
+29s   Normal    Created                        pod/llm-proxy-857bf6d79d-9gm2k                     Container created
+1s    Warning   FailedGetResourceMetric        horizontalpodautoscaler/llm-proxy                  failed to get cpu utilization: unable to get metrics for resource cpu: no metrics returned from resource metrics API
+1s    Warning   FailedComputeMetricsReplicas   horizontalpodautoscaler/llm-proxy                  invalid metrics (1 invalid out of 1), first error is: failed to get cpu resource metric value: failed to get cpu utilization: unable to get metrics for resource cpu: no metrics returned from resource metrics API
+run_end=1787351527
+interrupted=0

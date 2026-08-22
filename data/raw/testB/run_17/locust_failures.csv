@@ -1,0 +1,2 @@
+Method,Name,Error,Occurrences
+POST,/generate,HTTPError('504 Server Error: Gateway Timeout for url: /generate'),30

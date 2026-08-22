@@ -97,11 +97,14 @@ cleanup() {
 }
 trap cleanup EXIT
 
-RUN_INDEX=$((RUN_START - 1))
+RUN_INDEX=0
 for level in $LEVELS; do
   echo "==> Test B level $level users"
   for i in $(seq 1 "$RUNS"); do
     RUN_INDEX=$((RUN_INDEX + 1))
+    # skip positions before RUN_START (resume support); positions map
+    # 1..(levels x RUNS) across the whole grid
+    [ "$RUN_INDEX" -lt "$RUN_START" ] && continue
     CUR_RUN_DIR="$REPO/data/raw/$SCENARIO/run_$RUN_INDEX"
     CUR_SCENARIO="$SCENARIO"
     CUR_RUN="$RUN_INDEX"

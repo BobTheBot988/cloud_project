@@ -1,0 +1,6 @@
+1787352331 llm-proxy   Deployment/llm-proxy   cpu: 101%/60%   1     2     2     54m
+1787352402 llm-proxy   Deployment/llm-proxy   cpu: 102%/60%   1     2     2     55m
+1787352472 llm-proxy   Deployment/llm-proxy   cpu: 104%/60%   1     2     2     56m
+1787352545 llm-proxy   Deployment/llm-proxy   cpu: 104%/60%   1     2     2     58m
+1787352621 llm-proxy   Deployment/llm-proxy   cpu: 57%/60%   1     2     2     59m
+1787352697 llm-proxy   Deployment/llm-proxy   cpu: 60%/60%   1     2     2     60m

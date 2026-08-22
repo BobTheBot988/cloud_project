@@ -1,0 +1,6 @@
+60m   Normal   Created   pod/llm-proxy-857bf6d79d-9gm2k   Container created
+60m   Normal   Started   pod/llm-proxy-857bf6d79d-9gm2k   Container started
+60m   Normal   Pulled    pod/llm-proxy-857bf6d79d-9gm2k   Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+13m   Normal   Pulled    pod/llm-proxy-857bf6d79d-vb4kw   Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+13m   Normal   Created   pod/llm-proxy-857bf6d79d-vb4kw   Container created
+13m   Normal   Started   pod/llm-proxy-857bf6d79d-vb4kw   Container started
