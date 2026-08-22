@@ -1,0 +1,35 @@
+58m   Normal    Created             pod/llm-proxy-857bf6d79d-thxs6           Container created
+58m   Normal    Pulled              pod/llm-proxy-857bf6d79d-thxs6           Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+58m   Normal    Started             pod/llm-proxy-857bf6d79d-thxs6           Container started
+58m   Normal    ScalingReplicaSet   deployment/llm-proxy                     Scaled up replica set llm-proxy-857bf6d79d from 3 to 4
+58m   Normal    SuccessfulRescale   horizontalpodautoscaler/llm-proxy-exp4   New size: 4; reason: cpu resource utilization (percentage of request) above target
+58m   Normal    SuccessfulCreate    replicaset/llm-proxy-857bf6d79d          Created pod: llm-proxy-857bf6d79d-mb6wl
+58m   Normal    Scheduled           pod/llm-proxy-857bf6d79d-mb6wl           Successfully assigned default/llm-proxy-857bf6d79d-mb6wl to ip-172-31-45-91.us-west-2.compute.internal
+58m   Normal    Pulled              pod/llm-proxy-857bf6d79d-mb6wl           Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
+58m   Normal    Created             pod/llm-proxy-857bf6d79d-mb6wl           Container created
+58m   Normal    Started             pod/llm-proxy-857bf6d79d-mb6wl           Container started
+57m   Normal    Started             pod/llm-proxy-857bf6d79d-mb6wl           Container started
+57m   Normal    Pulling             pod/llm-proxy-857bf6d79d-mb6wl           Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
+57m   Normal    Pulled              pod/llm-proxy-857bf6d79d-mb6wl           Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 354ms (354ms including waiting). Image size: 64753325 bytes.
+57m   Normal    Created             pod/llm-proxy-857bf6d79d-mb6wl           Container created
+57m   Warning   Unhealthy           pod/llm-proxy-857bf6d79d-mb6wl           Readiness probe failed: Get "http://10.244.9.3:8000/health": dial tcp 10.244.9.3:8000: connect: connection refused
+35m   Normal    Pulled              pod/llm-proxy-857bf6d79d-mb6wl           Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+35m   Normal    Started             pod/llm-proxy-857bf6d79d-mb6wl           Container started
+35m   Normal    Created             pod/llm-proxy-857bf6d79d-mb6wl           Container created
+34m   Normal    Pulled              pod/llm-proxy-857bf6d79d-4vp47           Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+34m   Normal    Created             pod/llm-proxy-857bf6d79d-4vp47           Container created
+34m   Normal    Started             pod/llm-proxy-857bf6d79d-4vp47           Container started
+34m   Warning   Unhealthy           pod/llm-proxy-857bf6d79d-4vp47           Readiness probe failed: HTTP probe failed with statuscode: 503
+23m   Normal    ScalingReplicaSet   deployment/llm-proxy                     Scaled down replica set llm-proxy-857bf6d79d from 4 to 3
+23m   Normal    Killing             pod/llm-proxy-857bf6d79d-4vp47           Stopping container llama-server
+23m   Normal    Killing             pod/llm-proxy-857bf6d79d-4vp47           Stopping container fastapi-proxy
+23m   Normal    SuccessfulRescale   horizontalpodautoscaler/llm-proxy-exp4   New size: 3; reason: All metrics below target
+23m   Normal    SuccessfulDelete    replicaset/llm-proxy-857bf6d79d          Deleted pod: llm-proxy-857bf6d79d-4vp47
+23m   Normal    SuccessfulDelete    replicaset/llm-proxy-857bf6d79d          Deleted pod: llm-proxy-857bf6d79d-mb6wl
+23m   Normal    SuccessfulDelete    replicaset/llm-proxy-857bf6d79d          Deleted pod: llm-proxy-857bf6d79d-thxs6
+23m   Normal    Killing             pod/llm-proxy-857bf6d79d-mb6wl           Stopping container llama-server
+23m   Normal    Killing             pod/llm-proxy-857bf6d79d-thxs6           Stopping container llama-server
+23m   Normal    SuccessfulRescale   horizontalpodautoscaler/llm-proxy-exp4   New size: 1; reason: All metrics below target
+23m   Normal    Killing             pod/llm-proxy-857bf6d79d-thxs6           Stopping container fastapi-proxy
+23m   Normal    Killing             pod/llm-proxy-857bf6d79d-mb6wl           Stopping container fastapi-proxy
+23m   Normal    ScalingReplicaSet   deployment/llm-proxy                     Scaled down replica set llm-proxy-857bf6d79d from 3 to 1

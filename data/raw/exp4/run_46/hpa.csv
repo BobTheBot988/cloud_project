@@ -1,0 +1,3 @@
+1787428664 llm-proxy-exp4   Deployment/llm-proxy   cpu: 40%/60%   1     4     3     166m
+1787428736 llm-proxy-exp4   Deployment/llm-proxy   cpu: 76%/60%   1     4     4     167m
+1787428808 llm-proxy-exp4   Deployment/llm-proxy   cpu: 57%/60%   1     4     4     168m
