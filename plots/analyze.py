@@ -64,16 +64,22 @@ def load_run(d):
 
 
 def load_details(path):
-    """total_ms, upstream_ms, orchestrator_ms by size."""
+    """total_ms, upstream_ms, orchestrator_ms by size (successful 2xx rows only)."""
     if not os.path.exists(path):
         return {}
     out = {}
+    nrows = nskip = 0
     for r in csv.DictReader(open(path)):
         try:
+            status = int(r.get("status", "200"))
             size = r["size"]
             total = float(r["total_ms"])
             up = float(r["upstream_ms"])
         except (KeyError, ValueError):
+            continue
+        nrows += 1
+        if not (200 <= status < 300):  # exclude timeouts/failures — they'd
+            nskip += 1                 # misattribute llama delay to orchestrator
             continue
         out.setdefault(size, []).append((total, up))
     return out
@@ -121,12 +127,15 @@ def main():
 
     # ---- figure 2: delay breakdown per variant per level (mix) ----
     fig, ax = plt.subplots(figsize=(11, 5))
+    any_detail = False
     for v in vs.values():
         xs, tot, up, orch = [], [], [], []
         for l in sorted(v["levels"]):
             agg = {"total": [], "up": [], "orch": []}
             for r in v["levels"][l]:
                 det = load_details(r["detail"])
+                if det:
+                    any_detail = True
                 for size, pairs in det.items():
                     for t, u in pairs:
                         agg["total"].append(t)
@@ -140,6 +149,8 @@ def main():
         ax.plot(xs, tot, "o-", label=f"{v['name']} total")
         ax.plot(xs, up, "s--", label=f"{v['name']} upstream(llama)")
         ax.plot(xs, orch, "d:", label=f"{v['name']} orchestrator+transport")
+    if not any_detail:
+        print("WARN: no requests_detail.csv found in any variant — delay figures empty (needs the timing proxy image + detail capture)")
     ax.set(xlabel="users", ylabel="ms (avg)", title="Delay breakdown: client total vs llama vs orchestrator+transport")
     ax.legend(fontsize=8)
     fig.tight_layout(); fig.savefig(f"{ART}/variant_delay_breakdown.png", dpi=130)
@@ -178,6 +189,9 @@ def main():
                 "availability": round(1 - fails / max(reqs, 1), 4),
                 "avg_p95_s": round(statistics.mean(r["p95"] for r in runs), 1),
             })
+    if not rows:
+        print("WARN: no variant data found under data/raw — nothing to summarize")
+        return
     with open(f"{ART}/variant_summary.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         w.writeheader(); w.writerows(rows)

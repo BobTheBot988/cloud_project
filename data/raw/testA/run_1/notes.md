@@ -11,3 +11,8 @@ interrupted=1 (ssh hang; collector data complete, locust CSVs pulled manually)
 locust_total=230 locust_failures=11 (7x503 4x502)
 collect_stop=1787342829
 run_end=1787342829
+collect_stop=1787417503
+--- events ---
+
+interrupted=1
+run_end=1787417503

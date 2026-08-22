@@ -56,6 +56,10 @@ sweep_stale() {
 # even with an empty account. Fail-closed before any API call.
 workers_ceiling() {
   local inst vcpu
+  if ! [[ "$WORKERS" =~ ^[1-9][0-9]*$ ]]; then
+    echo "FATAL: WORKERS must be a positive integer (got '$WORKERS')"
+    return 1
+  fi
   inst=$((WORKERS + 2))          # master + workers + loadgen
   vcpu=$((2 + 2 * WORKERS + 2))  # master t3.small + workers t3.medium + loadgen
   if [ "$inst" -gt "$MAX_INSTANCES" ]; then

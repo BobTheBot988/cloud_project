@@ -36,10 +36,13 @@ for size in small medium large; do
   echo "==> smoke SIZE=$size ($BURST_SECS s, 1 user)"
   tmp=$(mktemp -d)
   TMP_DIR="$tmp"
-  SIZE="$size" .venv/bin/locust -f "$REPO/locustfile.py" --headless \
+  SIZE="$size" DETAIL_CSV="$tmp/requests_detail.csv" .venv/bin/locust -f "$REPO/locustfile.py" --headless \
     --host "$TARGET" -u 1 -r 1 --run-time "${BURST_SECS}s" --csv "$tmp/locust" >"$tmp/locust.out" 2>&1 || fail=1
   if [ ! -f "$tmp/locust_stats.csv" ]; then
     echo "FAIL: locust produced no stats CSV (crash?)"
+    fail=1
+  elif [ ! -f "$tmp/requests_detail.csv" ] || [ "$(tail -n +2 "$tmp/requests_detail.csv" | wc -l)" -eq 0 ]; then
+    echo "FAIL: no per-request detail rows ($tmp/requests_detail.csv)"
     fail=1
   else
     "$PY" - "$tmp/locust_stats.csv" <<'PYEOF' || fail=1

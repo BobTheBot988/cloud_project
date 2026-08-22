@@ -43,7 +43,7 @@ for w in "${WORKER_PUBS[@]}"; do
 done
 
 # wait: poll kubectl on master until all nodes report Ready
-EXPECT_NODES=$((WORKERS + 1))
+EXPECT_NODES=$(( ${WORKERS:-2} + 1 ))
 echo "==> waiting for nodes Ready ($EXPECT_NODES)"
 for _ in $(seq 1 60); do
   NODES="$(ssh_run "$MASTER_PUB" "sudo KUBECONFIG=/etc/kubernetes/admin.conf kubectl get nodes --no-headers 2>/dev/null" || true)"

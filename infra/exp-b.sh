@@ -53,8 +53,8 @@ for level in $LEVELS; do
     exit 1
   fi
 done
-if [[ ! "$STEADY_MIN" =~ ^[0-9]+$ ]] || [ "$STEADY_MIN" -lt 1 ]; then
-  echo "FATAL: STEADY_MIN '$STEADY_MIN' is not an integer >= 1"
+if [[ ! "$STEADY_MIN" =~ ^[0-9]+(\.[0-9]+)?$ ]] || [ "$(echo "$STEADY_MIN" | awk '{print ($1 < 1)}')" = 1 ]; then
+  echo "FATAL: STEADY_MIN '$STEADY_MIN' must be a number >= 1"
   exit 1
 fi
 
@@ -64,13 +64,15 @@ run_locust() {
   local run_dir="$1" users="$2"
   if [ -n "$LOADGEN" ]; then
     # remote: run locust on the in-AWS load-gen node, pull CSVs back
-    ssh "${SSH_OPTS[@]}" "$LOADGEN" "mkdir -p /tmp/exp"
+    ssh "${SSH_OPTS[@]}" "$LOADGEN" "mkdir -p /tmp/exp && rm -f /tmp/exp/requests_detail.csv"
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
       "$REPO/locustfile.py" "$LOADGEN:/tmp/exp/"
     ssh "${SSH_OPTS[@]}" "$LOADGEN" \
       "cd /tmp/exp && export PATH=/tmp/exp/.venv/bin:\$HOME/.local/bin:\$PATH && SIZE=$(q "$SIZE") DETAIL_CSV=/tmp/exp/requests_detail.csv locust -f locustfile.py --headless --host $(q "$TARGET") -u $(q "$users") -r 5 --run-time $(q "${STEADY_MIN}m") --exit-code-on-error 0 --csv /tmp/exp/locust"
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
-      "$LOADGEN:/tmp/exp/locust_stats.csv" "$LOADGEN:/tmp/exp/locust_failures.csv" "$LOADGEN:/tmp/exp/requests_detail.csv" "$run_dir/"
+      "$LOADGEN:/tmp/exp/locust_stats.csv" "$LOADGEN:/tmp/exp/locust_failures.csv" "$run_dir/"
+    scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
+      "$LOADGEN:/tmp/exp/requests_detail.csv" "$run_dir/" || true
     if ! test -s "$run_dir/locust_stats.csv" || ! test -s "$run_dir/locust_failures.csv"; then
       echo "FATAL: missing locust CSV after remote run"
       exit 1
@@ -117,10 +119,10 @@ for level in $LEVELS; do
     mkdir -p "$CUR_RUN_DIR"
     echo "    run $RUN_INDEX/$((RUNS * $(echo "$LEVELS" | wc -w))) level=$level ($STEADY_MIN min steady)"
     bash "$DIR/collect.sh" start "$SCENARIO" "$RUN_INDEX"
-    RUN_START=$(date -u +%s)
+    RUN_TS=$(date -u +%s)
     {
       echo "run=$RUN_INDEX"
-      echo "run_start=$RUN_START"
+      echo "run_start=$RUN_TS"
       echo "scenario=$SCENARIO"
       echo "test=TestB(steady)"
       echo "level_users=$level steady_min=$STEADY_MIN size=$SIZE"

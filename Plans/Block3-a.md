@@ -79,7 +79,7 @@ Both sessions: `just cluster-down` at end (budget rule), account clean (0 instan
 
 **Test A — N=5 complete** (`data/raw/testA/run_1..5`). All runs show scale-out 1→2 (CPU crossing 60%) AND scale-in 2→1 (drain, ≥10min zero load) in `replicas.csv`; `SuccessfulRescale` events in runs 2-5 (run_1's `events.csv` was lost to the ssh hang). Totals: 1142 reqs, 89 fails (**7.8%**, per-run 0-13%; run_5 clean at 0%). Avg response 35-49s, p95 72-90s. U_MAX=12, `--parallel 2`.
 
-**Test B — 25 runs** (`data/raw/testB/run_1..25`). STEADY_MIN=6. **All levels 10/20/30/40/50 = 5 runs each (N=5)**; level 50 runs 24-25 completed in a follow-up session (initial teardown lost them; stray level-10 `run_24` removed). Totals: ~1830 reqs, ~759 fails (~42% overall). Error rate noisy per run but trends up with intensity: 10u 0-35% (run_1 outlier 91%), 20u 0-55%, 30u 0-34%, 40u 29-68%, 50u 5-75% (avg ~39%). Failure split: 503 busy=260, 504 timeout=221, 502=135. **p95 pins at 300s** (proxy timeout) at high intensity → compute saturation at max 2 pods; pods steady at 2 for all levels ≥10 users (maxReplicas cap).
+**Test B — 25 runs** (`data/raw/testB/run_1..25`). STEADY_MIN=6. **All levels 10/20/30/40/50 = 5 runs each (N=5)**; level 50 runs 24-25 completed in a follow-up session (initial teardown lost them; stray level-10 `run_24` removed). Totals: 1776 reqs, 617 fails (**34.7%** overall). Error rate noisy per run but trends up with intensity: 10u 0-35% (run_1 outlier 91%), 20u 0-55%, 30u 0-34%, 40u 29-68%, 50u 5-75% (avg ~34%). Failure split: 503 busy=254, 504 timeout=231, 502=132. **p95 pins at 300s** (proxy timeout) at high intensity → compute saturation at max 2 pods; pods steady at 2 for all levels ≥10 users (maxReplicas cap).
 
 **Gotcha fixed on the fly:** exp-b `RUN_START` resume must keep `RUNS` = per-level runs (5), not the total grid — a `RUNS=25` resume replayed wrong levels and mislabeled runs (stray `run_24` is level 10, not level 50; see `HANDOFF.md`).
 
@@ -98,6 +98,29 @@ Two variant clusters to prove scaling beyond max 2 pods and attribute delay:
 - **Delay attribution** (per request, `requests_detail.csv`): `total_ms` (locust client) vs `upstream_ms` (proxy→llama, `X-Upstream-Ms` header) → **orchestrator+transport = total − upstream**. Reported per level AND per size class (small/medium/large from the mix pool).
 - **Availability** = `1 − ErrorRate` per level; failure attribution by type: 503=llama busy (container), 504=llama timeout (container/queue), 502=proxy↔llama (proxy), edge-refused=orchestrator.
 - **Analysis**: `just plots` → `plots/analyze.py` → `artifacts/` (capacity/p95/error/availability, delay breakdown, per-size delay; base `testB` shown as exp2 for comparison).
-- **Sessions**: ~2 per variant (~3.7h each at STEADY_MIN=2), multi-session via `RUN_START`. Cluster: `WORKERS=4|6 just exp4-up/exp6-up`, deploy with the variant hpa, run `SCENARIO=exp4|exp6` sweeps, `git add -f` data, teardown.
+- **Sessions**: 3 × 4h (see "Variant session runbook" below — one WORKERS=6 cluster serves both variants, HPA swapped between sweeps). Cluster: `WORKERS=6 just exp6-up`, deploy with the variant hpa, run `SCENARIO=exp4|exp6` sweeps, `git add -f` data, teardown.
+- **Bug fixed (review):** exp-a/exp-b reused `RUN_START` as the notes run timestamp, clobbering the resume index → only run 1 executed per invocation (would have silently produced 1/20 runs for the sweeps). Now `RUN_TS` is the timestamp; `RUN_START` stays the resume index. Also: collector queries HPA by `-l app=llm-proxy` (variant HPA names differ); `swap-hpa.sh` removes the base max-2 HPA too; STEADY_MIN accepts decimals.
 - **Prereq**: proxy timing image must be on GHCR (`X-Upstream-Ms`) — push was flaky, verify before sessions.
 - **Quota guard**: `workers_ceiling` refuses WORKERS>6 even on empty account; `quota_check` counts the full footprint + existing instances (guard tests extended).
+
+## Variant session runbook (3 sessions x 4h)
+
+Locked: ONE WORKERS=6 cluster serves BOTH variants (exp4/exp6 differ only in HPA maxReplicas 4 vs 6 — swap the HPA manifest, the variant semantics come from maxReplicas). N=20 per level, 5 levels (10/20/30/40/50 users), STEADY_MIN=2, mix workload. 8 instances / 16 vCPU = at the 8-instance cap.
+
+Schedule: S1 exp4 runs 1-72 · S2 exp4 runs 73-100 then swap to exp6 + exp6 runs 1-60 · S3 exp6 runs 61-100 then teardown. `RUN_START` resumes grid positions 1-100.
+
+Per session (fresh Learner Lab, ~4h):
+1. Wire fresh creds (region-scoped, recent sessions us-west-2) + ~/.ssh/labsuser.pem; `aws sts get-caller-identity` gate.
+2. `WORKERS=6 REGION=<region> AZ1=<az1> AZ2=<az2> just exp6-up` (~40-55 min; 8 instances at cap — guard refuses if anything lingers).
+3. Deploy: scp `deploy/deployment.yaml deploy/service.yaml deploy/hpa-exp4.yaml` to master, `kubectl apply`, rollout status, `/health` 200 via :30080, HPA shows a real CPU target.
+4. Loadgen: launch t3.small (tag cluster=llm-lab), install locust (`python3 -m venv /tmp/exp/.venv` + pip, needs python3-devel gcc), scp locustfile.py + ramp_shape.py.
+5. Verify the timing header: one `curl /generate` returns `X-Upstream-Ms` (image with timing build is on GHCR).
+6. Run the sweep:
+   - S1: `SCENARIO=exp4 RUNS=20 RUN_START=1 LOADGEN=<user>@<host> TARGET=http://<master>:30080 just exp4`
+   - S2 (resume exp4): `... RUN_START=<last+1>`; on exp4 done: `bash infra/swap-hpa.sh exp6`; then `SCENARIO=exp6 RUNS=20 RUN_START=1 ... just exp6`
+   - S3: `SCENARIO=exp6 RUNS=20 RUN_START=<last+1> ... just exp6`
+   (RUNS=20 STEADY_MIN=2 are baked into the just exp4/exp6 recipes)
+7. Each session end: `git add -f data/raw/exp4 data/raw/exp6` + commit + `just cluster-down` (mandatory).
+8. Fallback trims if time runs short, in order: drop level 10 for the remainder → STEADY_MIN=1.5 → N=15 for the second variant. Log any trim in the run notes.
+
+Post-campaign: `just plots` → `artifacts/` (capacity/p95/error/availability, delay breakdown per level + per size, exp2 baseline), commit with `-f`.

@@ -88,6 +88,17 @@ if [ "$CONFIG" = default ]; then
   expect_pass "WORKERS=6 (exp6) empty account fits 8/31" '[]' 6 || fail=1
   expect_abort_workers "WORKERS=7 would need 9 instances (over 8)" '[]' 7 || fail=1
   expect_abort_workers "WORKERS=6 + 1 existing instance over 8" '[{"ID":"i-1","Type":"t3.medium","State":"running"}]' 6 || fail=1
+  # workers_ceiling in isolation (not shadowed by quota_check)
+  if ( WORKERS=7 workers_ceiling ) >/dev/null 2>&1; then
+    echo "FAIL [workers_ceiling WORKERS=7]: expected ABORT, ceiling passed"; fail=1
+  else
+    echo "PASS [workers_ceiling WORKERS=7]: ceiling aborts"
+  fi
+  if ( WORKERS=abc workers_ceiling ) >/dev/null 2>&1; then
+    echo "FAIL [workers_ceiling WORKERS=abc]: expected ABORT, ceiling passed"; fail=1
+  else
+    echo "PASS [workers_ceiling WORKERS=abc]: non-integer aborts"
+  fi
 else
   expect_abort "empty-account + 3 nodes (trigger lowered limit)" '[]' || fail=1
   expect_abort "existing 1x t3.small (2 vcpu)" '[{"ID":"i-1","Type":"t3.small","State":"running"}]' || fail=1

@@ -22,26 +22,26 @@ Per-run metadata (level, params) is in each `notes.md`. **Trust `notes.md`, not 
 
 | | Test A (N=5) | Test B (25 runs) |
 |---|---|---|
-| Requests | 1142 | 1704+127 |
-| Failures | 89 (**7.8%**, 0-13% per run) | ~759 (**42%** overall) |
+| Requests | 1142 | 1776 |
+| Failures | 89 (**7.8%**, 0-13% per run) | 617 (**34.7%** overall) |
 | Scale evidence | **1→2→1 in every run** (`replicas.csv`); `SuccessfulRescale` events in runs 2-5 (run 1 lost its `events.csv` to an ssh hang) | 2 pods steady at all levels ≥10 users — HPA scales, then caps at `maxReplicas 2` |
 | Latency | avg 35-49s, p95 72-90s | avg 30-271s; **p95 pinned at 300s** (the proxy request timeout) under heavy load |
 | Errors by level | — | 10u: 0-35% (run_1 outlier 91%) · 20u: 0-55% · 30u: 0-34% · 40u: 29-68% · **50u: 5-75%** |
-| Failure types | — | 503 busy=260 · 504 timeout=221 · 502=135 |
+| Failure types | — | 503 busy=254 · 504 timeout=231 · 502=132 |
 
 **Takeaway:** error rate generally rises with intensity but is noisy per run; at 40-50 users it is high (level 50 avg ~39%, p95 at the 300s timeout) — **compute saturation at max 2 pods**. The 503s = llama-server busy (slots exhausted), 504s = requests exceeding the 300s gen timeout under queueing. Report these as real results, don't hide them.
+
+Also note the **mix workload is random per request** (0.5/0.3/0.2) — Test A/B data is aggregate-mix, can't be split by size; per-size delay comes from the variant runs' `requests_detail.csv`.
 
 ## ⚠️ Watch out for (learned the hard way)
 
 1. **`SIZE` env is import-time, default `mix`.** Your `exp-c` MUST set `SIZE=small|medium|large` per run or you silently get mix → wrong Test C data. `SIZE=` (empty) also falls back to mix now.
-2. **Uneven N.** Test B level 50 has 3 runs, not 5. Average per level over whatever exists; flag the deviation in the report (commit `0422100` has details).
-3. **Stray `run_24` in testB** is a **level-10** run (resume-retry bug), not level 50. Don't let it pollute level-50 averaging.
-4. **Mix is random per request** (0.5/0.3/0.2). Plots from Test A/B are aggregate-mix; can't split by size. Don't assume fixed ratios per run.
-5. **Error rates are real saturation data** (503/502/504). They rise with intensity: Test B level 40-50 runs show ~20-86% errors. Report them; don't "fix" them.
-6. **Git ignore**: `data/raw/` is gitignored except `.gitkeep`. Commit data with `git add -f data/raw/...`. Your `plots/` + `tables/` are also gitignored → same `-f` for the report.
-7. **Collector junk** `.collect.log/.collect.pid` must NOT be committed (gitignored).
-8. **`--parallel 2` on llama-server** is a deploy change (avoided the 503 storm at single-slot). Keep it for Test C.
-9. **`just plots`/`sanity` are yours to build** (offline, test against synthetic fixtures). Data layout + formulas in `Plans/Block3.md`; per-run CSVs are `locust_stats.csv`/`locust_failures.csv` (not `_requests.csv` — locust 2.46).
+2. **Error rates are real saturation data** (503/502/504). They rise with intensity: Test B level 40-50 runs show high error rates. Report them; don't "fix" them.
+3. **Git ignore**: `data/raw/` is gitignored except `.gitkeep`. Commit data with `git add -f data/raw/...`. Your `plots/` + `tables/` are also gitignored → same `-f` for the report.
+4. **Collector junk** `.collect.log/.collect.pid` must NOT be committed (gitignored).
+5. **`--parallel 2` on llama-server** is a deploy change (avoided the 503 storm at single-slot). Keep it for Test C.
+6. **`just plots`/`sanity` are yours to build** (offline, test against synthetic fixtures). Data layout + formulas in `Plans/Block3.md`; per-run CSVs are `locust_stats.csv`/`locust_failures.csv` (not `_requests.csv` — locust 2.46). `plots/analyze.py` already exists for the variant work — extend it, don't fork it.
+7. **Delay split** (`requests_detail.csv`, per-request): `total_ms` (locust) vs `upstream_ms` (proxy→llama header) → orchestrator+transport = total − upstream. Only successful (2xx) rows count; failures/timeouts are excluded so they don't misattribute to orchestrator.
 
 ## Commands that work
 

@@ -97,10 +97,10 @@ for i in $(seq "$RUN_START" "$RUNS"); do
   mkdir -p "$CUR_RUN_DIR"
   echo "==> Test A run $i/$RUNS (U_MAX=$U_MAX, SIZE=$SIZE)"
   bash "$DIR/collect.sh" start "$SCENARIO" "$i"
-  RUN_START=$(date -u +%s)
+  RUN_TS=$(date -u +%s)
   {
     echo "run=$i"
-    echo "run_start=$RUN_START"
+    echo "run_start=$RUN_TS"
     echo "test=TestA(ramp)"
     echo "u_max=$U_MAX size=$SIZE"
     echo "target=$TARGET loadgen=${LOADGEN:-local}"

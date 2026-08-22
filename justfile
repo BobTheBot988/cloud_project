@@ -136,15 +136,19 @@ collect-stop scenario run:
 exp-smoke:
 	bash infra/exp-smoke.sh
 
-# exp4 variant: 4-worker cluster + HPA max 4 + Test B sweep (N=20/level)
-# Env: RUNS(20) STEADY_MIN(2) LEVELS SIZE TARGET LOADGEN RUN_START
+# exp4 variant: 4-worker cluster + HPA max 4 + Test B sweep (N=20/level, 2min steady)
+# Env: LEVELS SIZE TARGET LOADGEN RUN_START
 # Setup: WORKERS=4 just cluster-up, then deploy with deploy/hpa-exp4.yaml
 exp4:
-	SCENARIO=exp4 bash infra/exp-b.sh
+	SCENARIO=exp4 RUNS=20 STEADY_MIN=2 bash infra/exp-b.sh
 
-# exp6 variant: 6-worker cluster + HPA max 6 + Test B sweep (N=20/level)
+# exp6 variant: 6-worker cluster + HPA max 6 + Test B sweep (N=20/level, 2min steady)
 exp6:
-	SCENARIO=exp6 bash infra/exp-b.sh
+	SCENARIO=exp6 RUNS=20 STEADY_MIN=2 bash infra/exp-b.sh
+
+# switch active variant HPA on a live cluster (exp4|exp6)
+variant-hpa v:
+	bash infra/swap-hpa.sh {{v}}
 
 # 4-worker cluster bring-up (exp4); quota guard enforces 6 inst/12 vCPU
 exp4-up: launch4

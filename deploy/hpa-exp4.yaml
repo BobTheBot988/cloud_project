@@ -1,10 +1,10 @@
 # Purpose: HPA for exp4 variant — autoscale llm-proxy on CPU (target 60%),
-# up to 4 replicas (cluster: master + 4 workers).
-# boiler plate
+# up to 4 replicas (cluster: master + 4 workers). Named distinctly so it
+# can't silently collide with deploy/hpa.yaml when both are applied.
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: llm-proxy
+  name: llm-proxy-exp4
   namespace: default
   labels:
     app: llm-proxy

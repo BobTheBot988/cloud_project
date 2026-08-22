@@ -66,12 +66,14 @@ async def generate(request: Request):
         }
     headers = {"Content-Type": "application/json"}
     url = f"{LLAMA_CPP_URL}/v1/chat/completions"
+    t0 = time.perf_counter()
     try:
         # timing: X-Upstream-Ms = proxy->llama round-trip (non-streaming: full
         # response; streaming: time-to-first-byte). The fine-grained delay split
         # (client total vs llama vs orchestrator+transport) uses this header.
+        # Set on error responses too (elapsed up to the failure) so timeouts
+        # aren't misattributed to the orchestrator.
         if body.get("stream"):
-            t0 = time.perf_counter()
             r = await client.send(
                 client.build_request("POST", url, json=body, headers=headers), stream=True
             )
@@ -81,16 +83,19 @@ async def generate(request: Request):
             )
             resp.headers["X-Upstream-Ms"] = f"{upstream_ms:.1f}"
             return resp
-        t0 = time.perf_counter()
         r = await client.post(url, json=body, headers=headers)
         upstream_ms = (time.perf_counter() - t0) * 1000
         resp = JSONResponse(status_code=r.status_code, content=_decode(r.content))
         resp.headers["X-Upstream-Ms"] = f"{upstream_ms:.1f}"
         return resp
     except httpx.TimeoutException:
-        return JSONResponse({"error": "upstream timeout"}, status_code=504)
+        resp = JSONResponse({"error": "upstream timeout"}, status_code=504)
+        resp.headers["X-Upstream-Ms"] = f"{(time.perf_counter() - t0) * 1000:.1f}"
+        return resp
     except httpx.RequestError:
-        return JSONResponse({"error": "upstream unavailable"}, status_code=502)
+        resp = JSONResponse({"error": "upstream unavailable"}, status_code=502)
+        resp.headers["X-Upstream-Ms"] = f"{(time.perf_counter() - t0) * 1000:.1f}"
+        return resp
 
 
 # Streams upstream bytes to the client; emits an error chunk and

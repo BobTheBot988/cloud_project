@@ -64,10 +64,11 @@ curl http://127.0.0.1:30080/health                 # via NodePort
 
 ## Block 3 — Experimental runs (1-2 sessions, budget-frugal)
 
-Status: **Test A + Test B done on AWS (Sessions 1-2, Person A)** — data committed, `HANDOFF.md` written; **Person B starts: plots 1-4 + sanity, then Test C/D + R4**. Level 50 under-sampled (N=3, see notes).
+Status: **Test A + Test B done on AWS (Person A)** — data committed, `HANDOFF.md` written. Next: **variant sweeps exp4/exp6 (HPA max 4/6, N=20/level, fine-grained delay)**; Person B: plots/sanity + Test C/D + R4 in parallel.
 
 - Split: two-person relay per `Plans/Block3-WORKSPLIT.md`; Phase 0 plan in `Plans/Block3-a.md`.
-- Data: `data/raw/testA/` runs 1-5 (N=5, all 1->2->1 scale), `data/raw/testB/` runs 1-24 (levels 10/20/30/40 N=5, level 50 N=3 — lab teardown lost 24-25).
+- Data: `data/raw/testA/` runs 1-5 (N=5, all 1->2->1 scale), `data/raw/testB/` runs 1-25 (**all levels 10/20/30/40/50 N=5**).
+- Variants: `deploy/hpa-exp4.yaml` (max 4) / `hpa-exp6.yaml` (max 6), `WORKERS=4|6` cluster (quota-guarded, exp6 at the 8-instance cap), `SCENARIO=exp4|exp6 RUNS=20 STEADY_MIN=2 just exp4/exp6`, per-request `requests_detail.csv` (total vs upstream vs orchestrator), `plots/analyze.py` → `artifacts/`.
 - Person A tooling: `locustfile.py` size buckets + mix (0.5/0.3/0.2), `ramp_shape.py` (Test A ramp), `infra/collect.sh` (per-min kubectl collector), `infra/exp-a.sh` (ramp), `infra/exp-b.sh` (intensity sweep), `just exp-smoke` (local gate, verified).
 - Data layout: `data/raw/<scenario>/run_<i>/{toppods,replicas,hpa,events}.csv` + `locust_*.csv` + `notes.md`.
 - Collector: `kubectl top pods` at interval + Locust CSV -> `run_1`, `run_2`, ...

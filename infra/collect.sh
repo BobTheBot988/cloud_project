@@ -61,7 +61,8 @@ collect_loop() {
     else
       fails=$((fails + 1))
     fi
-    if kc get hpa llm-proxy --no-headers | sed "s/^/$ts /" >> "$RUN_DIR/hpa.csv"; then
+    # HPA by label so variant runs (llm-proxy-exp4/exp6) are captured too
+    if kc get hpa -l app=llm-proxy --no-headers | sed "s/^/$ts /" >> "$RUN_DIR/hpa.csv"; then
       fails=0
     else
       fails=$((fails + 1))
