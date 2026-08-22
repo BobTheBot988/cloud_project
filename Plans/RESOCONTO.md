@@ -323,16 +323,14 @@ Tutti i test dei guard continuano a passare con le nuove regole
 | Block 0 — sistema locale + prove | ✅ COMPLETO |
 | Block 1 — script cluster + guard | ✅ COMPLETO (testato; run AWS fatto) |
 | Block 2 — deploy + HPA su AWS | ✅ **COMPLETO (provato dal vivo il 17-08-2026)** |
-| Block 3 — esperimenti di carico | 🟡 IN CORSO (tooling Phase 0 pronto; sessioni AWS da fare) |
+| Block 3 — esperimenti di carico | 🟡 IN CORSO (Test A + Test B fatti su AWS; manca processing/plots di B, Test C/D) |
 | Block 4 — analisi + relazione | ⬜ Da fare |
 
-**Prossimo passo (Block 3, persona A):** tooling pronto — `locustfile.py` con
-bucket small/medium/large + mix, `ramp_shape.py` (Test A), `collect.sh`
-(collettore kubectl), `exp-a.sh`/`exp-b.sh` (orchestratori), `just exp-smoke`
-(verificato). Prossime sessioni AWS: `just cluster-up` → deploy → Test A
-(rampa, ≥15 min, N≥5) → Test B (5 livelli × N) → `just cluster-down`. Load-gen
-**dentro AWS** (`LOADGEN`), mai battere il NodePort dall'esterno. Due persone
-in parallelo: vedi `Plans/Block3-WORKSPLIT.md` + `Plans/Block3-a.md`.
+**Stato Block 3 (persona A):** Test A completato (5 run, scale-out 1→2 e scale-in 2→1
+in ogni run, `--parallel 2` applicato per evitare la valanga di 503). Test B: 24 run
+(livelli 10/20/30/40 N=5, livello 50 N=3 — persi per teardown del lab). Dati in
+`data/raw/testA|testB/`, committati. **Handoff a B:** processare plots 1-4 + sanity,
+poi Test C/D; vedi `Plans/Block3-WORKSPLIT.md`.
 
 ---
 
