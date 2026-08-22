@@ -30,5 +30,8 @@ USE_EIP=true
 POD_CIDR=10.244.0.0/16
 K8S_VERSION=1.36
 
+# number of worker nodes to launch (exp4=4, exp6=6; default cluster=2)
+WORKERS=${WORKERS:-2}
+
 # boiler plate: aws cli base invocation
 AWS=(aws --profile "$PROFILE" --region "$REGION")

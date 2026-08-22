@@ -1,0 +1,27 @@
+# Purpose: HPA for exp6 variant — autoscale llm-proxy on CPU (target 60%),
+# up to 6 replicas (cluster: master + 6 workers).
+# boiler plate
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: llm-proxy
+  namespace: default
+  labels:
+    app: llm-proxy
+# scaleTargetRef: HPA acts on the llm-proxy Deployment
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: llm-proxy
+# min/max replica bounds for autoscaling
+  minReplicas: 1
+  maxReplicas: 6
+# metric: scale when average CPU utilization vs requested cpu exceeds 60%
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60

@@ -21,7 +21,7 @@ STEADY_MIN="${STEADY_MIN:-8}"
 SIZE="${SIZE:-mix}"
 TARGET="${TARGET:-http://127.0.0.1:8000}"
 LOADGEN="${LOADGEN:-}"
-SCENARIO=testB
+SCENARIO="${SCENARIO:-testB}"
 
 # shell-quote a value for safe embedding into the remote ssh command
 q() { printf '%q' "$1"; }
@@ -68,16 +68,16 @@ run_locust() {
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
       "$REPO/locustfile.py" "$LOADGEN:/tmp/exp/"
     ssh "${SSH_OPTS[@]}" "$LOADGEN" \
-      "cd /tmp/exp && export PATH=/tmp/exp/.venv/bin:\$HOME/.local/bin:\$PATH && SIZE=$(q "$SIZE") locust -f locustfile.py --headless --host $(q "$TARGET") -u $(q "$users") -r 5 --run-time $(q "${STEADY_MIN}m") --exit-code-on-error 0 --csv /tmp/exp/locust"
+      "cd /tmp/exp && export PATH=/tmp/exp/.venv/bin:\$HOME/.local/bin:\$PATH && SIZE=$(q "$SIZE") DETAIL_CSV=/tmp/exp/requests_detail.csv locust -f locustfile.py --headless --host $(q "$TARGET") -u $(q "$users") -r 5 --run-time $(q "${STEADY_MIN}m") --exit-code-on-error 0 --csv /tmp/exp/locust"
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
-      "$LOADGEN:/tmp/exp/locust_stats.csv" "$LOADGEN:/tmp/exp/locust_failures.csv" "$run_dir/"
+      "$LOADGEN:/tmp/exp/locust_stats.csv" "$LOADGEN:/tmp/exp/locust_failures.csv" "$LOADGEN:/tmp/exp/requests_detail.csv" "$run_dir/"
     if ! test -s "$run_dir/locust_stats.csv" || ! test -s "$run_dir/locust_failures.csv"; then
       echo "FATAL: missing locust CSV after remote run"
       exit 1
     fi
   else
     # local: run locust from the repo (phase-0 smoke path)
-    SIZE="$SIZE" .venv/bin/locust -f locustfile.py --headless \
+    SIZE="$SIZE" DETAIL_CSV="$run_dir/requests_detail.csv" .venv/bin/locust -f locustfile.py --headless \
       --host "$TARGET" -u "$users" -r 5 --run-time "${STEADY_MIN}m" --exit-code-on-error 0 --csv "$run_dir/locust"
   fi
 }
@@ -121,6 +121,7 @@ for level in $LEVELS; do
     {
       echo "run=$RUN_INDEX"
       echo "run_start=$RUN_START"
+      echo "scenario=$SCENARIO"
       echo "test=TestB(steady)"
       echo "level_users=$level steady_min=$STEADY_MIN size=$SIZE"
       echo "target=$TARGET loadgen=${LOADGEN:-local}"

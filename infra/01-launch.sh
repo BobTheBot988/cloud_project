@@ -118,6 +118,8 @@ main() {
   flock -n 9 || { echo "FATAL: another launch in progress"; exit 1; }
   # tripwire + quota guard: hard Learner Lab caps before any API calls
   tripwire
+  # workers_ceiling: WORKERS value itself must fit caps (even empty account)
+  workers_ceiling || exit 1
   # sweep: terminate stale stopped instances from a prior session (the lab
   # auto-restarts them next session); abort if a live cluster is running
   sweep_stale || exit 1
@@ -134,20 +136,23 @@ main() {
   else
     echo "    reusing SG=$SG"
   fi
-  echo "==> launching master ($MASTER_TYPE) + 2 workers ($WORKER_TYPE)"
-  # launch: master + 2 workers spread across AZs
+  echo "==> launching master ($MASTER_TYPE) + $WORKERS workers ($WORKER_TYPE)"
+  # launch: master + WORKERS workers spread across AZs
   MASTER_ID="$(launch master "$MASTER_TYPE" "$AZ1")"
-  W1_ID="$(launch worker "$WORKER_TYPE" "$AZ1")"
-  W2_ID="$(launch worker "$WORKER_TYPE" "$AZ2")"
-  echo "    master=$MASTER_ID worker1=$W1_ID worker2=$W2_ID"
+  W_ID=()
+  for i in $(seq 1 "$WORKERS"); do
+    az="$AZ1"; [ $((i % 2)) -eq 0 ] && az="$AZ2"
+    W_ID[$i]="$(launch worker "$WORKER_TYPE" "$az")"
+  done
+  echo "    master=$MASTER_ID workers=${W_ID[*]}"
   echo "==> waiting for private IPs"
-  # wait for private + public IPs on all 3 nodes
+  # wait for private + public IPs on all nodes
   MASTER_PRIV="$(private_ip "$MASTER_ID")"
-  W1_PRIV="$(private_ip "$W1_ID")"
-  W2_PRIV="$(private_ip "$W2_ID")"
   MASTER_PUB="$(public_ip "$MASTER_ID")"
-  W1_PUB="$(public_ip "$W1_ID")"
-  W2_PUB="$(public_ip "$W2_ID")"
+  for i in $(seq 1 "$WORKERS"); do
+    W_PRIV[$i]="$(private_ip "${W_ID[$i]}")"
+    W_PUB[$i]="$(public_ip "${W_ID[$i]}")"
+  done
   # EIP: allocate + associate to master for a stable public endpoint
   EIP_ALLOC=""
   if [ "$USE_EIP" = true ]; then
@@ -170,28 +175,30 @@ main() {
     fi
   fi
   echo "==> waiting for ssh on all nodes"
-  wait_ssh "$MASTER_PUB"; wait_ssh "$W1_PUB"; wait_ssh "$W2_PUB"
+  wait_ssh "$MASTER_PUB"
+  for i in $(seq 1 "$WORKERS"); do wait_ssh "${W_PUB[$i]}"; done
   # persist node IPs/IDs/SG for bootstrap + teardown
-  cat > "$DIR/.cluster-ips" <<EOF
-MASTER_PUB=$MASTER_PUB
-MASTER_PRIV=$MASTER_PRIV
-WORKER1_PUB=$W1_PUB
-WORKER1_PRIV=$W1_PRIV
-WORKER2_PUB=$W2_PUB
-WORKER2_PRIV=$W2_PRIV
-MASTER_ID=$MASTER_ID
-W1_ID=$W1_ID
-W2_ID=$W2_ID
-EIP_ALLOC=${EIP_ALLOC:-}
-SG=$SG
-REGION=$REGION
-EOF
+  {
+    echo "MASTER_PUB=$MASTER_PUB"
+    echo "MASTER_PRIV=$MASTER_PRIV"
+    echo "WORKERS=$WORKERS"
+    for i in $(seq 1 "$WORKERS"); do
+      echo "WORKER${i}_PUB=${W_PUB[$i]}"
+      echo "WORKER${i}_PRIV=${W_PRIV[$i]}"
+      echo "W${i}_ID=${W_ID[$i]}"
+    done
+    echo "MASTER_ID=$MASTER_ID"
+    echo "EIP_ALLOC=${EIP_ALLOC:-}"
+    echo "SG=$SG"
+    echo "REGION=$REGION"
+  } > "$DIR/.cluster-ips"
   echo "==> nodes up, ssh ready"
   # boiler plate: summary table of nodes
   printf '%-8s %-12s %s\n' role instance ip
   printf '%-8s %-12s %s\n' master "$MASTER_TYPE" "$MASTER_PUB"
-  printf '%-8s %-12s %s\n' worker "$WORKER_TYPE" "$W1_PUB"
-  printf '%-8s %-12s %s\n' worker "$WORKER_TYPE" "$W2_PUB"
+  for i in $(seq 1 "$WORKERS"); do
+    printf '%-8s %-12s %s\n' worker "$WORKER_TYPE" "${W_PUB[$i]}"
+  done
   echo "==> next: just cluster-up (bootstrap)"
 }
 

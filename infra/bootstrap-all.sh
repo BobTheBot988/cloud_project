@@ -30,20 +30,27 @@ JOIN_CMD="$(ssh_run "$MASTER_PUB" "sudo bash /tmp/bootstrap.sh master" | sed -n 
 echo "    join: $JOIN_CMD"
 
 # join orchestration (workers): bootstrap each worker with master's join cmd
-for w in "$WORKER1_PUB" "$WORKER2_PUB"; do
+WORKER_PUBS=()
+for i in $(seq 1 "${WORKERS:-2}"); do
+  var="WORKER${i}_PUB"
+  WORKER_PUBS[$i]="${!var:-}"
+done
+for w in "${WORKER_PUBS[@]}"; do
+  [ -n "$w" ] || { echo "FATAL: missing worker pub ip in .cluster-ips (WORKERS=$WORKERS)"; exit 1; }
   echo "==> bootstrapping worker $w"
   scp_to "$w"
   ssh_run "$w" "sudo bash /tmp/bootstrap.sh worker '$JOIN_CMD'"
 done
 
-# wait: poll kubectl on master until all 3 nodes report Ready
-echo "==> waiting for nodes Ready"
+# wait: poll kubectl on master until all nodes report Ready
+EXPECT_NODES=$((WORKERS + 1))
+echo "==> waiting for nodes Ready ($EXPECT_NODES)"
 for _ in $(seq 1 60); do
   NODES="$(ssh_run "$MASTER_PUB" "sudo KUBECONFIG=/etc/kubernetes/admin.conf kubectl get nodes --no-headers 2>/dev/null" || true)"
   READY="$(awk '$2=="Ready"{c++} END{print c+0}' <<<"$NODES")"
-  [ "$READY" -ge 3 ] && { echo "$NODES"; break; }
+  [ "$READY" -ge "$EXPECT_NODES" ] && { echo "$NODES"; break; }
   sleep 10
 done
-[ "$READY" -ge 3 ] || { echo "FATAL: nodes not ready ($READY/3 Ready)"; exit 1; }
+[ "$READY" -ge "$EXPECT_NODES" ] || { echo "FATAL: nodes not ready ($READY/$EXPECT_NODES Ready)"; exit 1; }
 
 echo "==> bootstrap complete"

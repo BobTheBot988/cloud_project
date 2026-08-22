@@ -39,9 +39,9 @@ inventory() {
 
 # test helper: assert guard aborts with the given mock inventory
 expect_abort() {
-  local name="$1" inv="$2"
+  local name="$1" inv="$2" wk="${3:-}"
   printf '%s' "$inv" > "$MOCK_INV_FILE"
-  if ( quota_check ) >/dev/null 2>&1; then
+  if ( WORKERS="${wk:-$WORKERS}" quota_check ) >/dev/null 2>&1; then
     echo "FAIL [$name]: expected ABORT, guard passed"
     return 1
   else
@@ -51,13 +51,25 @@ expect_abort() {
 
 # test helper: assert guard allows with the given mock inventory
 expect_pass() {
-  local name="$1" inv="$2"
+  local name="$1" inv="$2" wk="${3:-}"
   printf '%s' "$inv" > "$MOCK_INV_FILE"
-  if ( quota_check ) >/dev/null 2>&1; then
+  if ( WORKERS="${wk:-$WORKERS}" quota_check ) >/dev/null 2>&1; then
     echo "PASS [$name]: guard allows"
   else
     echo "FAIL [$name]: expected allow, guard aborted"
     return 1
+  fi
+}
+
+# test helper: assert workers_ceiling aborts (oversized WORKERS for the caps)
+expect_abort_workers() {
+  local name="$1" inv="$2" wk="$3"
+  printf '%s' "$inv" > "$MOCK_INV_FILE"
+  if ( WORKERS="$wk" quota_check ) >/dev/null 2>&1 && ( WORKERS="$wk" workers_ceiling ) >/dev/null 2>&1; then
+    echo "FAIL [$name]: expected ABORT, guard passed"
+    return 1
+  else
+    echo "PASS [$name]: guard aborts"
   fi
 }
 
@@ -70,6 +82,12 @@ if [ "$CONFIG" = default ]; then
   expect_pass "existing 2x t3.medium (6 vcpu within limits)" '[{"ID":"i-1","Type":"t3.medium","State":"running"},{"ID":"i-2","Type":"t3.medium","State":"stopped"}]' || fail=1
   expect_abort "existing 9x t3.medium (over 8 instances)" '[{"ID":"i-1","Type":"t3.medium","State":"running"},{"ID":"i-2","Type":"t3.medium","State":"running"},{"ID":"i-3","Type":"t3.medium","State":"running"},{"ID":"i-4","Type":"t3.medium","State":"running"},{"ID":"i-5","Type":"t3.medium","State":"running"},{"ID":"i-6","Type":"t3.medium","State":"running"},{"ID":"i-7","Type":"t3.medium","State":"running"},{"ID":"i-8","Type":"t3.medium","State":"running"},{"ID":"i-9","Type":"t3.medium","State":"running"}]' || fail=1
   expect_abort "existing t3.large (over size medium)" '[{"ID":"i-1","Type":"t3.large","State":"running"}]' || fail=1
+
+  # WORKERS variant bounds (exp4/exp6 must fit the 8/31 caps; oversized WORKERS fails)
+  expect_pass "WORKERS=4 (exp4) empty account fits 8/31" '[]' 4 || fail=1
+  expect_pass "WORKERS=6 (exp6) empty account fits 8/31" '[]' 6 || fail=1
+  expect_abort_workers "WORKERS=7 would need 9 instances (over 8)" '[]' 7 || fail=1
+  expect_abort_workers "WORKERS=6 + 1 existing instance over 8" '[{"ID":"i-1","Type":"t3.medium","State":"running"}]' 6 || fail=1
 else
   expect_abort "empty-account + 3 nodes (trigger lowered limit)" '[]' || fail=1
   expect_abort "existing 1x t3.small (2 vcpu)" '[{"ID":"i-1","Type":"t3.small","State":"running"}]' || fail=1

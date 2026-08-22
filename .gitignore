@@ -19,5 +19,6 @@ data/raw/*
 !data/raw/.gitkeep
 data/raw/**/.collect.*
 data/processed/
-plots/
 tables/
+artifacts/*
+!artifacts/.gitkeep

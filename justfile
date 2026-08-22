@@ -135,3 +135,35 @@ collect-stop scenario run:
 # Phase 0 smoke: compose up -> size-bucket burst test -> non-empty gen -> down
 exp-smoke:
 	bash infra/exp-smoke.sh
+
+# exp4 variant: 4-worker cluster + HPA max 4 + Test B sweep (N=20/level)
+# Env: RUNS(20) STEADY_MIN(2) LEVELS SIZE TARGET LOADGEN RUN_START
+# Setup: WORKERS=4 just cluster-up, then deploy with deploy/hpa-exp4.yaml
+exp4:
+	SCENARIO=exp4 bash infra/exp-b.sh
+
+# exp6 variant: 6-worker cluster + HPA max 6 + Test B sweep (N=20/level)
+exp6:
+	SCENARIO=exp6 bash infra/exp-b.sh
+
+# 4-worker cluster bring-up (exp4); quota guard enforces 6 inst/12 vCPU
+exp4-up: launch4
+	bash infra/bootstrap-all.sh
+	bash infra/02-verify.sh
+
+# 6-worker cluster bring-up (exp6); quota guard enforces 8 inst/16 vCPU
+exp6-up: launch6
+	bash infra/bootstrap-all.sh
+	bash infra/02-verify.sh
+
+# launch 4-worker cluster (WORKERS=4)
+launch4:
+	WORKERS=4 bash infra/01-launch.sh
+
+# launch 6-worker cluster (WORKERS=6)
+launch6:
+	WORKERS=6 bash infra/01-launch.sh
+
+# analysis: variant plots + tables from data/raw -> artifacts/
+plots:
+	.venv/bin/python plots/analyze.py

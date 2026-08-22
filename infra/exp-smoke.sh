@@ -58,7 +58,7 @@ PYEOF
 import sys, urllib.request, json, urllib.error
 size, target = sys.argv[1], sys.argv[2]
 from locustfile import pick_request
-prompt, max_tokens = pick_request()
+_, prompt, max_tokens = pick_request()
 body = json.dumps({"messages": [{"role": "user", "content": prompt}], "max_tokens": max_tokens, "stream": False}).encode()
 req = urllib.request.Request(target + "/generate", data=body, headers={"Content-Type": "application/json"})
 try:

@@ -7,6 +7,7 @@
 from locust import HttpUser, task, between
 import random
 import os
+import time
 import sys
 
 # boiler plate
@@ -57,7 +58,37 @@ def pick_request():
         size = SIZE
     bucket = SIZE_BUCKETS[size]
     prompt = random.choice(bucket["prompts"])
-    return prompt, bucket["max_tokens"]
+    return size, prompt, bucket["max_tokens"]
+
+
+# per-request detail capture: {ts,size,total_ms,upstream_ms} appended to the
+# CSV named by DETAIL_CSV (set by the exp runner per run dir). total_ms = locust
+# client-side latency; upstream_ms = proxy->llama round-trip (X-Upstream-Ms
+# header); orchestrator+transport = total_ms - upstream_ms.
+DETAIL_CSV = os.environ.get("DETAIL_CSV", "")
+_detail_fh = None
+
+
+def detail_write(size, total_ms, upstream_ms):
+    global _detail_fh
+    if not DETAIL_CSV:
+        return
+    if _detail_fh is None:
+        _detail_fh = open(DETAIL_CSV, "a", newline="")
+        _detail_fh.write("ts,size,total_ms,upstream_ms\n")
+    _detail_fh.write(f"{int(time.time())},{size},{total_ms:.1f},{upstream_ms:.1f}\n")
+
+
+# boiler plate
+from locust import events
+
+
+@events.test_stop.add_listener
+def _close_detail_csv(environment, **kw):
+    global _detail_fh
+    if _detail_fh is not None:
+        _detail_fh.close()
+        _detail_fh = None
 
 
 class LLMUser(HttpUser):
@@ -67,9 +98,12 @@ class LLMUser(HttpUser):
     # sampled from the selected size bucket.
     @task
     def generate(self):
-        prompt, max_tokens = pick_request()
-        self.client.post("/generate", json={
+        size, prompt, max_tokens = pick_request()
+        r = self.client.post("/generate", json={
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": max_tokens,
             "stream": False,
         })
+        total_ms = r.elapsed.total_seconds() * 1000
+        upstream_ms = float(r.headers.get("X-Upstream-Ms", "0") or 0)
+        detail_write(size, total_ms, upstream_ms)

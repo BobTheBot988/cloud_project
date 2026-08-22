@@ -5,6 +5,7 @@
 # boiler plate
 import json
 import os
+import time
 
 import httpx
 from fastapi import FastAPI, Request
@@ -66,15 +67,26 @@ async def generate(request: Request):
     headers = {"Content-Type": "application/json"}
     url = f"{LLAMA_CPP_URL}/v1/chat/completions"
     try:
+        # timing: X-Upstream-Ms = proxy->llama round-trip (non-streaming: full
+        # response; streaming: time-to-first-byte). The fine-grained delay split
+        # (client total vs llama vs orchestrator+transport) uses this header.
         if body.get("stream"):
+            t0 = time.perf_counter()
             r = await client.send(
                 client.build_request("POST", url, json=body, headers=headers), stream=True
             )
-            return StreamingResponse(
+            upstream_ms = (time.perf_counter() - t0) * 1000
+            resp = StreamingResponse(
                 _iter_stream(r), status_code=r.status_code, media_type="text/event-stream"
             )
+            resp.headers["X-Upstream-Ms"] = f"{upstream_ms:.1f}"
+            return resp
+        t0 = time.perf_counter()
         r = await client.post(url, json=body, headers=headers)
-        return JSONResponse(status_code=r.status_code, content=_decode(r.content))
+        upstream_ms = (time.perf_counter() - t0) * 1000
+        resp = JSONResponse(status_code=r.status_code, content=_decode(r.content))
+        resp.headers["X-Upstream-Ms"] = f"{upstream_ms:.1f}"
+        return resp
     except httpx.TimeoutException:
         return JSONResponse({"error": "upstream timeout"}, status_code=504)
     except httpx.RequestError:

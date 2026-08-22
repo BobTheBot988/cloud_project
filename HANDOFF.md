@@ -54,6 +54,15 @@ just exp-a / exp-b / collect / collect-stop        # mine, for reference
 
 `exp-*` scripts support multi-session resume via `RUN_START` (position in the run grid). For `exp-b`, `RUNS` is **per-level runs** (default 5), NOT the total grid — set `RUNS=5`, not 25, on resume.
 
+## Variants exp4 / exp6 (new work — you'll run these)
+
+Two variant clusters proving scaling beyond 2 pods + fine-grained delay attribution:
+- **exp4** (`WORKERS=4`, HPA max 4) / **exp6** (`WORKERS=6`, HPA max 6, at the 8-instance cap). 5 levels × **N=20** each, `STEADY_MIN=2`.
+- **Delay split** in `requests_detail.csv` per request: `total_ms` (locust) vs `upstream_ms` (proxy→llama header) → `orchestrator+transport = total − upstream`. Analyzed per level AND per size class.
+- **Availability** = `1 − ErrorRate`; failure attribution: 503=llama busy, 504=llama timeout, 502=proxy↔llama, edge-refused=orchestrator.
+- Commands: `WORKERS=4|6 just exp4-up/exp6-up` → deploy with `deploy/hpa-exp4|6.yaml` → `SCENARIO=exp4|exp6 RUNS=20 STEADY_MIN=2 LOADGEN=... TARGET=... just exp4/exp6`. Resume with `RUN_START`. Analysis: `just plots` → `artifacts/`.
+- **Prereq:** the proxy timing image (`X-Upstream-Ms`) must be pushed to GHCR — push was flaky last session; verify before running.
+
 ## Read first
 
 - `Plans/Block3-WORKSPLIT.md` (role split + data layout)

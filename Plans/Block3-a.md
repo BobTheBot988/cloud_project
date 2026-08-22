@@ -88,3 +88,16 @@ Both sessions: `just cluster-down` at end (budget rule), account clean (0 instan
 ## Handoff to B
 
 `HANDOFF.md` (repo root): what B owns (plots 1-4, `sanity`, Test C/D, R4), the gotchas above, and commands. B starts now.
+
+## Variants exp4 / exp6 (fine-grained delay + N=20)
+
+Two variant clusters to prove scaling beyond max 2 pods and attribute delay:
+
+- **exp4**: `WORKERS=4` cluster (6 inst / 12 vCPU), HPA `maxReplicas: 4` (`deploy/hpa-exp4.yaml`), Test B-style sweep at 5 levels × **N=20** (`STEADY_MIN=2`).
+- **exp6**: `WORKERS=6` cluster (8 inst / 16 vCPU — **at the 8-instance cap**), HPA max 6 (`deploy/hpa-exp6.yaml`), same sweep. Load levels must be high enough to actually push CPU above 60% across 6 pods or the HPA stays below max (that's a finding, not a bug).
+- **Delay attribution** (per request, `requests_detail.csv`): `total_ms` (locust client) vs `upstream_ms` (proxy→llama, `X-Upstream-Ms` header) → **orchestrator+transport = total − upstream**. Reported per level AND per size class (small/medium/large from the mix pool).
+- **Availability** = `1 − ErrorRate` per level; failure attribution by type: 503=llama busy (container), 504=llama timeout (container/queue), 502=proxy↔llama (proxy), edge-refused=orchestrator.
+- **Analysis**: `just plots` → `plots/analyze.py` → `artifacts/` (capacity/p95/error/availability, delay breakdown, per-size delay; base `testB` shown as exp2 for comparison).
+- **Sessions**: ~2 per variant (~3.7h each at STEADY_MIN=2), multi-session via `RUN_START`. Cluster: `WORKERS=4|6 just exp4-up/exp6-up`, deploy with the variant hpa, run `SCENARIO=exp4|exp6` sweeps, `git add -f` data, teardown.
+- **Prereq**: proxy timing image must be on GHCR (`X-Upstream-Ms`) — push was flaky, verify before sessions.
+- **Quota guard**: `workers_ceiling` refuses WORKERS>6 even on empty account; `quota_check` counts the full footprint + existing instances (guard tests extended).

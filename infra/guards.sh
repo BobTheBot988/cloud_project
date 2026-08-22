@@ -51,9 +51,27 @@ sweep_stale() {
   fi
 }
 
-# quota guard: abort if existing size/count/vCPU would exceed hard caps
+# quota guard: hard ceiling for the WORKERS value itself — the launch
+# footprint (master + WORKERS workers + 1 load-gen node) must fit the caps
+# even with an empty account. Fail-closed before any API call.
+workers_ceiling() {
+  local inst vcpu
+  inst=$((WORKERS + 2))          # master + workers + loadgen
+  vcpu=$((2 + 2 * WORKERS + 2))  # master t3.small + workers t3.medium + loadgen
+  if [ "$inst" -gt "$MAX_INSTANCES" ]; then
+    echo "FATAL: WORKERS=$WORKERS needs $inst instances (master+workers+loadgen) > MAX_INSTANCES=$MAX_INSTANCES"
+    return 1
+  fi
+  if [ "$vcpu" -gt "$MAX_VCPU" ]; then
+    echo "FATAL: WORKERS=$WORKERS needs $vcpu vCPU > MAX_VCPU=$MAX_VCPU"
+    return 1
+  fi
+}
+
+# quota guard: abort if existing size/count/vCPU would exceed hard caps.
+# Footprint = master + WORKERS workers + 1 load-gen node.
 quota_check() {
-  local inv count vcpu type
+  local inv count vcpu type inst vcpu_add
   inv="$(inventory)"
   count=$(jq 'length' <<<"$inv")
   vcpu=0
@@ -65,6 +83,8 @@ quota_check() {
     echo "FATAL: existing instance exceeds max size medium; refusing (account deactivation risk)"
     return 1
   fi
-  [ $((count + 3)) -le "$MAX_INSTANCES" ] || { echo "FATAL: would exceed $MAX_INSTANCES instances (have $count, launching 3)"; return 1; }
-  [ $((vcpu + 2 + 2 + 2)) -le "$MAX_VCPU" ] || { echo "FATAL: would exceed $MAX_VCPU vCPU (have $vcpu, launching 6)"; return 1; }
+  inst=$((WORKERS + 2))
+  vcpu_add=$((2 + 2 * WORKERS + 2))
+  [ $((count + inst)) -le "$MAX_INSTANCES" ] || { echo "FATAL: would exceed $MAX_INSTANCES instances (have $count, launching $inst)"; return 1; }
+  [ $((vcpu + vcpu_add)) -le "$MAX_VCPU" ] || { echo "FATAL: would exceed $MAX_VCPU vCPU (have $vcpu, launching $vcpu_add)"; return 1; }
 }
