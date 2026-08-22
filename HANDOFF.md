@@ -7,7 +7,7 @@ Your job: **plots 1-4 + `sanity`** from the Test A/B data, then your **Test C/D*
 | Artifact | Where | Status |
 |---|---|---|
 | Test A (continuous ramp, mix, U_MAX=12) | `data/raw/testA/run_1..5/` | **N=5 complete**, every run scale-out 1→2 + scale-in 2→1, `interrupted=0` |
-| Test B (fixed intensity, mix, STEADY_MIN=6) | `data/raw/testB/run_1..24/` | Levels 10/20/30/40 = **5 runs each**; **level 50 = N=3** (runs 21-23; 24-25 lost to lab teardown) |
+| Test B (fixed intensity, mix, STEADY_MIN=6) | `data/raw/testB/run_1..25/` | **All levels 10/20/30/40/50 = 5 runs each (N=5, 25 runs total)**; stray level-10 `run_24` removed |
 | Collector | each run: `toppods.csv`, `replicas.csv`, `hpa.csv`, `events.csv`, `locust_stats.csv`, `locust_failures.csv`, `notes.md` | complete (`notes.md` has level, ts, params, `interrupted`) |
 
 Per-run metadata (level, params) is in each `notes.md`. **Trust `notes.md`, not the run number**, for level mapping.
@@ -20,16 +20,16 @@ Per-run metadata (level, params) is in each `notes.md`. **Trust `notes.md`, not 
 
 **Results (verified from `data/raw/`):**
 
-| | Test A (N=5) | Test B (24 runs) |
+| | Test A (N=5) | Test B (25 runs) |
 |---|---|---|
-| Requests | 1142 | 1704 |
-| Failures | 89 (**7.8%**, 0-13% per run) | 616 (**36%** overall) |
+| Requests | 1142 | 1704+127 |
+| Failures | 89 (**7.8%**, 0-13% per run) | ~759 (**42%** overall) |
 | Scale evidence | **1→2→1 in every run** (`replicas.csv`); `SuccessfulRescale` events in runs 2-5 (run 1 lost its `events.csv` to an ssh hang) | 2 pods steady at all levels ≥10 users — HPA scales, then caps at `maxReplicas 2` |
 | Latency | avg 35-49s, p95 72-90s | avg 30-271s; **p95 pinned at 300s** (the proxy request timeout) under heavy load |
-| Errors by level | — | 10u: 0-35% (run_1 outlier 91%) · 20u: 0-55% · 30u: 0-34% · 40u: 29-68% · 50u: 32-75% |
+| Errors by level | — | 10u: 0-35% (run_1 outlier 91%) · 20u: 0-55% · 30u: 0-34% · 40u: 29-68% · **50u: 5-75%** |
 | Failure types | — | 503 busy=260 · 504 timeout=221 · 502=135 |
 
-**Takeaway:** error rate generally rises with intensity but is noisy per run; at 40-50 users it is consistently ≥29% with p95 at the 300s timeout — **compute saturation at max 2 pods**. The 503s = llama-server busy (slots exhausted), 504s = requests exceeding the 300s gen timeout under queueing. Report these as real results, don't hide them.
+**Takeaway:** error rate generally rises with intensity but is noisy per run; at 40-50 users it is high (level 50 avg ~39%, p95 at the 300s timeout) — **compute saturation at max 2 pods**. The 503s = llama-server busy (slots exhausted), 504s = requests exceeding the 300s gen timeout under queueing. Report these as real results, don't hide them.
 
 ## ⚠️ Watch out for (learned the hard way)
 

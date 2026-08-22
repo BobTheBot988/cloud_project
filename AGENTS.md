@@ -14,7 +14,7 @@ University project: scale an LLM inference service (Qwen3.5-0.8B via llama.cpp) 
 | `HANDOFF.md` | Block 3 Person A→B handoff: what B owns + gotchas (SIZE trap, uneven N, level mapping, git add -f) |
 | `deploy/` | k8s manifests: deployment (sidecar, initContainer prefetch), deployment-kind-fast (hostPath GGUF, kind only), service (NodePort 30080), hpa (cpu 60%, min 1 max 2); llama-server args include `--parallel 2` |
 | `infra/` | EC2 lifecycle scripts (quota-guarded) + `guards.sh` (shared guard logic + `sweep_stale`), `kind-fast.sh` (offline kind run), `tests/` (guard trigger tests), Block 3: `collect.sh` (kubectl metric collector), `exp-a.sh`/`exp-b.sh` (Test A/B orchestrators, `RUN_START` multi-session resume, ban-guard: remote TARGET requires in-AWS `LOADGEN`), `exp-smoke.sh` (local gate), see `Plans/Block1.md`, `Plans/HARDENING.md`, `Plans/Block3.md` |
-| `data/raw/` | Block 3 per-run CSVs: `run_<i>/{toppods,replicas,hpa,events}.csv`, `locust_stats.csv`, `notes.md` (gitignored; commit with `git add -f`). Test A runs 1-5 (N=5), Test B runs 1-24 (level 50 N=3) |
+| `data/raw/` | Block 3 per-run CSVs: `run_<i>/{toppods,replicas,hpa,events}.csv`, `locust_stats.csv`, `notes.md` (gitignored; commit with `git add -f`). Test A runs 1-5 (N=5), Test B runs 1-25 (all levels N=5) |
 | `kind-config.yaml` | local kind cluster (control-plane + 2 workers, NodePort 30080) |
 | `justfile` | recipes: test, test-prompt, up/down, launch/cluster-up/cluster-verify/cluster-down, kind-up/load/metrics/deploy/test/fast/down, case-0/1/2 + aliases, guard-default, case-all, exp-a/exp-b/collect/collect-stop/exp-smoke |
 | `MEASURE.md` | perf evidence (25.8 tok/s @2thr, 2B fork rejected) |
