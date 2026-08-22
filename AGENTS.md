@@ -9,13 +9,14 @@ University project: scale an LLM inference service (Qwen3.5-0.8B via llama.cpp) 
 | `app/main.py` | FastAPI proxy: `GET /health` (upstream probe 200/503), `POST /generate` (OpenAI-compat passthrough, streaming, error map, 300s timeout). Env: `LLAMA_CPP_URL`, `SYSTEM_PROMPT` (injected unless client sends one) |
 | `tests/test_proxy.py` | pytest, httpx MockTransport, 11 tests |
 | `compose.yaml` + `Dockerfile` | local llama-server + proxy (k8s dry-run), podman-compose |
-| `locustfile.py` | Locust load: size buckets small/medium/large (max_tokens 32/128/256) + weighted mix pool (0.5/0.3/0.2), `SIZE` env (default `mix`), POST /generate |
-| `ramp_shape.py` | Test A `LoadTestShape`: warm-up→ramp→steady→ramp-down→drain (~27min, env-overridable durations) |
-| `deploy/` | k8s manifests: deployment (sidecar, initContainer prefetch), deployment-kind-fast (hostPath GGUF, kind only), service (NodePort 30080), hpa (cpu 60%, min 1 max 2) |
-| `infra/` | EC2 lifecycle scripts (quota-guarded) + `guards.sh` (shared guard logic + `sweep_stale`), `kind-fast.sh` (offline kind run), `tests/` (guard trigger tests), Block 3: `collect.sh` (kubectl metric collector), `exp-a.sh`/`exp-b.sh` (Test A/B orchestrators), `exp-smoke.sh` (local gate), see `Plans/Block1.md`, `Plans/HARDENING.md`, `Plans/Block3.md` |
-| `data/raw/` | Block 3 per-run CSVs: `run_<i>/{toppods,replicas,hpa,events}.csv`, `locust_stats.csv`, `notes.md` (gitignored; layout in `Plans/Block3-WORKSPLIT.md` + `Block3-a.md`) |
+| `locustfile.py` | Locust load: size buckets small/medium/large (max_tokens 32/128/256) + weighted mix pool (0.5/0.3/0.2), `SIZE` env (default `mix`, validated at import — exit 1 on unknown, empty→mix), POST /generate |
+| `ramp_shape.py` | Test A `LoadTestShape`: warm-up→ramp→steady→ramp-down→drain (~27min, env-overridable durations WARMUP_SECS/RAMP_SECS/STEADY_SECS/RAMPDOWN_SECS/DRAIN_SECS) |
+| `HANDOFF.md` | Block 3 Person A→B handoff: what B owns + gotchas (SIZE trap, uneven N, level mapping, git add -f) |
+| `deploy/` | k8s manifests: deployment (sidecar, initContainer prefetch), deployment-kind-fast (hostPath GGUF, kind only), service (NodePort 30080), hpa (cpu 60%, min 1 max 2); llama-server args include `--parallel 2` |
+| `infra/` | EC2 lifecycle scripts (quota-guarded) + `guards.sh` (shared guard logic + `sweep_stale`), `kind-fast.sh` (offline kind run), `tests/` (guard trigger tests), Block 3: `collect.sh` (kubectl metric collector), `exp-a.sh`/`exp-b.sh` (Test A/B orchestrators, `RUN_START` multi-session resume, ban-guard: remote TARGET requires in-AWS `LOADGEN`), `exp-smoke.sh` (local gate), see `Plans/Block1.md`, `Plans/HARDENING.md`, `Plans/Block3.md` |
+| `data/raw/` | Block 3 per-run CSVs: `run_<i>/{toppods,replicas,hpa,events}.csv`, `locust_stats.csv`, `notes.md` (gitignored; commit with `git add -f`). Test A runs 1-5 (N=5), Test B runs 1-24 (level 50 N=3) |
 | `kind-config.yaml` | local kind cluster (control-plane + 2 workers, NodePort 30080) |
-| `justfile` | recipes: test, test-prompt, up/down, launch/cluster-up/cluster-verify/cluster-down, kind-up/load/metrics/deploy/test/fast/down, case-0/1/2 + aliases, guard-default, case-all |
+| `justfile` | recipes: test, test-prompt, up/down, launch/cluster-up/cluster-verify/cluster-down, kind-up/load/metrics/deploy/test/fast/down, case-0/1/2 + aliases, guard-default, case-all, exp-a/exp-b/collect/collect-stop/exp-smoke |
 | `MEASURE.md` | perf evidence (25.8 tok/s @2thr, 2B fork rejected) |
 | `.opencode/agent/` | swarm-builder + swarm-reviewer subagents (deepseek/deepseek-v4-flash, variant minimal) |
 
@@ -32,7 +33,10 @@ Rules: read PLAN.md first; update it + the relevant Block file when implementati
 
 - Model `unsloth/Qwen3.5-0.8B-MTP-GGUF:UD-Q6_K_XL` (UD-Q6_K_XL.gguf). GGUF blobs live under `~/.cache/huggingface/hub/models--unsloth--Qwen3.5-0.8B-MTP-GGUF/blobs/` (snapshot entries are symlinks).
 - Image `ghcr.io/ggml-org/llama.cpp:server` build 10380 (tag `latest` gone; older builds reject arch `qwen35`).
-- llama-server flags: `--reasoning off` (no `--reasoning`/`--spec-type`/`--reasoning-budget` in server builds).
+- llama-server flags: `--reasoning off` (no `--reasoning`/`--spec-type`/`--reasoning-budget` in server builds); runs with `--parallel 2` (single-slot 503 storm fix — concurrent load rejected with 503 otherwise).
+- Learner Lab session **region varies** (us-east-1 OR us-west-2); creds token is region-scoped. Launch with `REGION=<region> AZ1=<az> AZ2=<az>` overrides; keypair `vockey` may need importing per region (see `BLOCK1-SETUP.md`); `01-launch.sh` persists `REGION` into `.cluster-ips` so teardown targets the right region.
+- Locust 2.46 writes `locust_stats.csv`/`locust_failures.csv` (not `_requests.csv`); exp runs use `--exit-code-on-error 0` so request failures (data, not harness errors) don't fail the run.
+- exp-a/exp-b remote branch: PATH-robust locust (`/tmp/exp/.venv/bin`), ssh hardened (ServerAlive + `</dev/null` + local `timeout` wrapper) after a 30-min ssh hang; exp-c/exp-d/plots/sanity/loadgen-up are Person B-owned (not built yet).
 - k8s v1.36 via pkgs.k8s.io el9 rpm on AL2023 (not RHEL; static-binary fallback if rpm set fails).
 - Learner Lab hard caps enforced in `infra/01-launch.sh`: <=8 instances, <=31 vCPU, size <= medium. Never weaken; account deactivation = total loss. `sweep_stale` also terminates our `stopped` instances from prior sessions (lab auto-restarts them) and blocks launch if a live cluster is running.
 - Learner Lab safety hardening (SG self-referencing, EIP leak sweep, `just cost`): `Plans/HARDENING.md`.

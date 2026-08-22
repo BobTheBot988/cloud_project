@@ -64,7 +64,7 @@ curl http://127.0.0.1:30080/health                 # via NodePort
 
 ## Block 3 — Experimental runs (1-2 sessions, budget-frugal)
 
-Status: **Test A + Test B done on AWS (Sessions 1-2, Person A)** — data committed, handoff to Person B for plots/report. Level 50 under-sampled (N=3, see notes).
+Status: **Test A + Test B done on AWS (Sessions 1-2, Person A)** — data committed, `HANDOFF.md` written; **Person B starts: plots 1-4 + sanity, then Test C/D + R4**. Level 50 under-sampled (N=3, see notes).
 
 - Split: two-person relay per `Plans/Block3-WORKSPLIT.md`; Phase 0 plan in `Plans/Block3-a.md`.
 - Data: `data/raw/testA/` runs 1-5 (N=5, all 1->2->1 scale), `data/raw/testB/` runs 1-24 (levels 10/20/30/40 N=5, level 50 N=3 — lab teardown lost 24-25).

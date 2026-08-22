@@ -329,8 +329,8 @@ Tutti i test dei guard continuano a passare con le nuove regole
 **Stato Block 3 (persona A):** Test A completato (5 run, scale-out 1→2 e scale-in 2→1
 in ogni run, `--parallel 2` applicato per evitare la valanga di 503). Test B: 24 run
 (livelli 10/20/30/40 N=5, livello 50 N=3 — persi per teardown del lab). Dati in
-`data/raw/testA|testB/`, committati. **Handoff a B:** processare plots 1-4 + sanity,
-poi Test C/D; vedi `Plans/Block3-WORKSPLIT.md`.
+`data/raw/testA|testB/`, committati. **Handoff a B** (`HANDOFF.md`): processare plots 1-4
++ sanity, poi Test C/D; vedi `Plans/Block3-WORKSPLIT.md`.
 
 ---
 

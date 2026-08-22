@@ -74,3 +74,17 @@ Session 2 — Test B (operator A):
 - **Handoff:** `git add -f data/raw/testB/` + commit → B produces plots 2-4; **cluster handoff to B for Test C** after `just cluster-down`.
 
 Both sessions: `just cluster-down` at end (budget rule), account clean (0 instances, 0 EIP).
+
+## Results (Sessions 1-2, AWS us-west-2)
+
+**Test A — N=5 complete** (`data/raw/testA/run_1..5`). All runs show scale-out 1→2 (CPU crossing 60%) AND scale-in 2→1 (drain, ≥10min zero load) in `replicas.csv`, `hpa.csv` (current/target), and `SuccessfulRescale` events. Requests/runs: 230/255/243/242/172, failures 11/34/26/18/0 (run_5 clean). Avg response times 30-72s (mix, large bucket dominates). U_MAX=12, `--parallel 2`.
+
+**Test B — 24 runs** (`data/raw/testB/run_1..24`). STEADY_MIN=6. Levels 10/20/30/40 users = 5 runs each (N=5); **level 50 = N=3** (runs 21-23 — runs 24-25 lost to a network blip + lab teardown; sandbox gone, not recoverable; documented deviation). Errors (503/502/504) rise with intensity: level 10 ~0-78%, level 40 ~20-65%, level 50 ~30-86% — saturation at max 2 pods is a real bottleneck finding.
+
+**Gotcha fixed on the fly:** exp-b `RUN_START` resume must keep `RUNS` = per-level runs (5), not the total grid — a `RUNS=25` resume replayed wrong levels and mislabeled runs (stray `run_24` is level 10, not level 50; see `HANDOFF.md`).
+
+**Teardown:** clean — EIP + SG released, instances gone (lab reclaimed at session end), creds revoked (`voc-cancel-cred`).
+
+## Handoff to B
+
+`HANDOFF.md` (repo root): what B owns (plots 1-4, `sanity`, Test C/D, R4), the gotchas above, and commands. B starts now.
