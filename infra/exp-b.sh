@@ -63,12 +63,14 @@ SSH_OPTS=(-i "$SSH_KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10
 run_locust() {
   local run_dir="$1" users="$2"
   if [ -n "$LOADGEN" ]; then
-    # remote: run locust on the in-AWS load-gen node, pull CSVs back
+    # remote: run locust on the in-AWS load-gen node, pull CSVs back.
+    # timeout guards against a hung ssh session stalling the whole run
+    # (same fix as exp-a; locust CSVs are pulled by scp regardless).
     ssh "${SSH_OPTS[@]}" "$LOADGEN" "mkdir -p /tmp/exp && rm -f /tmp/exp/requests_detail.csv"
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
       "$REPO/locustfile.py" "$LOADGEN:/tmp/exp/"
-    ssh "${SSH_OPTS[@]}" "$LOADGEN" \
-      "cd /tmp/exp && export PATH=/tmp/exp/.venv/bin:\$HOME/.local/bin:\$PATH && SIZE=$(q "$SIZE") DETAIL_CSV=/tmp/exp/requests_detail.csv locust -f locustfile.py --headless --host $(q "$TARGET") -u $(q "$users") -r 5 --run-time $(q "${STEADY_MIN}m") --exit-code-on-error 0 --csv /tmp/exp/locust"
+    timeout "${LOCUST_MAX:-600}" ssh "${SSH_OPTS[@]}" "$LOADGEN" \
+      "cd /tmp/exp && export PATH=/tmp/exp/.venv/bin:\$HOME/.local/bin:\$PATH && SIZE=$(q "$SIZE") DETAIL_CSV=/tmp/exp/requests_detail.csv locust -f locustfile.py --headless --host $(q "$TARGET") -u $(q "$users") -r 5 --run-time $(q "${STEADY_MIN}m") --exit-code-on-error 0 --csv /tmp/exp/locust" || true
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
       "$LOADGEN:/tmp/exp/locust_stats.csv" "$LOADGEN:/tmp/exp/locust_failures.csv" "$run_dir/"
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
