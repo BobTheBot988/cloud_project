@@ -157,8 +157,10 @@ def main():
         if not xs:
             no_detail.append(v["name"])
             continue
-        ax.plot(xs, tot, "o-", label=f"{v['name']} total")
-        ax.plot(xs, up, "s-", label=f"{v['name']} upstream(llama)")
+        # total vs upstream sit nearly on top of each other; separate by
+        # linestyle too: blue/red total = dotted, orange/purple upstream = dashed
+        ax.plot(xs, tot, "o:", label=f"{v['name']} total")
+        ax.plot(xs, up, "s--", label=f"{v['name']} upstream(llama)")
         ax.plot(xs, orch, orch_styles[oi % 3], marker="d", label=f"{v['name']} orchestrator+transport")
         oi += 1
     if not any_detail:
