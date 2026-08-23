@@ -151,6 +151,17 @@ exp6:
 exp-c:
 	bash infra/exp-c.sh
 
+# Test D: bursty workload (normal -> burst, repeated), N runs.
+# Env: RUNS, LOW_USERS, HIGH_USERS, NORMAL_SECS, BURST_SECS, CYCLES,
+#      COLLECT_INTERVAL, TARGET, LOADGEN
+exp-d:
+	bash infra/exp-d.sh
+
+# Launch the in-AWS Locust load-gen node (t3.micro, quota-guarded +1/+2).
+# Prints LOADGEN=ec2-user@<ip> to export for the exp-* scripts.
+loadgen-up:
+	bash infra/loadgen-up.sh
+
 # switch active variant HPA on a live cluster (exp4|exp6)
 variant-hpa v:
 	bash infra/swap-hpa.sh {{v}}
@@ -176,3 +187,22 @@ launch6:
 # analysis: variant plots + tables from data/raw -> artifacts/
 plots:
 	.venv/bin/python plots/analyze.py
+
+# Block 3 offline pipeline (Person B, Test A/B -> report figures).
+# Uses distinct names so `plots` (variant analysis) stays untouched.
+
+# sanity checks on the raw Test A/B data (exit 1 on structural ERROR)
+sanity:
+	.venv/bin/python infra/plots.py sanity
+
+# raw CSVs -> processed avgs -> Test A/B report figures + R3 table
+plots-b:
+	.venv/bin/python infra/plots.py all
+
+# common-mistakes sanity report (tables/)
+report:
+	.venv/bin/python infra/plots.py report
+
+# 6-month cost estimate: EC2 stack vs single EC2 vs Lambda (tables/)
+r4:
+	.venv/bin/python infra/r4_cost.py

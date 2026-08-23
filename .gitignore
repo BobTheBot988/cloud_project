@@ -13,6 +13,7 @@ __pycache__/
 
 # Runtime cluster state
 infra/.cluster-ips
+infra/.loadgen-ips
 
 # Block 3 experiment data + outputs (committed layout via data/.gitkeep)
 data/raw/*
@@ -20,5 +21,6 @@ data/raw/*
 data/raw/**/.collect.*
 data/processed/
 tables/
+plots/*.png
 artifacts/*
 !artifacts/.gitkeep
