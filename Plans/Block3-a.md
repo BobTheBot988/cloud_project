@@ -117,6 +117,8 @@ Two variant clusters to prove scaling beyond max 2 pods and attribute delay:
 
 **Report flags:** exp6 level-20 sparse (~5 reqs/run); exp4 level-50 ceiling; exp2 level-40 error spike (56%) + level-50 run_1 outlier (91%).
 
+**LIMITATION — no warm-up in Test B/variants (cold-start + ramp transients):** exp-b runs are `-u LEVEL -r 5 --run-time 2m` with NO warm-up (Test A has one by design). Verified in data: first 30s of a level-50 run is ~20s median vs ~58s later (locust ramp, not service cold-start — the llama model is loaded at pod start and pods stay warm between consecutive runs). But at levels where HPA had scaled down between runs (level 30: 6/20 runs start at 1 pod; level 40: 4/20), the run **cold-starts new pods mid-window** (model load), inflating latency and under-reporting steady pod count. The `variant_capacity` pod curve (exp6 5.5→1.9→3.2→4.3→6.0) reflects this HPA carryover noise, not pure steady-state. **Report the variant delay/pods as "full autoscaling behavior incl. cold-start", not clean steady-state.** Fix if ever re-run: add a warm-up/steady pre-window to exp-b (extends session time).
+
 Final artifacts in `artifacts/` (capacity/p95/error/availability + delay breakdown + per-size); summary CSV 15 rows. Campaign commits: exp4 `b367ea9`, exp6 `f38f887`, artifacts `b98072e`.
 
 ## Variant session runbook (3 sessions x 4h) — DONE

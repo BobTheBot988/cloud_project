@@ -64,6 +64,7 @@ Two variant clusters proving scaling beyond 2 pods + fine-grained delay attribut
 - **Delay split** in `requests_detail.csv`: orchestrator+transport ≈ **11ms**; llama decode dominates (~40s). **Bottleneck = llama (container), not proxy/orchestrator.**
 - `just plots` → `plots/analyze.py` → `artifacts/` (capacity/p95/error/availability + delay breakdown + per-size; exp2 shown as baseline but has NO per-request detail — pre-timing capture).
 - Report flags: exp6 level-20 sparse (~5 reqs/run); exp4 level-50 ceiling (178 reqs, 26% err); exp2 level-40 error spike (56%); exp2 level-50 run_1 outlier (91%).
+- **No warm-up in Test B/variants** — runs ramp users immediately (`-r 5`), and HPA may cold-start pods mid-run when it had scaled down between runs (level 30: 6/20 runs, level 40: 4/20 started at 1 pod). Delay/pods figures = full autoscaling behavior incl. cold-start + ramp, NOT clean steady-state. Test A had proper warm-up + drain (clean elasticity). Say this explicitly in the report.
 
 ## Read first
 
