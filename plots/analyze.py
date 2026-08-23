@@ -157,11 +157,14 @@ def main():
         if not xs:
             no_detail.append(v["name"])
             continue
-        # total vs upstream sit nearly on top of each other; separate by
-        # linestyle too: blue/red total = dotted, orange/purple upstream = dashed
-        ax.plot(xs, tot, "o:", label=f"{v['name']} total")
-        ax.plot(xs, up, "s--", label=f"{v['name']} upstream(llama)")
-        ax.plot(xs, orch, orch_styles[oi % 3], marker="d", label=f"{v['name']} orchestrator+transport")
+        # total vs upstream differ by only ~11ms (orchestrator), so on a
+        # seconds axis they overlap completely and the under-line is hidden.
+        # Jitter x by ±0.6 users so BOTH lines render as distinct parallel
+        # traces; orchestrator lines (both ~0) get a per-variant x nudge too.
+        ax.plot([l - 0.6 for l in xs], tot, "o:", label=f"{v['name']} total")
+        ax.plot([l + 0.6 for l in xs], up, "s--", label=f"{v['name']} upstream(llama)")
+        ax.plot([l + 0.3 * (oi % 2) for l in xs], orch, orch_styles[oi % 3], marker="d",
+                label=f"{v['name']} orchestrator+transport")
         oi += 1
     if not any_detail:
         print("WARN: no requests_detail.csv found in any variant — delay figures empty (needs the timing proxy image + detail capture)")
