@@ -49,6 +49,10 @@ def load_run(d):
             else:
                 err_types["other"] = err_types.get("other", 0) + n
     reqs = int(r.get("Request Count", 0))
+    try:
+        p95 = float(r.get("95%", 0)) / 1000
+    except (TypeError, ValueError):
+        p95 = 0.0  # locust writes N/A when too few requests for a percentile
     lvl_m = re.search(r"level_users=(\d+)", open(f"{d}/notes.md").read())
     return {
         "level": int(lvl_m.group(1)) if lvl_m else 0,
@@ -56,7 +60,7 @@ def load_run(d):
         "reqs": reqs,
         "fails": fails,
         "err_types": err_types,
-        "p95": float(r.get("95%", 0)) / 1000,
+        "p95": p95,
         "err": 100 * fails / max(reqs, 1),
         "replicas": [l.split()[1] for l in open(f"{d}/replicas.csv") if l.strip()] if os.path.exists(f"{d}/replicas.csv") else [],
         "detail": f"{d}/requests_detail.csv",
