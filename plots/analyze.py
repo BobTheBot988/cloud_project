@@ -132,6 +132,10 @@ def main():
     # ---- figure 2: delay breakdown per variant per level (mix) ----
     fig, ax = plt.subplots(figsize=(11, 5))
     any_detail, no_detail = False, []
+    # orchestrator lines all sit near ~0 and overlap; give each variant a
+    # distinct linestyle so they separate (green->dashed, brown->dotted, ...)
+    orch_styles = ["--", ":", "-."]
+    oi = 0
     for v in vs.values():
         xs, tot, up, orch = [], [], [], []
         for l in sorted(v["levels"]):
@@ -154,8 +158,9 @@ def main():
             no_detail.append(v["name"])
             continue
         ax.plot(xs, tot, "o-", label=f"{v['name']} total")
-        ax.plot(xs, up, "s--", label=f"{v['name']} upstream(llama)")
-        ax.plot(xs, orch, "d:", label=f"{v['name']} orchestrator+transport")
+        ax.plot(xs, up, "s-", label=f"{v['name']} upstream(llama)")
+        ax.plot(xs, orch, orch_styles[oi % 3], marker="d", label=f"{v['name']} orchestrator+transport")
+        oi += 1
     if not any_detail:
         print("WARN: no requests_detail.csv found in any variant — delay figures empty (needs the timing proxy image + detail capture)")
     if no_detail:
@@ -187,6 +192,45 @@ def main():
     axs[0].legend(fontsize=7)
     fig.suptitle("Delay by request size (mix runs; exp2 has no pre-timing detail)")
     fig.tight_layout(); fig.savefig(f"{ART}/variant_delay_by_size.png", dpi=130)
+
+    # ---- figure 4: stacked delay breakdown per size (reference format) ----
+    sizes = ("small", "medium", "large")
+    bar_data = {s: {"up": [], "orch": []} for s in sizes}
+    for v in vs.values():
+        for l in sorted(v["levels"]):
+            for r in v["levels"][l]:
+                for s, pairs in load_details(r["detail"]).items():
+                    if s not in bar_data:
+                        continue
+                    for t, u in pairs:
+                        bar_data[s]["up"].append(u)
+                        bar_data[s]["orch"].append(t - u)
+    if any(bar_data[s]["up"] for s in sizes):
+        up_avg = [statistics.mean(bar_data[s]["up"]) / 1000 for s in sizes]
+        or_avg = [statistics.mean(bar_data[s]["orch"]) / 1000 for s in sizes]
+        xs = list(range(3))
+        fig, ax = plt.subplots(figsize=(7, 5))
+        ax.bar(xs, up_avg, color="#4C72B0", label="llama (container)")
+        ax.bar(xs, or_avg, bottom=up_avg, color="#DD8452", label="proxy+orchestrator+transport")
+        for i, (u, o) in enumerate(zip(up_avg, or_avg)):
+            tot = u + o
+            ax.text(i, u / 2, f"{u / tot * 100:.2f}%", ha="center", va="center",
+                    color="white", fontweight="bold")
+            ax.text(i, tot * 1.02, f"{o / tot * 100:.2f}%", ha="center", va="bottom",
+                    fontsize=8, color="#DD8452")
+        ax.set_xticks(xs)
+        tok = {"small": "32", "medium": "128", "large": "256"}
+        ax.set_xticklabels([f"{s}\n({tok[s]} tok)" for s in sizes])
+        ax.set_ylabel("avg delay (s)")
+        ax.grid(axis="y", ls=":", alpha=.5)
+        ax.legend(loc="upper left", fontsize=8)
+        ax.set_title("Delay breakdown by request size\n(llama vs proxy+orchestrator+transport)")
+        fig.tight_layout(); fig.savefig(f"{ART}/variant_delay_stack.png", dpi=130)
+        print("wrote", f"{ART}/variant_delay_stack.png",
+              "| llama(s):", [round(x, 1) for x in up_avg],
+              "| orch(ms):", [round(x * 1000, 1) for x in or_avg])
+    else:
+        print("WARN: no per-request detail data for the delay stack figure")
 
     # ---- summary table CSV ----
     rows = []
