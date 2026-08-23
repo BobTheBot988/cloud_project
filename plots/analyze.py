@@ -126,12 +126,12 @@ def main():
     axs[0].set(xlabel="users", title="avg max pods"); axs[0].legend()
     axs[1].set(xlabel="users", title="avg p95 (s)")
     axs[2].set(xlabel="users", title="avg error rate %")
-    fig.suptitle("Variants: capacity + latency + errors vs intensity")
+    fig.suptitle("Variants: capacity + latency + errors vs intensity (users)")
     fig.tight_layout(); fig.savefig(f"{ART}/variant_capacity.png", dpi=130)
 
     # ---- figure 2: delay breakdown per variant per level (mix) ----
     fig, ax = plt.subplots(figsize=(11, 5))
-    any_detail = False
+    any_detail, no_detail = False, []
     for v in vs.values():
         xs, tot, up, orch = [], [], [], []
         for l in sorted(v["levels"]):
@@ -147,15 +147,22 @@ def main():
                         agg["orch"].append(t - u)
             if agg["total"]:
                 xs.append(l)
-                tot.append(statistics.mean(agg["total"]))
-                up.append(statistics.mean(agg["up"]))
-                orch.append(statistics.mean(agg["orch"]))
+                tot.append(statistics.mean(agg["total"]) / 1000)
+                up.append(statistics.mean(agg["up"]) / 1000)
+                orch.append(statistics.mean(agg["orch"]) / 1000)
+        if not xs:
+            no_detail.append(v["name"])
+            continue
         ax.plot(xs, tot, "o-", label=f"{v['name']} total")
         ax.plot(xs, up, "s--", label=f"{v['name']} upstream(llama)")
         ax.plot(xs, orch, "d:", label=f"{v['name']} orchestrator+transport")
     if not any_detail:
         print("WARN: no requests_detail.csv found in any variant — delay figures empty (needs the timing proxy image + detail capture)")
-    ax.set(xlabel="users", ylabel="ms (avg)", title="Delay breakdown: client total vs llama vs orchestrator+transport")
+    if no_detail:
+        print(f"WARN: no per-request detail for {', '.join(no_detail)} (pre-timing data) — omitted from delay figure")
+        ax.text(0.02, 0.98, f"no delay data: {', '.join(no_detail)} (pre-timing capture)", transform=ax.transAxes,
+                va="top", fontsize=8, bbox=dict(facecolor="white", alpha=0.7))
+    ax.set(xlabel="users", ylabel="seconds (avg)", title="Delay breakdown: client total vs llama vs orchestrator+transport")
     ax.legend(fontsize=8)
     fig.tight_layout(); fig.savefig(f"{ART}/variant_delay_breakdown.png", dpi=130)
 
@@ -171,12 +178,14 @@ def main():
                     for t, u in pairs:
                         agg["total"].append(t); agg["up"].append(u); agg["orch"].append(t - u)
                 if agg["total"]:
-                    xs.append(l); tot.append(statistics.mean(agg["total"])); up.append(statistics.mean(agg["up"])); orch.append(statistics.mean(agg["orch"]))
+                    xs.append(l); tot.append(statistics.mean(agg["total"]) / 1000); up.append(statistics.mean(agg["up"]) / 1000); orch.append(statistics.mean(agg["orch"]) / 1000)
+            if not xs:
+                continue
             axs[si].plot(xs, tot, "o-", label=f"{v['name']} total")
             axs[si].plot(xs, up, "s--", label=f"{v['name']} llama")
-        axs[si].set(xlabel="users", title=f"size={size}")
+        axs[si].set(xlabel="users", ylabel="s", title=f"size={size}")
     axs[0].legend(fontsize=7)
-    fig.suptitle("Delay by request size (mix runs)")
+    fig.suptitle("Delay by request size (mix runs; exp2 has no pre-timing detail)")
     fig.tight_layout(); fig.savefig(f"{ART}/variant_delay_by_size.png", dpi=130)
 
     # ---- summary table CSV ----

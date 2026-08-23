@@ -54,14 +54,14 @@ just exp-a / exp-b / collect / collect-stop        # mine, for reference
 
 `exp-*` scripts support multi-session resume via `RUN_START` (position in the run grid). For `exp-b`, `RUNS` is **per-level runs** (default 5), NOT the total grid — set `RUNS=5`, not 25, on resume.
 
-## Variants exp4 / exp6 (new work — you'll run these)
+## Variants exp4 / exp6 (CAMPAIGN COMPLETE — data + artifacts committed)
 
-Two variant clusters proving scaling beyond 2 pods + fine-grained delay attribution:
-- **exp4** (`WORKERS=4`, HPA max 4) / **exp6** (`WORKERS=6`, HPA max 6, at the 8-instance cap). 5 levels × **N=20** each, `STEADY_MIN=2`.
-- **Delay split** in `requests_detail.csv` per request: `total_ms` (locust) vs `upstream_ms` (proxy→llama header) → `orchestrator+transport = total − upstream`. Analyzed per level AND per size class.
-- **Availability** = `1 − ErrorRate`; failure attribution: 503=llama busy, 504=llama timeout, 502=proxy↔llama, edge-refused=orchestrator.
-- Commands: `WORKERS=4|6 just exp4-up/exp6-up` → deploy with `deploy/hpa-exp4|6.yaml` → `SCENARIO=exp4|exp6 RUNS=20 STEADY_MIN=2 LOADGEN=... TARGET=... just exp4/exp6`. Resume with `RUN_START`. Analysis: `just plots` → `artifacts/`.
-- **Prereq:** the proxy timing image (`X-Upstream-Ms`) must be pushed to GHCR — push was flaky last session; verify before running.
+Two variant clusters proving scaling beyond 2 pods + fine-grained delay attribution. **All data collected** (3 AWS sessions):
+- **exp4** (HPA max 4, N=20/level): `data/raw/exp4/run_1..100` — 4-27% errors, p95 51-101s, availability 0.73-0.96.
+- **exp6** (HPA max 6, N=20/level): `data/raw/exp6/run_1..100` — 0-24% errors, p95 30-98s, availability 0.76-1.0, hit 6 pods (86% CPU). Level 50 served 7× exp4's requests (1299 vs 178) — processes the queue instead of dropping.
+- **Delay split** in `requests_detail.csv`: orchestrator+transport ≈ **11ms**; llama decode dominates (~40s). **Bottleneck = llama (container), not proxy/orchestrator.**
+- `just plots` → `plots/analyze.py` → `artifacts/` (capacity/p95/error/availability + delay breakdown + per-size; exp2 shown as baseline but has NO per-request detail — pre-timing capture).
+- Report flags: exp6 level-20 sparse (~5 reqs/run); exp4 level-50 ceiling (178 reqs, 26% err); exp2 level-40 error spike (56%); exp2 level-50 run_1 outlier (91%).
 
 ## Read first
 

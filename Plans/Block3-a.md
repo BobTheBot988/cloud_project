@@ -103,7 +103,19 @@ Two variant clusters to prove scaling beyond max 2 pods and attribute delay:
 - **Prereq**: proxy timing image must be on GHCR (`X-Upstream-Ms`) — push was flaky, verify before sessions.
 - **Quota guard**: `workers_ceiling` refuses WORKERS>6 even on empty account; `quota_check` counts the full footprint + existing instances (guard tests extended).
 
-## Variant session runbook (3 sessions x 4h)
+## Variant results (campaign COMPLETE — 3 sessions)
+
+**exp2** (testB, max 2, N=5): worst — 23-59% errors, p95 139-295s (300s timeout ceiling), availability 0.41-0.78. Capped at 2 pods.
+**exp4** (max 4, N=20): 4-27% errors, p95 51-101s, availability 0.73-0.96. Peaked at 3.8 pods; level 50 saturated (178 reqs, 26% err) — 4-pod ceiling under 50 users.
+**exp6** (max 6, N=20): 0-24% errors, p95 30-98s, availability 0.76-1.0. Hit 6 pods (86% CPU). Level 50 served **1299 reqs vs exp4's 178** (7×) — processes the queue instead of dropping; hence p95 higher (98s) than exp4 (70s) at 50 users but availability/throughput far better.
+
+**Delay attribution:** orchestrator+transport ≈ **11ms** (negligible); llama decode dominates (~40s avg). **The container (llama) is the bottleneck — not the proxy or orchestrator.** exp2 has no per-request detail (pre-timing capture).
+
+**Report flags:** exp6 level-20 sparse (~5 reqs/run); exp4 level-50 ceiling; exp2 level-40 error spike (56%) + level-50 run_1 outlier (91%).
+
+Final artifacts in `artifacts/` (capacity/p95/error/availability + delay breakdown + per-size); summary CSV 15 rows. Campaign commits: exp4 `b367ea9`, exp6 `f38f887`, artifacts `b98072e`.
+
+## Variant session runbook (3 sessions x 4h) — DONE
 
 Locked: ONE WORKERS=6 cluster serves BOTH variants (exp4/exp6 differ only in HPA maxReplicas 4 vs 6 — swap the HPA manifest, the variant semantics come from maxReplicas). N=20 per level, 5 levels (10/20/30/40/50 users), STEADY_MIN=2, mix workload. 8 instances / 16 vCPU = at the 8-instance cap.
 

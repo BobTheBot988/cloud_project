@@ -323,14 +323,14 @@ Tutti i test dei guard continuano a passare con le nuove regole
 | Block 0 — sistema locale + prove | ✅ COMPLETO |
 | Block 1 — script cluster + guard | ✅ COMPLETO (testato; run AWS fatto) |
 | Block 2 — deploy + HPA su AWS | ✅ **COMPLETO (provato dal vivo il 17-08-2026)** |
-| Block 3 — esperimenti di carico | 🟡 IN CORSO (Test A + Test B fatti su AWS; manca processing/plots di B, Test C/D) |
+| Block 3 — esperimenti di carico | ✅ QUASI COMPLETO (Test A/B + varianti exp4/exp6 fatti; resta report/plots finali) |
 | Block 4 — analisi + relazione | ⬜ Da fare |
 
-**Stato Block 3 (persona A):** Test A completato (5 run, scale-out 1→2 e scale-in 2→1
-in ogni run, `--parallel 2` applicato per evitare la valanga di 503). Test B: 24 run
-(livelli 10/20/30/40 N=5, livello 50 N=3 — persi per teardown del lab). Dati in
-`data/raw/testA|testB/`, committati. **Handoff a B** (`HANDOFF.md`): processare plots 1-4
-+ sanity, poi Test C/D; vedi `Plans/Block3-WORKSPLIT.md`.
+**Stato Block 3:** Test A (5 run, scale-out 1→2 e scale-in 2→1), Test B (25 run, tutti i livelli N=5),
+**varianti exp4/exp6** (100 run ciascuno, N=20/livello, HPA max 4/6, delay attribuzione
+total/upstream/orchestrator). Risultato: più pod → meno errori/latenza, disponibilità maggiore;
+**orchestratore ≈ 11ms, bottleneck = llama** (container). Dati in `data/raw/{testA,testB,exp4,exp6}/`,
+plots in `artifacts/`, `plots/analyze.py`. Handoff a B per report finale (vedi `HANDOFF.md`).
 
 ---
 

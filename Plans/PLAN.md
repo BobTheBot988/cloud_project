@@ -64,11 +64,11 @@ curl http://127.0.0.1:30080/health                 # via NodePort
 
 ## Block 3 — Experimental runs (1-2 sessions, budget-frugal)
 
-Status: **Test A + Test B done on AWS (Person A)** — data committed, `HANDOFF.md` written. Next: **variant sweeps exp4/exp6 (HPA max 4/6, N=20/level, fine-grained delay)**; Person B: plots/sanity + Test C/D + R4 in parallel.
+Status: **Test A + Test B + variants exp4/exp6 COMPLETE on AWS** — all data + artifacts committed. Remaining: report writing (plots 1-4 + variant analysis + Test C/D/R4, Person B) + joint merge.
 
 - Split: two-person relay per `Plans/Block3-WORKSPLIT.md`; Phase 0 plan in `Plans/Block3-a.md`.
-- Data: `data/raw/testA/` runs 1-5 (N=5, all 1->2->1 scale), `data/raw/testB/` runs 1-25 (**all levels 10/20/30/40/50 N=5**).
-- Variants: `deploy/hpa-exp4.yaml` (max 4) / `hpa-exp6.yaml` (max 6), `WORKERS=4|6` cluster (quota-guarded, exp6 at the 8-instance cap), `SCENARIO=exp4|exp6 RUNS=20 STEADY_MIN=2 just exp4/exp6`, per-request `requests_detail.csv` (total vs upstream vs orchestrator), `plots/analyze.py` → `artifacts/`.
+- Data: `data/raw/testA/` runs 1-5 (N=5, all 1->2->1 scale), `data/raw/testB/` runs 1-25 (all levels 10/20/30/40/50 N=5), `data/raw/exp4/` runs 1-100 (N=20, HPA max 4), `data/raw/exp6/` runs 1-100 (N=20, HPA max 6).
+- Variants: `WORKERS=6` cluster served both (HPA swapped via `swap-hpa.sh`), per-request `requests_detail.csv` (total vs upstream vs orchestrator), `plots/analyze.py` → `artifacts/`. Result: more pods → lower latency/errors/availability; orchestrator ≈ 11ms (llama = bottleneck).
 - Person A tooling: `locustfile.py` size buckets + mix (0.5/0.3/0.2), `ramp_shape.py` (Test A ramp), `infra/collect.sh` (per-min kubectl collector), `infra/exp-a.sh` (ramp), `infra/exp-b.sh` (intensity sweep), `just exp-smoke` (local gate, verified).
 - Data layout: `data/raw/<scenario>/run_<i>/{toppods,replicas,hpa,events}.csv` + `locust_*.csv` + `notes.md`.
 - Collector: `kubectl top pods` at interval + Locust CSV -> `run_1`, `run_2`, ...
