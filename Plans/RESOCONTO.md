@@ -312,6 +312,7 @@ Tutti i test dei guard continuano a passare con le nuove regole
 | `just exp-smoke` | Prova locale dei bucket small/medium/large (compose) |
 | `just exp-a` | **Test A** rampa continua (U_MAX/RUNS/TARGET/LOADGEN) |
 | `just exp-b` | **Test B** curva carico-capacità (LEVELS/RUNS/STEADY_MIN) |
+| `just exp-c` | **Test C** size-isolato (small/medium/large separati, `just exp-c`) |
 | `just collect` / `collect-stop` | Collector kubectl (top pods/replicas/hpa/events) su `data/raw/` |
 
 ---

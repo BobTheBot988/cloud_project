@@ -46,11 +46,13 @@ Also note the **mix workload is random per request** (0.5/0.3/0.2) — Test A/B 
 ## Commands that work
 
 ```
-just exp-c / exp-d / loadgen-up / plots / sanity   # yours (B-owned; some not built yet)
+just exp-c / exp-d / loadgen-up / plots / sanity   # yours (B-owned; exp-c is PRE-BUILT, run `just exp-c`)
 just exp-a / exp-b / collect / collect-stop        # mine, for reference
 ```
 
 **Your session flow:** `cluster-up` (or continue mine) → deploy → `LOADGEN=<user>@<host> TARGET=http://<master>:30080 just exp-c` → commit with `git add -f` → `cluster-down`.
+
+**Test C (exp-c, PRE-BUILT):** runs the same-size sweep per class — `data/raw/testC_{small,medium,large}/run_<i>/`. This gives isolated per-size delay (no cross-size interference: a small request slows ~2× locally / ~4× at 50 users when mixed with large ones — that gap is exactly what Test C removes). Resume a single size: `SCENARIO=testC_<size> RUN_START=N bash infra/exp-b.sh`. Recommend `RUNS=20 STEADY_MIN=2` like the variants; ~1 AWS session per size at that N.
 
 `exp-*` scripts support multi-session resume via `RUN_START` (position in the run grid). For `exp-b`, `RUNS` is **per-level runs** (default 5), NOT the total grid — set `RUNS=5`, not 25, on resume.
 

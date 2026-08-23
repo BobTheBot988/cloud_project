@@ -64,7 +64,7 @@ curl http://127.0.0.1:30080/health                 # via NodePort
 
 ## Block 3 — Experimental runs (1-2 sessions, budget-frugal)
 
-Status: **Test A + Test B + variants exp4/exp6 COMPLETE on AWS** — all data + artifacts committed. Remaining: report writing (plots 1-4 + variant analysis + Test C/D/R4, Person B) + joint merge.
+Status: **Test A + Test B + variants exp4/exp6 COMPLETE on AWS** — all data + artifacts committed; **exp-c (size-isolated Test C) pre-built**. Remaining: B runs Test C (AWS), report writing (plots 1-4 + variant analysis + R4, Person B) + joint merge.
 
 - Split: two-person relay per `Plans/Block3-WORKSPLIT.md`; Phase 0 plan in `Plans/Block3-a.md`.
 - Data: `data/raw/testA/` runs 1-5 (N=5, all 1->2->1 scale), `data/raw/testB/` runs 1-25 (all levels 10/20/30/40/50 N=5), `data/raw/exp4/` runs 1-100 (N=20, HPA max 4), `data/raw/exp6/` runs 1-100 (N=20, HPA max 6).

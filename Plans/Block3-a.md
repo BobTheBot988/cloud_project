@@ -34,7 +34,11 @@ Compose up → 1-user locust ~20s per bucket (small/medium/large) against local 
 
 ## Deferred (not in this pass)
 
-- `loadgen-up`, `exp-c/exp-d` (Person B), plots/sanity pipeline (B), R4 (B), AWS sessions 1-2 (need Learner Lab).
+- `loadgen-up`, `exp-d` (Person B), sanity pipeline (B), R4 (B). **exp-c is now built** (see below) — B runs it, doesn't write it.
+
+## Test C — size-isolated (pre-built, `just exp-c`)
+
+Fixed-intensity sweep run three times, once per pure size (`SIZE=small|medium|large`, `SCENARIO=testC_<size>`) so every concurrent user sends the same prompt size. Removes the cross-size interference measured in the mix variants (a small request slows ~2× locally, ~4× at 50 users, when neighbours send large prompts). Local validation: small-only **4.0s** vs mix-small **7.6s** — isolated is lower, as expected. Data: `data/raw/testC_{small,medium,large}/`. Resume per size: `SCENARIO=testC_<size> RUN_START=N bash infra/exp-b.sh`.
 
 ## Doc sync (AGENTS rule: update docs when impl changes)
 
