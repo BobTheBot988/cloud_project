@@ -1,0 +1,3 @@
+1787472430 llm-proxy-exp6   Deployment/llm-proxy   cpu: 91%/60%   1     6     6     80m
+1787472502 llm-proxy-exp6   Deployment/llm-proxy   cpu: 90%/60%   1     6     6     81m
+1787472574 llm-proxy-exp6   Deployment/llm-proxy   cpu: 88%/60%   1     6     6     82m

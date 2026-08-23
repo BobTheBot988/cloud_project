@@ -1,0 +1,26 @@
+59m     Warning   Unhealthy   pod/llm-proxy-857bf6d79d-kj8vp   Readiness probe failed: HTTP probe failed with statuscode: 503
+53m     Warning   Unhealthy   pod/llm-proxy-857bf6d79d-9hsvr   Readiness probe failed: Get "http://10.244.6.3:8000/health": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+45m     Warning   Unhealthy   pod/llm-proxy-857bf6d79d-ncklk   Readiness probe failed: Get "http://10.244.7.3:8000/health": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+35m     Normal    Started     pod/llm-proxy-857bf6d79d-79btg   Container started
+35m     Normal    Pulled      pod/llm-proxy-857bf6d79d-79btg   Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+35m     Normal    Created     pod/llm-proxy-857bf6d79d-79btg   Container created
+26m     Warning   Unhealthy   pod/llm-proxy-857bf6d79d-n29qk   Readiness probe failed: Get "http://10.244.5.3:8000/health": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+20m     Normal    Started     pod/llm-proxy-857bf6d79d-ncklk   Container started
+20m     Normal    Created     pod/llm-proxy-857bf6d79d-ncklk   Container created
+20m     Normal    Pulled      pod/llm-proxy-857bf6d79d-ncklk   Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+20m     Warning   Unhealthy   pod/llm-proxy-857bf6d79d-ncklk   Readiness probe failed: HTTP probe failed with statuscode: 503
+18m     Warning   Unhealthy   pod/llm-proxy-857bf6d79d-kj8vp   Readiness probe failed: Get "http://10.244.1.4:8000/health": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+14m     Normal    Created     pod/llm-proxy-857bf6d79d-n29qk   Container created
+14m     Normal    Pulled      pod/llm-proxy-857bf6d79d-n29qk   Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+14m     Normal    Started     pod/llm-proxy-857bf6d79d-n29qk   Container started
+9m42s   Normal    Pulled      pod/llm-proxy-857bf6d79d-9hsvr   Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+9m42s   Normal    Created     pod/llm-proxy-857bf6d79d-9hsvr   Container created
+9m41s   Warning   Unhealthy   pod/llm-proxy-857bf6d79d-9hsvr   Readiness probe failed: HTTP probe failed with statuscode: 503
+9m41s   Normal    Started     pod/llm-proxy-857bf6d79d-9hsvr   Container started
+3m36s   Normal    Pulled      pod/llm-proxy-857bf6d79d-kj8vp   Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+3m35s   Normal    Created     pod/llm-proxy-857bf6d79d-kj8vp   Container created
+3m35s   Normal    Started     pod/llm-proxy-857bf6d79d-kj8vp   Container started
+3m24s   Normal    Started     pod/llm-proxy-857bf6d79d-fhbgs   Container started
+3m24s   Normal    Created     pod/llm-proxy-857bf6d79d-fhbgs   Container created
+3m24s   Normal    Pulled      pod/llm-proxy-857bf6d79d-fhbgs   Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+3m23s   Warning   Unhealthy   pod/llm-proxy-857bf6d79d-fhbgs   Readiness probe failed: HTTP probe failed with statuscode: 503
