@@ -105,12 +105,14 @@ wait_ssh() {
   echo "FATAL: ssh not reachable on $ip"; exit 1
 }
 
-# setup_locust: create /tmp/exp venv with locust (venv first, --user fallback)
+# setup_locust: create /tmp/exp venv with locust (venv first, --user fallback).
+# Locust >=2.46 requires Python 3.11+; AL2023 defaults to 3.9, so install 3.11
+# first and build the venv with it (fallback to system python3).
 setup_locust() {
   local ip="$1"
   echo "==> installing locust on load-gen node (a few minutes)"
   ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 "$SSH_USER@$ip" \
-    "mkdir -p /tmp/exp && { python3 -m venv /tmp/exp/.venv && /tmp/exp/.venv/bin/pip install -q 'locust==$LOCUST_VERSION'; } || python3 -m pip install --user -q 'locust==$LOCUST_VERSION'"
+    "mkdir -p /tmp/exp && python3.11 -m venv /tmp/exp/.venv 2>/dev/null || python3 -m venv /tmp/exp/.venv; { /tmp/exp/.venv/bin/pip install -q 'locust==$LOCUST_VERSION'; } || /tmp/exp/.venv/bin/pip install --user -q 'locust==$LOCUST_VERSION'"
   local ver
   ver="$(ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 "$SSH_USER@$ip" \
     "/tmp/exp/.venv/bin/locust --version 2>/dev/null || \$HOME/.local/bin/locust --version 2>/dev/null || echo MISSING")"
