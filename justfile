@@ -146,6 +146,11 @@ exp4:
 exp6:
 	SCENARIO=exp6 RUNS=20 STEADY_MIN=2 bash infra/exp-b.sh
 
+# Test C: request-size comparison — same-size sweep per class (small/medium/large)
+# Isolated per-size delay (no cross-size interference); data/raw/testC_<size>/
+exp-c:
+	bash infra/exp-c.sh
+
 # switch active variant HPA on a live cluster (exp4|exp6)
 variant-hpa v:
 	bash infra/swap-hpa.sh {{v}}
