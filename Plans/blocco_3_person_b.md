@@ -132,10 +132,29 @@ Strumenti: `infra/plots.py` (sanity + processazione + grafici + report),
 6. **Test C**: `LOADGEN=$LOADGEN TARGET=http://<MASTER_IP>:30080 just exp-c`
    (RUNS=5, SIZES="small medium large", USERS=4). Resume parziale con
    `RUN_START=<pos>` (posizioni 1..15 nella griglia size×runs).
+   - **Usa `LEVELS=4`** (4 utenti): a 20 utenti il singolo pod si satura e le
+     richieste medium/large restano in coda oltre il run-time → run a 0
+     richieste. Il runbook originale del gruppo indicava USERS=4: è il
+     regime giusto per confrontare le size senza saturare.
+   - **Steady**: `STEADY_MIN=3` per small/medium, `STEADY_MIN=4` per large
+     (una richiesta large = ~40-60s a ~6 tok/s; 2 min non bastano per
+     completare nulla sotto coda). Se ne lanci più di una size con steady
+     diversi, chiama `exp-b.sh` direttamente per size
+     (`SIZE=<sz> SCENARIO=testC_<sz> FORCE=1 ...`).
+   - **llama-server si degrada dopo ~90min di carico**: memoria al ~97% del
+     limit, prompt eval 4x più lento (3.4 vs 14 tok/s), richieste in timeout,
+     `RemoteDisconnected`. Se le latenze salgono o le run producono 0/errori
+     inspiegabili → **riavvia il pod** tra una size e l'altra:
+     `kubectl delete pod -l app=llm-proxy --grace-period=0` e attendi Ready.
+   - **OOM fix** (già in `deploy/deployment.yaml`): limit memoria llama-server
+     2Gi→3Gi (a 2Gi sotto 20 utenti va OOMKilled, exit 137, e inquina le run
+     con 503/502). Verifica prima della sessione: `grep memory deploy/deployment.yaml`.
 7. **Test D** (opzionale): `LOADGEN=$LOADGEN TARGET=http://<MASTER_IP>:30080 just exp-d`
 8. **Dati**: `git add -f data/raw/testC-* data/raw/testD ... && git commit`
 9. **Teardown**: `just cluster-down` (termina tutto, rilascia EIP/SG). Fine
-   sessione nel portale.
+   sessione nel portale (il teardown va fatto PRIMA di chiudere: la revoca
+   credenziali `voc-cancel-cred` arriva al termine della sessione e blocca
+   anche le describe).
 
 ---
 
@@ -148,7 +167,7 @@ Strumenti: `infra/plots.py` (sanity + processazione + grafici + report),
 | `infra/exp-c.sh` | Test C size-isolated (`SCENARIO=testC_<size>`, `SIZE=<classe>` a ogni run, RUNS=20) | gruppo |
 | `infra/exp-d.sh` | Test D: bursty, shape-driven, collector a 20 s | Persona B |
 | `burst_shape.py` | `LoadTestShape` per il Test D (normale ↔ burst, CYCLES×) | Persona B |
-| `infra/loadgen-up.sh` | Nodo locust t3.micro in AWS, quota-guarded +1/+2, riusa il SG | Persona B |
+| `infra/loadgen-up.sh` | Nodo locust t3.micro in AWS, quota-guarded +1/+2, riusa il SG. **Fix 2026-08-23**: AL2023 defaulta Python 3.9 → installa `python3.11` e crea il venv con quello (Locust 2.46 richiede ≥3.11; il pin 2.46.3 non installava su 3.9) | Persona B |
 | `infra/plots.py`, `infra/r4_cost.py` | Pipeline offline B (sanity/plots-b/report/r4) | Persona B |
 | `justfile` | recipe `exp-c`/`exp-d`/`loadgen-up` + `plots-b`/`sanity`/`report`/`r4` | B (+ exp-c del gruppo) |
 
