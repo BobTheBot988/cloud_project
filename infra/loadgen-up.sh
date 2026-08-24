@@ -105,17 +105,26 @@ wait_ssh() {
   echo "FATAL: ssh not reachable on $ip"; exit 1
 }
 
-# setup_locust: create /tmp/exp venv with locust (venv first, --user fallback).
-# Locust >=2.46 requires Python 3.11+; AL2023 defaults to 3.9, so install 3.11
-# first and build the venv with it (fallback to system python3).
+# setup_locust: create /tmp/exp venv with locust. Locust >=2.46 requires
+# Python 3.11+; AL2023 defaults to 3.9, so install python3.11 via dnf FIRST
+# and build the venv with it (the old fallback silently used 3.9's pip 21.3.1,
+# which cannot resolve locust 2.46.3). Fail loudly if 3.11 is unavailable.
 setup_locust() {
   local ip="$1"
-  echo "==> installing locust on load-gen node (a few minutes)"
+  echo "==> installing python3.11 + locust on load-gen node (a few minutes)"
   ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 "$SSH_USER@$ip" \
-    "mkdir -p /tmp/exp && python3.11 -m venv /tmp/exp/.venv 2>/dev/null || python3 -m venv /tmp/exp/.venv; { /tmp/exp/.venv/bin/pip install -q 'locust==$LOCUST_VERSION'; } || /tmp/exp/.venv/bin/pip install --user -q 'locust==$LOCUST_VERSION'"
+    "sudo dnf install -y python3.11 >/dev/null 2>&1; python3.11 --version"
+  local pyver
+  pyver="$(ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 "$SSH_USER@$ip" "python3.11 --version 2>/dev/null || echo MISSING")"
+  case "$pyver" in
+    Python\ 3.1*) : ;;
+    *) echo "FATAL: python3.11 not available on load-gen node (got '$pyver')"; exit 1 ;;
+  esac
+  ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 "$SSH_USER@$ip" \
+    "rm -rf /tmp/exp/.venv && python3.11 -m venv /tmp/exp/.venv && /tmp/exp/.venv/bin/pip install -q --upgrade pip && /tmp/exp/.venv/bin/pip install -q 'locust==$LOCUST_VERSION'"
   local ver
   ver="$(ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 "$SSH_USER@$ip" \
-    "/tmp/exp/.venv/bin/locust --version 2>/dev/null || \$HOME/.local/bin/locust --version 2>/dev/null || echo MISSING")"
+    "/tmp/exp/.venv/bin/locust --version 2>/dev/null || echo MISSING")"
   echo "    locust on node: $ver"
   case "$ver" in
     *MISSING*) echo "FATAL: locust install failed on load-gen node"; exit 1 ;;

@@ -97,6 +97,15 @@ Strumenti: `infra/plots.py` (sanity + processazione + grafici + report),
   / `just loadgen-up` presenti.
 - **Test C e Test D su AWS**: rimane l'esecuzione (runbook in sezione 6). Il
   Test C del gruppo usa `RUNS=20` per classe con `SCENARIO=testC_<size>`.
+- **Design Test C (deciso 2026-08-24):** 1 livello **20 utenti**, `RUNS=10`,
+  `STEADY_MIN=2` per ciascuna size (small/medium/large) **+ un run mix**
+  (`SIZE=mix`, stessa griglia, scenario `testC_mix`) per il confronto
+  isolato-vs-mischiato alla pari.
+- **Stato dati (verificato 2026-08-24, sanitizzato da `just sanity`):** i dati
+  testC esistenti (small 5/5, medium run_4 a 0 richieste + run_5 100%
+  `RemoteDisconnected`, large inutilizzabile) sono tutti a **4 utenti** →
+  **vanno rifatti tutti a 20** (`first_bad_run` considera il livello, quindi
+  riparte da run_1 per ogni scenario). `testC_mix` e `testD` mai eseguiti.
 - Attenzione alla **trappola `SIZE`**: la variabile è letta all'import di
   `locustfile.py` e il default è `mix` → `exp-c` imposta `SIZE=<classe>` a ogni
   run (mai mix), ma in qualsiasi uso manuale di `locustfile.py` va passata
@@ -132,6 +141,15 @@ Strumenti: `infra/plots.py` (sanity + processazione + grafici + report),
 6. **Test C**: `LOADGEN=$LOADGEN TARGET=http://<MASTER_IP>:30080 just exp-c`
    (RUNS=5, SIZES="small medium large", USERS=4). Resume parziale con
    `RUN_START=<pos>` (posizioni 1..15 nella griglia size×runs).
+   - **In alternativa (consigliata, una sessione sola):** il driver
+     `just day-run` fa cluster-up → deploy → loadgen-up → **Test C a 20 utenti
+     (RUNS=10, STEADY_MIN=2) per small/medium/large + `testC_mix`** con pod
+     llama riavviato tra una classe e l'altra (cura la degradazione dopo ~90
+     min di carico, causa delle run a 0 richieste/RemoteDisconnected del
+     rialzo a 4 utenti) → commit dati → `cluster-down`. Intervento manuale =
+     solo credenziali + avvio. **Serve una sessione ~4h** (`SESSION_HOURS=4`,
+     ~3.5h di lavoro): NON impostare 2. Il Test D è disattivato di default
+     (`RUNS_D=0`) perché la campagna riempie la sessione.
    - **Usa `LEVELS=4`** (4 utenti): a 20 utenti il singolo pod si satura e le
      richieste medium/large restano in coda oltre il run-time → run a 0
      richieste. Il runbook originale del gruppo indicava USERS=4: è il

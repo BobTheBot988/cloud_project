@@ -9,6 +9,7 @@ Commands:
 """
 
 import argparse
+import csv
 import re
 import sys
 from pathlib import Path
@@ -30,6 +31,11 @@ HPA_TARGET = 60.0
 CPU_REQUEST_M = 1700
 BIN_S = 60
 LEVELS = [10, 20, 30, 40, 50]
+TESTC_SIZES = ["small", "medium", "large", "mix"]  # mix = weighted pool workload
+TESTC_LEVEL = 20
+TESTC_RUNS = 10
+SCENARIOS = ["testA", "testB"] + [f"testC_{s}" for s in TESTC_SIZES] + ["testD"]
+TESTD_TMAX = 420  # 2x(120+60)s burst shape + margin, for the 60s-binned avg
 
 
 def parse_notes(run_dir):
@@ -59,17 +65,23 @@ def run_dirs(scenario):
 
 def load_replicas(run_dir):
     rows = []
-    for line in (run_dir / "replicas.csv").read_text().splitlines():
-        p = line.split()
-        if len(p) >= 2:
-            rows.append((int(p[0]), int(p[1])))
+    p = run_dir / "replicas.csv"
+    if not p.exists():
+        return pd.DataFrame(columns=["ts", "replicas"])
+    for line in p.read_text().splitlines():
+        p2 = line.split()
+        if len(p2) >= 2:
+            rows.append((int(p2[0]), int(p2[1])))
     df = pd.DataFrame(rows, columns=["ts", "replicas"])
     return df.drop_duplicates("ts") if not df.empty else df
 
 
 def load_hpa(run_dir):
     rows = []
-    for line in (run_dir / "hpa.csv").read_text().splitlines():
+    p = run_dir / "hpa.csv"
+    if not p.exists():
+        return pd.DataFrame(columns=["ts", "cpu_pct", "cur_replicas"])
+    for line in p.read_text().splitlines():
         p = line.split()
         if len(p) >= 7:
             cur = np.nan
@@ -84,7 +96,10 @@ def load_hpa(run_dir):
 
 def load_toppods(run_dir):
     rows = []
-    for line in (run_dir / "toppods.csv").read_text().splitlines():
+    p = run_dir / "toppods.csv"
+    if not p.exists():
+        return pd.DataFrame(columns=["ts", "cpu_m"])
+    for line in p.read_text().splitlines():
         p = line.split()
         if len(p) >= 3:
             rows.append((int(p[0]), int(p[2].rstrip("m"))))
@@ -92,6 +107,13 @@ def load_toppods(run_dir):
     if not df.empty:
         df = df.groupby("ts", as_index=False)["cpu_m"].sum()
     return df
+
+
+def _float(v):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return np.nan  # locust writes "N/A" when too few requests for a percentile
 
 
 def load_locust(run_dir):
@@ -105,13 +127,13 @@ def load_locust(run_dir):
     return {
         "total": int(r["Request Count"]),
         "failures": int(r["Failure Count"]),
-        "req_s": float(r["Requests/s"]),
-        "fail_s": float(r["Failures/s"]),
-        "avg_ms": float(r["Average Response Time"]),
-        "median_ms": float(r["Median Response Time"]),
-        "p50": float(r["50%"]),
-        "p95": float(r["95%"]),
-        "max_ms": float(r["Max Response Time"]),
+        "req_s": _float(r["Requests/s"]),
+        "fail_s": _float(r["Failures/s"]),
+        "avg_ms": _float(r["Average Response Time"]),
+        "median_ms": _float(r["Median Response Time"]),
+        "p50": _float(r["50%"]),
+        "p95": _float(r["95%"]),
+        "max_ms": _float(r["Max Response Time"]),
     }
 
 
@@ -299,7 +321,7 @@ def testB_reported(df):
 
 
 def make_dirs():
-    for p in (PROC / "testA", PROC / "testB", PLOTS, TABLES):
+    for p in (PROC / "testA", PROC / "testB", PROC / "testC", PROC / "testD", PLOTS, TABLES):
         p.mkdir(parents=True, exist_ok=True)
 
 
@@ -408,7 +430,7 @@ def write_processed(testA_avg, lat, df_testB):
     return out
 
 
-def r3_summary(df_testB):
+def r3_summary(df_testB, sumC=None, dfD=None):
     make_dirs()
     rep = testB_reported(df_testB)
     rows = []
@@ -423,16 +445,262 @@ def r3_summary(df_testB):
             "error_rate_pct_mean": round(rep["error_rate"].loc[rep["error_rate"]["level"] == lvl, "mean"].iloc[0] * 100, 1),
             "max_pods": int(sub["pods_steady"].max()),
         })
+    if sumC is not None and not sumC.empty:
+        for _, r in sumC.iterrows():
+            rows.append({
+                "scenario": f"testC {r['size']}",
+                "n_runs": int(r["n_runs"]),
+                "throughput_req_s_mean": r["req_s_mean"],
+                "p50_ms_mean": r["p50_ms_mean"],
+                "p95_ms_mean": r["p95_ms_mean"],
+                "error_rate_pct_mean": r["error_rate_pct"],
+                "max_pods": int(r["pods_steady_mean"]),
+            })
+    if dfD is not None and not dfD.empty:
+        rows.append({
+            "scenario": "testD burst",
+            "n_runs": len(dfD),
+            "throughput_req_s_mean": round(dfD["req_s"].mean(), 3),
+            "p50_ms_mean": round(dfD["p50_ms"].mean(), 1),
+            "p95_ms_mean": round(dfD["p95_ms"].mean(), 1),
+            "error_rate_pct_mean": round(100 * dfD["error_rate"].mean(), 1),
+            "max_pods": int(dfD["max_pods"].max()),
+        })
     pd.DataFrame(rows).to_csv(TABLES / "r3_summary.csv", index=False)
     return rows
 
 
+def load_details(path):
+    """total_ms, upstream_ms, orchestrator_ms by size from requests_detail.csv
+    (successful 2xx rows only — timeouts would misattribute llama delay)."""
+    out = {}
+    if not path.exists():
+        return out
+    for r in csv.DictReader(open(path)):
+        try:
+            status = int(r.get("status", "200"))
+            size = r["size"]
+            total = float(r["total_ms"])
+            up = float(r["upstream_ms"])
+        except (KeyError, ValueError):
+            continue
+        if not (200 <= status < 300):
+            continue
+        out.setdefault(size, []).append((total, up))
+    return out
+
+
+def max_replicas(run_dir):
+    reps = load_replicas(run_dir)
+    return int(reps["replicas"].max()) if not reps.empty else 0
+
+
+def testC_steady_by_size():
+    rows = []
+    for sz in TESTC_SIZES:
+        for d in run_dirs(f"testC_{sz}"):
+            meta = parse_notes(d)
+            run = first_int(meta.get("run"))
+            run_secs = run_seconds(d, meta)
+            if run_secs is None or not (d / "locust_stats.csv").exists():
+                continue
+            loc = load_locust(d)
+            sv = steady_values(d, meta, run_secs)
+            agg = {"total": [], "up": [], "orch": []}
+            for pairs in load_details(d / "requests_detail.csv").values():
+                for t, u in pairs:
+                    agg["total"].append(t)
+                    agg["up"].append(u)
+                    agg["orch"].append(t - u)
+            rows.append({
+                "size": sz,
+                "run": run,
+                "n_requests": loc["total"],
+                "n_failures": loc["failures"],
+                "error_rate": loc["failures"] / loc["total"] if loc["total"] else np.nan,
+                "req_s": loc["req_s"],
+                "avg_ms": loc["avg_ms"],
+                "p50_ms": loc["p50"],
+                "p95_ms": loc["p95"],
+                "pods_steady": sv.get("pods_steady", np.nan),
+                "cpu_pct_steady": sv.get("cpu_pct_steady", np.nan),
+                "delay_total_ms": np.mean(agg["total"]) if agg["total"] else np.nan,
+                "delay_upstream_ms": np.mean(agg["up"]) if agg["up"] else np.nan,
+                "delay_orch_ms": np.mean(agg["orch"]) if agg["orch"] else np.nan,
+                "n_detail": len(agg["total"]),
+            })
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        df = df.sort_values(["size", "run"]).reset_index(drop=True)
+    return df
+
+
+def testC_summary(df):
+    out = []
+    for sz in TESTC_SIZES:
+        sub = df[df["size"] == sz]
+        if sub.empty or sub["n_requests"].sum() == 0:
+            continue
+        out.append({
+            "size": sz,
+            "n_runs": len(sub),
+            "reqs": int(sub["n_requests"].sum()),
+            "fails": int(sub["n_failures"].sum()),
+            "error_rate_pct": round(100 * sub["n_failures"].sum() / max(sub["n_requests"].sum(), 1), 2),
+            "req_s_mean": round(sub["req_s"].mean(), 3),
+            "p50_ms_mean": round(sub["p50_ms"].mean(), 1),
+            "p95_ms_mean": round(sub["p95_ms"].mean(), 1),
+            "pods_steady_mean": round(sub["pods_steady"].mean(), 2),
+            "cpu_pct_steady_mean": round(sub["cpu_pct_steady"].mean(), 1),
+            "delay_total_ms": round(sub["delay_total_ms"].mean(), 1),
+            "delay_upstream_ms": round(sub["delay_upstream_ms"].mean(), 1),
+            "delay_orch_ms": round(sub["delay_orch_ms"].mean(), 1),
+        })
+    return pd.DataFrame(out)
+
+
+def testD_runs():
+    rows = []
+    for d in run_dirs("testD"):
+        meta = parse_notes(d)
+        run = first_int(meta.get("run"))
+        run_secs = run_seconds(d, meta)
+        if run_secs is None or not (d / "locust_stats.csv").exists():
+            continue
+        loc = load_locust(d)
+        sv = steady_values(d, meta, run_secs)
+        rows.append({
+            "run": run,
+            "n_requests": loc["total"],
+            "n_failures": loc["failures"],
+            "error_rate": loc["failures"] / loc["total"] if loc["total"] else np.nan,
+            "req_s": loc["req_s"],
+            "avg_ms": loc["avg_ms"],
+            "p50_ms": loc["p50"],
+            "p95_ms": loc["p95"],
+            "max_pods": max_replicas(d),
+            "cpu_pct_steady": sv.get("cpu_pct_steady", np.nan),
+        })
+    df = pd.DataFrame(rows)
+    if not df.empty:
+        df = df.sort_values("run").reset_index(drop=True)
+    return df
+
+
+def testD_shape_params():
+    for d in run_dirs("testD"):
+        meta = parse_notes(d)
+        return (int(meta.get("normal_secs") or 120),
+                int(meta.get("burst_secs") or 60),
+                int(meta.get("cycles") or 2))
+    return (120, 60, 2)
+
+
+def plot5(sumC):
+    make_dirs()
+    if sumC.empty:
+        print("WARN: no Test C data — plot5 skipped")
+        return
+    xs = np.arange(len(sumC))
+    labels = sumC["size"].to_list()
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(16, 5))
+    width = 0.35
+    p50 = sumC["p50_ms_mean"].to_numpy() / 1000
+    p95 = sumC["p95_ms_mean"].to_numpy() / 1000
+    ax1.bar(xs - width / 2, p50, width, label="p50", color="tab:green")
+    ax1.bar(xs + width / 2, p95, width, label="p95", color="tab:red")
+    ax1.set_xticks(xs)
+    ax1.set_xticklabels(labels)
+    ax1.set_ylabel("response time (s)")
+    ax1.set_title(f"Latency by request size (isolated, {TESTC_LEVEL} users)")
+    ax1.legend()
+    for i, (a, b) in enumerate(zip(p50, p95)):
+        ax1.text(xs[i] - width / 2, a, f"{a:.1f}", ha="center", va="bottom", fontsize=8)
+        ax1.text(xs[i] + width / 2, b, f"{b:.1f}", ha="center", va="bottom", fontsize=8)
+
+    tot = sumC["delay_total_ms"].to_numpy() / 1000
+    up = sumC["delay_upstream_ms"].to_numpy() / 1000
+    orch = sumC["delay_orch_ms"].to_numpy() / 1000
+    ax2.bar(xs, up, 0.5, label="llama upstream", color="tab:blue")
+    ax2.bar(xs, orch, 0.5, bottom=up, label="orchestrator+transport", color="tab:orange")
+    ax2.set_xticks(xs)
+    ax2.set_xticklabels(labels)
+    ax2.set_ylabel("delay (s)")
+    ax2.set_title("Delay breakdown (successful reqs)")
+    ax2.legend()
+    for i, (u, o, t) in enumerate(zip(up, orch, tot)):
+        ax2.text(xs[i], t, f"{t:.1f}s", ha="center", va="bottom", fontsize=8)
+        ax2.text(xs[i], up[i] / 2, f"orch {o * 1000:.0f}ms", ha="center", va="center",
+                 fontsize=7, color="white", fontweight="bold")
+
+    pods = sumC["pods_steady_mean"].to_numpy()
+    cpu = sumC["cpu_pct_steady_mean"].to_numpy()
+    ax3.bar(xs, pods, width, label="pods steady", color="tab:blue")
+    ax3.set_xticks(xs)
+    ax3.set_xticklabels(labels)
+    ax3.set_ylabel("pods (steady)")
+    ax3.set_yticks([1, 2])
+    ax3.set_ylim(0, 3)
+    ax4 = ax3.twinx()
+    ax4.bar(xs + width, cpu, width, label="CPU% steady", color="tab:red", alpha=0.7)
+    ax4.set_ylabel("CPU % (steady)")
+    ax4.set_ylim(0, 130)
+    ax3.set_title("Scaling + CPU by size")
+    h3, l3 = ax3.get_legend_handles_labels()
+    h4, l4 = ax4.get_legend_handles_labels()
+    ax3.legend(h3 + h4, l3 + l4, loc="upper right", fontsize=8)
+    fig.tight_layout()
+    fig.savefig(PLOTS / "plot5_size.png", dpi=150)
+    plt.close(fig)
+    print("wrote", PLOTS / "plot5_size.png")
+
+
+def plot7(testD_avg, dfD):
+    make_dirs()
+    if dfD.empty:
+        print("WARN: no Test D data — plot7 skipped")
+        return
+    fig, ax1 = plt.subplots(figsize=(11, 5))
+    n_secs, b_secs, cycles = testD_shape_params()
+    if testD_avg is not None:
+        t = testD_avg["t_sec"].to_numpy() / 60.0
+        ax1.step(t, testD_avg["replicas_avg"], where="mid", color="tab:blue", linewidth=2,
+                 label="Pods (avg)")
+        ax2 = ax1.twinx()
+        ax2.plot(t, testD_avg["cpu_pct_avg"], color="tab:red", linewidth=1.5,
+                 label="HPA CPU% (avg)")
+        ax2.axhline(HPA_TARGET, color="black", ls="--", lw=1, label=f"HPA target {HPA_TARGET:.0f}%")
+        ax2.set_ylabel("HPA CPU utilization (%)", color="tab:red")
+        ax2.set_ylim(0, 130)
+    for c in range(cycles):
+        s = (c * (n_secs + b_secs) + n_secs) / 60.0
+        e = (c * (n_secs + b_secs) + n_secs + b_secs) / 60.0
+        ax1.axvspan(s, e, color="red", alpha=0.12)
+    ax1.axvspan(0, 0.01, color="red", alpha=0.12, label=f"burst ({b_secs}s)")  # legend swatch
+    ax1.set_xlabel("time since load start (min)")
+    ax1.set_ylabel("replicas", color="tab:blue")
+    ax1.set_yticks([1, 2])
+    ax1.set_ylim(0, 3)
+    ax1.set_title(f"Test D burst: HPA reaction (normal {n_secs}s / burst {b_secs}s x{cycles}, N={len(dfD)})")
+    h1, l1 = ax1.get_legend_handles_labels()
+    if testD_avg is not None:
+        h2, l2 = ax2.get_legend_handles_labels()
+    else:
+        h2, l2 = [], []
+    ax1.legend(h1 + h2, l1 + l2, loc="upper left", fontsize=8)
+    fig.tight_layout()
+    fig.savefig(PLOTS / "plot7_burst.png", dpi=150)
+    plt.close(fig)
+    print("wrote", PLOTS / "plot7_burst.png")
+
+
 def sanity():
     errors, warns, anomalies = [], [], []
-    for scenario in ["testA", "testB"]:
+    for scenario in SCENARIOS:
         dirs = run_dirs(scenario)
         if not dirs:
-            errors.append(f"{scenario}: no run dirs found")
+            if scenario not in ("testC_mix", "testD"):
+                errors.append(f"{scenario}: no run dirs found")
             continue
         for d in dirs:
             run = d.name
@@ -465,10 +733,20 @@ def sanity():
                 hpa = load_hpa(d)
                 if not hpa.empty and hpa["cpu_pct"].nunique() < 3:
                     errors.append(f"{scenario}/{run}: cpu% series is flat (not a real scale run)")
+            elif scenario == "testD":
+                if not reps.empty:
+                    vals = sorted(reps["replicas"].unique())
+                    if vals == [1]:
+                        warns.append(f"{scenario}/{run}: replicas never scaled out (only 1 pod)")
+                hpa = load_hpa(d)
+                if not hpa.empty and hpa["cpu_pct"].nunique() < 2:
+                    warns.append(f"{scenario}/{run}: cpu% flat (no burst reaction)")
             else:
                 level = first_int(meta.get("level_users"))
                 if level is None:
                     errors.append(f"{scenario}/{run}: missing level_users in notes")
+                elif scenario.startswith("testC") and level != TESTC_LEVEL:
+                    warns.append(f"{scenario}/{run}: level_users={level} (expected {TESTC_LEVEL} — collected at the wrong intensity)")
                 hpa = load_hpa(d)
                 if not hpa.empty and hpa["cpu_pct"].nunique() < 2:
                     warns.append(f"{scenario}/{run}: cpu% flat (level {level})")
@@ -479,7 +757,7 @@ def sanity():
                     errors.append(f"{scenario}/{run}: cannot parse locust_stats.csv ({e})")
                     continue
                 if loc["total"] == 0:
-                    errors.append(f"{scenario}/{run}: zero requests recorded")
+                    anomalies.append(f"{scenario}/{run}: zero requests recorded — saturation at high level (throughput ~0)")
                 err = loc["failures"] / loc["total"] if loc["total"] else 0.0
                 level = first_int(meta.get("level_users"))
                 if err > 0.05:
@@ -506,6 +784,12 @@ def sanity():
             for _, r in lat.iterrows():
                 if pd.isna(r["t_scaleout"]):
                     warns.append(f"testA/run_{int(r['run'])}: scale-out not captured (collector started after 1->2)")
+        elif scenario.startswith("testC"):
+            if len(dirs) < TESTC_RUNS:
+                warns.append(f"{scenario}: only {len(dirs)} runs (target {TESTC_RUNS}, under-sampled)")
+        elif scenario == "testD":
+            if len(dirs) < 3:
+                warns.append(f"testD: only {len(dirs)} runs (target >=3)")
     return errors, warns, anomalies
 
 
@@ -521,9 +805,34 @@ def run_all():
     reported = testB_reported(dfB)
     plot1(testA_avg, lat)
     plot2_3_4(reported, dfB)
-    r3_summary(dfB)
+    sumC, dfD = process_extra()
+    plot_extra(sumC, dfD)
+    r3_summary(dfB, sumC, dfD)
     print("wrote:", PLOTS, PROC, TABLES)
     return 0
+
+
+def process_extra():
+    """Test C + Test D processing: per-run frames + summary tables (returns
+    (testC_summary_df, testD_per_run_df)); missing data -> empty frames."""
+    make_dirs()
+    dfC = testC_steady_by_size()
+    sumC = testC_summary(dfC)
+    if not dfC.empty:
+        dfC.to_csv(PROC / "testC" / "steady_per_run.csv", index=False)
+    if not sumC.empty:
+        sumC.to_csv(TABLES / "testC_summary.csv", index=False)
+    dfD = testD_runs()
+    if not dfD.empty:
+        dfD.to_csv(PROC / "testD" / "steady_per_run.csv", index=False)
+        dfD.to_csv(TABLES / "testD_summary.csv", index=False)
+    return sumC, dfD
+
+
+def plot_extra(sumC, dfD):
+    plot5(sumC)
+    testD_avg = average_runs("testD", TESTD_TMAX)
+    plot7(testD_avg, dfD)
 
 
 def write_report():
@@ -579,6 +888,24 @@ def write_report():
         lines.append(f"| {int(lvl)} | {n} | {m['offered_req_s']:.3f} | {m['received_req_s']:.3f} | "
                      f"{m['p50_ms']:.0f} | {m['p95_ms']:.0f} | {m['error_rate']*100:.1f} | "
                      f"{m['pods_steady']:.1f} | {m['cpu_pct_steady']:.1f} |")
+    sumC, dfD = process_extra()
+    if not sumC.empty:
+        lines.append(f"\n### Test C (size-isolated + mix, {TESTC_LEVEL} users)")
+        lines.append("| size | N | req/s | p50 (ms) | p95 (ms) | error % | pods | CPU% | delay total/up/orch (ms) |")
+        lines.append("|---|---|---|---|---|---|---|---|---|")
+        for _, r in sumC.iterrows():
+            lines.append(f"| {r['size']} | {int(r['n_runs'])} | {r['req_s_mean']:.3f} | "
+                         f"{r['p50_ms_mean']:.0f} | {r['p95_ms_mean']:.0f} | {r['error_rate_pct']:.1f} | "
+                         f"{r['pods_steady_mean']:.1f} | {r['cpu_pct_steady_mean']:.1f} | "
+                         f"{r['delay_total_ms']:.0f}/{r['delay_upstream_ms']:.0f}/{r['delay_orch_ms']:.0f} |")
+    if not dfD.empty:
+        lines.append("\n### Test D (burst)")
+        lines.append("| run | N reqs | fails | error % | req/s | p50 (ms) | p95 (ms) | max pods |")
+        lines.append("|---|---|---|---|---|---|---|---|")
+        for _, r in dfD.iterrows():
+            lines.append(f"| {int(r['run'])} | {int(r['n_requests'])} | {int(r['n_failures'])} | "
+                         f"{r['error_rate']*100:.1f} | {r['req_s']:.3f} | {r['p50_ms']:.0f} | "
+                         f"{r['p95_ms']:.0f} | {int(r['max_pods'])} |")
     (TABLES / "common_mistakes_report.md").write_text("\n".join(lines) + "\n")
     print("wrote", TABLES / "common_mistakes_report.md")
     return 0
@@ -613,6 +940,7 @@ def main():
         dfB = testB_steady_by_level()
         reported = testB_reported(dfB)
         write_processed(testA_avg, lat, dfB)
+        process_extra()
         print("processed ->", PROC)
     if args.cmd in ("all", "plots"):
         testA_avg = average_runs("testA", 1650)
@@ -621,7 +949,9 @@ def main():
         reported = testB_reported(dfB)
         plot1(testA_avg, lat)
         plot2_3_4(reported, dfB)
-        r3_summary(dfB)
+        sumC, dfD = process_extra()
+        plot_extra(sumC, dfD)
+        r3_summary(dfB, sumC, dfD)
         print("plots ->", PLOTS)
     return 0
 

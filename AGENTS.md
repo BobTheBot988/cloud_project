@@ -15,10 +15,10 @@ University project: scale an LLM inference service (Qwen3.5-0.8B via llama.cpp) 
 | `plots/analyze.py` | variant analysis (exp2/exp4/exp6): capacity/p95/error/availability vs level, delay breakdown total vs upstream vs orchestrator, per size class → PNGs + CSV into `artifacts/` (`just plots`) |
 | `HANDOFF.md` | Block 3 Person A→B handoff: what B owns + gotchas (SIZE trap, uneven N, level mapping, git add -f) |
 | `deploy/` | k8s manifests: deployment (sidecar, initContainer prefetch), deployment-kind-fast (hostPath GGUF, kind only), service (NodePort 30080), hpa (cpu 60%, min 1 max 2) + hpa-exp4 (max 4) / hpa-exp6 (max 6) variants; llama-server args include `--parallel 2` |
-| `infra/` | EC2 lifecycle scripts (quota-guarded) + `guards.sh` (shared guard logic + `sweep_stale` + `workers_ceiling`), `kind-fast.sh` (offline kind run), `tests/` (guard trigger tests), Block 3: `collect.sh` (kubectl metric collector), `exp-a.sh`/`exp-b.sh` (Test A/B orchestrators; exp-b takes `SCENARIO`, `RUN_START` multi-session resume, ban-guard: remote TARGET requires in-AWS `LOADGEN`), `exp-c.sh` (size-isolated Test C), `exp-d.sh` (Test D burst), `loadgen-up.sh` (in-AWS locust node, quota-guarded +1/+2), `exp-smoke.sh` (local gate), `plots.py` (B offline pipeline: sanity + Test A/B plots + report), `r4_cost.py` (6-month cost vs Lambda); `WORKERS` env scales cluster nodes (exp4=4, exp6=6) |
+| `infra/` | EC2 lifecycle scripts (quota-guarded) + `guards.sh` (shared guard logic + `sweep_stale` + `workers_ceiling`), `kind-fast.sh` (offline kind run), `tests/` (guard trigger tests), Block 3: `collect.sh` (kubectl metric collector), `exp-a.sh`/`exp-b.sh` (Test A/B orchestrators; exp-b takes `SCENARIO`, `RUN_START` multi-session resume, ban-guard: remote TARGET requires in-AWS `LOADGEN`), `exp-c.sh` (size-isolated Test C), `exp-d.sh` (Test D burst), `loadgen-up.sh` (in-AWS locust node, quota-guarded +1/+2), `exp-smoke.sh` (local gate), `plots.py` (B offline pipeline: sanity + Test A/B/C/D plots + report), `r4_cost.py` (6-month cost vs Lambda), `day-run.sh` (B one-shot AWS driver: cluster-up→deploy→loadgen→Test C redo→pod restart→Test D→commit→teardown, timer-safe); `WORKERS` env scales cluster nodes (exp4=4, exp6=6) |
 | `data/raw/` | Block 3 per-run CSVs: `run_<i>/{toppods,replicas,hpa,events}.csv`, `locust_stats.csv`, `notes.md` (gitignored; commit with `git add -f`). Test A runs 1-5 (N=5), Test B runs 1-25 (all levels N=5) |
 | `kind-config.yaml` | local kind cluster (control-plane + 2 workers, NodePort 30080) |
-| `justfile` | recipes: test, test-prompt, up/down, launch/cluster-up/cluster-verify/cluster-down, kind-up/load/metrics/deploy/test/fast/down, case-0/1/2 + aliases, guard-default, case-all, exp-a/exp-b/collect/collect-stop/exp-smoke, exp4/exp6 (+ -up/launch4/launch6), exp-c/exp-d/loadgen-up, plots/plots-b/sanity/report/r4 |
+| `justfile` | recipes: test, test-prompt, up/down, launch/cluster-up/cluster-verify/cluster-down, kind-up/load/metrics/deploy/test/fast/down, case-0/1/2 + aliases, guard-default, case-all, exp-a/exp-b/collect/collect-stop/exp-smoke, exp4/exp6 (+ -up/launch4/launch6), exp-c/exp-d/loadgen-up, day-run (B one-shot AWS session), plots/plots-b/sanity/report/r4 |
 | `artifacts/` | variant plot PNGs + tables from `just plots` (gitignored; commit with `-f`) |
 | `MEASURE.md` | perf evidence (25.8 tok/s @2thr, 2B fork rejected) |
 | `.opencode/agent/` | swarm-builder + swarm-reviewer subagents (deepseek/deepseek-v4-flash, variant minimal) |
@@ -78,6 +78,7 @@ just exp-a / exp-b            # Block 3 Test A ramp / Test B sweep (AWS: set LOA
 just exp4 / exp6              # variant sweeps: HPA max 4/6, WORKERS=4/6 cluster, N=20/level
 just exp-c                    # size-isolated Test C (small/medium/large sweeps)
 just collect / collect-stop   # kubectl metric collector start/stop
+just day-run                  # B one-shot AWS session driver (timer-safe, unattended)
 just plots                    # variant analysis -> artifacts/
 just launch / cluster-up / cluster-verify / cluster-down   # EC2 lifecycle
 ```

@@ -162,6 +162,15 @@ exp-d:
 loadgen-up:
 	bash infra/loadgen-up.sh
 
+# Person B one-shot AWS session: cluster-up -> deploy -> loadgen-up -> Test C
+# @20 users (small/medium/large/mix, RUNS=10, STEADY_MIN=2, fresh pod between
+# classes) -> commit -> teardown. Needs a ~4h session (SESSION_HOURS=4).
+# Env: REGION AZ1 AZ2 SESSION_HOURS START_AT LEVELS_C RUNS_C STEADY_MIN_C
+#      TESTC_SCENARIOS RUNS_D (0 = Test D off) NO_TEARDOWN
+# Run unattended with: setsid nohup just day-run > /tmp/day-run.log 2>&1 &
+day-run:
+	bash infra/day-run.sh
+
 # switch active variant HPA on a live cluster (exp4|exp6)
 variant-hpa v:
 	bash infra/swap-hpa.sh {{v}}
