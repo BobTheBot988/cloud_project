@@ -18,7 +18,7 @@ Da `Block3-WORKSPLIT.md`:
 | Tooling loadgen (`loadgen-up.sh`) | ✅ Fatto |
 | Driver unattended (`day-run.sh`) | ✅ Fatto |
 | **Esecuzione Test C su AWS** | ⚠️ Fatto ma con problemi di qualità dati |
-| **Esecuzione Test D su AWS** | ❌ Non fatto |
+| **Esecuzione Test D su AWS** | ✅ Fatto (26-08-2026, 3 run, 0 errori) |
 | Analisi dati Test A/B (sezioni 4.x) | ❌ Da rifare (dati cambiati dal collega) |
 | Sezioni report: Tool justification, environment, Test C/D, R4 | ❌ Non scritte |
 
@@ -69,7 +69,7 @@ just day-run      → sessione one-shot completa
 | `plot2_3_pods_and_latency.png` | Pods + p50/p95 vs offered load (Test B) | ✅ Generato |
 | `plot4_offered_vs_received.png` | Offered vs received load (bottleneck, Test B) | ✅ Generato |
 | `plot5_size.png` | Latency + delay breakdown + scaling per size class (Test C) | ✅ Generato |
-| `plot7_burst.png` | Test D burst HPA reaction | ❌ Non generato (no dati Test D) |
+| `plot7_burst.png` | Test D burst HPA reaction | ✅ Generato (26-08) |
 
 ### 3.2 Tabelle (`tables/`)
 
@@ -191,19 +191,45 @@ a 4 utenti. Contro: le size class non sarebbero confrontabili (intensità divers
 Parametri: `LOW_USERS=2 HIGH_USERS=12 NORMAL_SECS=120 BURST_SECS=60 CYCLES=2 RUNS=3`,
 collector a 20s.
 
-| Run | Richieste | Errori | req/s | avg (ms) | med (ms) | p95 (ms) |
-|---|---|---|---|---|---|---|
-| run_1 | 42 | 0 | 0.12 | 28799 | 47000 | 69000 |
-| run_2 | 48 | 0 | 0.14 | 26042 | 35000 | 156000 |
-| run_3 | 55 | 0 | 0.16 | 21216 | 32000 | 55000 |
-| **Totale** | **145** | **0** | — | — | — | — |
+| Run | Richieste | Errori | req/s | avg (ms) | med (ms) | p95 (ms) | p99 (ms) |
+|---|---|---|---|---|---|---|---|
+| run_1 | 42 | 0 | 0.117 | 28799 | 22000 | 56000 | 69000 |
+| run_2 | 48 | 0 | 0.135 | 26042 | 17000 | 58000 | 156000 |
+| run_3 | 55 | 0 | 0.157 | 21216 | 20000 | 52000 | 63000 |
+| **Totale** | **145** | **0** | — | — | — | — | — |
 
 **Reazione HPA (run_1, `hpa.csv` + `events.csv`):**
 - partenza 1 pod, CPU 0% → primo burst: CPU **86% → 106%**, `SuccessfulRescale` → **New size: 2** (~27s dal via).
 - tra i burst la CPU scende a **49-53%** ma l'HPA tiene 2 pod: la **finestra di stabilizzazione dello scale-in (300s)** è più lunga della fase low (120s) → **scale-in non osservabile** nel tempo di run. Da dichiarare nel report come limite del protocollo, non del sistema.
-- latenza più alta durante i burst (p95 55-156s), coerente con la coda su 2 slot.
+- latenza più alta durante i burst (p95 52-58s), coerente con la coda su 2 slot.
 
-Test D produce il **plot 7** (burst HPA reaction). Dati validi e committati.
+### 5.1 Analisi Test D
+
+Numeri chiave da `tables/testD_summary.csv` (3 run): 0.136 req/s medi, p50 ~21.7s,
+p95 ~55.3s, **0% errori**, 2 pod steady.
+
+- **I burst vengono assorbiti senza errori (0 su 145 richieste).** Il segnale è
+  pulito: la CPU passa 0% → 86-106% durante i burst e l'HPA scala 1→2 in ~27s
+  (evento `SuccessfulRescale`). Il target 60% viene superato con margine, quindi
+  la reazione è quella attesa.
+- **Contrasto con Test B (insight chiave).** A 12 utenti sostenuti (Test B,
+  livello ~10-20) si osservavano errori 0-35%; nel Test D un burst da 12 utenti
+  di soli 60s produce **0 errori**. Motivo: il burst corto viene assorbito dalla
+  coda su 2 slot e la fase low successiva (2 utenti, 120s) la **drena** prima che
+  scatti il timeout proxy (300s). È il carico *sostenuto* a far esplodere errori,
+  non il picco breve → HPA + coda tollerano i burst.
+- **Coda distribuita in modo asimmetrico**: in `toppods.csv` il primo pod resta
+  saturo (~1900m) anche tra i burst (mix workload in coda), mentre il secondo
+  pod è quasi idle (~5m). A 2 utenti il carico è già vicino alla saturazione di 1
+  pod → il burst di 12 utenti satura entrambi.
+- **Scale-in non osservabile**: finestra di stabilizzazione HPA (300s) più lunga
+  della fase low (120s) → nei 3 run i pod restano 2. Il Test A resta l'unico con
+  scale-in 2→1 dimostrato.
+- Latenza: p50 17-22s, p95 52-58s; il **p99 di run_2 a 156s** mostra la coda
+  massima raggiunta sotto burst (richieste che attendono ma completano, zero
+  timeout).
+
+Test D produce il **plot 7** (`plots/plot7_burst.png`). Dati validi e committati.
 
 ---
 
