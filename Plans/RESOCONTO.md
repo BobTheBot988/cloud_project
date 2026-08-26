@@ -324,14 +324,20 @@ Tutti i test dei guard continuano a passare con le nuove regole
 | Block 0 — sistema locale + prove | ✅ COMPLETO |
 | Block 1 — script cluster + guard | ✅ COMPLETO (testato; run AWS fatto) |
 | Block 2 — deploy + HPA su AWS | ✅ **COMPLETO (provato dal vivo il 17-08-2026)** |
-| Block 3 — esperimenti di carico | ✅ QUASI COMPLETO (Test A/B + varianti exp4/exp6 fatti; resta report/plots finali) |
+| Block 3 — esperimenti di carico | ✅ **COMPLETO** (Test A/B/C/D + varianti exp4/exp6 fatti; resta la scelta sui dati Test C large + sezioni report) |
 | Block 4 — analisi + relazione | ⬜ Da fare |
 
 **Stato Block 3:** Test A (5 run, scale-out 1→2 e scale-in 2→1), Test B (25 run, tutti i livelli N=5),
 **varianti exp4/exp6** (100 run ciascuno, N=20/livello, HPA max 4/6, delay attribuzione
 total/upstream/orchestrator). Risultato: più pod → meno errori/latenza, disponibilità maggiore;
 **orchestratore ≈ 11ms, bottleneck = llama** (container). Dati in `data/raw/{testA,testB,exp4,exp6}/`,
-plots in `artifacts/`, `plots/analyze.py`. Handoff a B per report finale (vedi `HANDOFF.md`).
+plots in `artifacts/`, `plots/analyze.py`.
+**Test C** (size-isolato @20 utenti, 26-08): small sano (~0.46 req/s, p50 25s, orch 11ms), medium
+degradato (13.6% err, p50 84s), **large insufficiente (10 req, 7/10 run vuote — decisione da
+prendere)**, mix con interference cross-size (small 25s isolato → 88s nel mix). Analisi in
+`Plans/blocco_3_person_b.md` §4.3.
+**Test D** (bursty, 26-08): 3 run, 145 req, 0 errori; scale-out 1→2 al burst (CPU 0%→86%→106%),
+nessuno scale-in (finestra stabilizzazione 300s > fase low 120s). Dati in `data/raw/testD/`.
 
 ---
 

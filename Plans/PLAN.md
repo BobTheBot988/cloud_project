@@ -62,17 +62,20 @@ curl http://127.0.0.1:30080/health                 # via NodePort
 - Apply Service + HPA -> `kubectl get hpa` shows data (debug Metrics Server _now_ if not).
 - Locust 2-5 fake users -> confirm scaling visibly starts (kind already proved scale-out at 91%/60%).
 
-## Block 3 — Experimental runs (1-2 sessions, budget-frugal)
 
-Status: **Test A + Test B + variants exp4/exp6 COMPLETE on AWS** — all data + artifacts committed; **Test C/D tooling + B offline pipeline built** (plots.py now covers testC/testD → plot5/plot7 + tables, `day-run.sh` one-shot AWS driver timer-safe). Remaining: B runs Test C redo (medium 4-5 + all large) + Test D on AWS, report writing (plots 1-8 + variant analysis + R4, Person B) + joint merge.
 
-- Split: two-person relay per `Plans/Block3-WORKSPLIT.md`; Phase 0 plan in `Plans/Block3-a.md`.
-- Data: `data/raw/testA/` runs 1-5 (N=5, all 1->2->1 scale), `data/raw/testB/` runs 1-25 (all levels 10/20/30/40/50 N=5), `data/raw/exp4/` runs 1-100 (N=20, HPA max 4), `data/raw/exp6/` runs 1-100 (N=20, HPA max 6).
-- Variants: `WORKERS=6` cluster served both (HPA swapped via `swap-hpa.sh`), per-request `requests_detail.csv` (total vs upstream vs orchestrator), `plots/analyze.py` → `artifacts/`. Result: more pods → lower latency/errors/availability; orchestrator ≈ 11ms (llama = bottleneck).
-- Person A tooling: `locustfile.py` size buckets + mix (0.5/0.3/0.2), `ramp_shape.py` (Test A ramp), `infra/collect.sh` (per-min kubectl collector), `infra/exp-a.sh` (ramp), `infra/exp-b.sh` (intensity sweep), `just exp-smoke` (local gate, verified).
-- Data layout: `data/raw/<scenario>/run_<i>/{toppods,replicas,hpa,events}.csv` + `locust_*.csv` + `notes.md`.
-- Collector: `kubectl top pods` at interval + Locust CSV -> `run_1`, `run_2`, ...
-- 5 solid runs >=15 min (ramp-up -> stable -> ramp-down). Shut instances after.
+## Block 3 — Experimental runs
+
+Status: **COMPLETE on AWS.** All tests done + data committed:
+
+- **Test A** (elasticity ramp): `data/raw/testA/run_1..5` — scale-out 1->2 + scale-in 2->1 in every run.
+- **Test B** (load-capacity): `data/raw/testB/run_1..25` — levels 10/20/30/40/50, N=5. Saturation at max 2 pods (p95 pinned at 300s proxy timeout under load, 503=llama busy, 504=gen timeout).
+- **Variants exp4/exp6** (HPA max 4/6, N=20/level): `data/raw/exp4/`, `data/raw/exp6/` — more pods -> lower latency/errors/higher availability; orchestrator ~11ms (llama = bottleneck). `plots/analyze.py` -> `artifacts/`.
+- **Test C** (size-isolated @20 users): `data/raw/testC_{small,medium,large,mix}/` — small healthy (~0.46 req/s, p50 25s), medium degraded (13.6% err, p50 84s), **large data insufficient (10 reqs, 7/10 runs empty)** — decision pending (redo at 4 users vs accept). Mix shows cross-size interference (small 25s isolated -> 88s in mix). Analysis in `Plans/blocco_3_person_b.md` §4.3.
+- **Test D** (bursty, 2026-08-26): `data/raw/testD/run_1..3` — 145 req, 0 errors; HPA scale-out 1->2 on burst (CPU 0%->86%->106%), no scale-in (stabilization 300s > 120s low window). Plot 7 now possible.
+
+Data committed with `git add -f` (raw + plots/tables gitignored). Tooling: `exp-a/exp-b/exp-c/exp-d.sh`, `loadgen-up.sh`, `collect.sh`, `day-run.sh`, `plots.py`, `r4_cost.py`.
+
 
 ## Block 4 — Analysis, report (out of AWS)
 

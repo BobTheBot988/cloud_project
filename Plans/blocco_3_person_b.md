@@ -119,7 +119,56 @@ A **20 utenti** il sistema si satura pesantemente per medium e large:
   *"a 20 utenti il singolo pod si satura e le richieste medium/large restano in
   coda → run a 0 richieste. USERS=4 è il regime giusto."*
 
-### 4.3 Decisione necessaria
+### 4.3 Analisi per size class (dati @20 utenti)
+
+Numeri chiave da `tables/testC_summary.csv` + `requests_detail.csv` (solo 2xx):
+
+| Size | N req | req/s | p50 (ms) | p95 (ms) | error % | delay total (s) | upstream (s) | orch (ms) |
+|---|---|---|---|---|---|---|---|---|
+| small | 497 | 0.46 | 24.8 | 51.0 | 1.2 | 25.3 | 25.3 | 11 |
+| medium | 57 | 0.06 | 84.4 | 115.5 | 13.6 | 80.9 | 80.9 | 17 |
+| large | 10 | 0.009 | 93.8 | 113.6 | 0.0 | 78.8 | 78.8 | 13 |
+| mix | 121 | 0.105 | 88.0 | 114.0 | 0.0 | 84.2 | 84.2 | 17 |
+
+**Small — unico regime sano.** Il pod regge 20 utenti: ~0.46 req/s (fino a 0.7
+nelle run pulite), p50 ~25s, p95 ~51s, errori 1.2%. Orchestrator 11ms → il
+costo è tutto di llama (upstream 25s), coerente col delay attribution delle
+varianti. Caveat: 2 run a 0 richieste (run_8, run_10) e run_9 con 6 richieste
+tutte fallite a ~107s → rumore da cold-start/pod non pronto, non dal carico.
+Le run sane 2-6 danno il segnale pulito.
+
+**Medium — degradato.** ~0.06 req/s, p50 ~84s, p95 ~115s, errori 13.6%.
+Una richiesta medium dura ~80-115s e ci sono solo 2 slot (--parallel 2): a 20
+utenti la coda cresce e il 13.6% supera il timeout proxy (300s). 2 run a 0
+richieste. Il sistema è al limite ma produce dati utilizzabili.
+
+**Mix — comportamento reale, e l'insight più forte.** 121 richieste, 0 errori,
+~0.105 req/s, p50 ~88s. Splittando `requests_detail.csv` per size:
+
+| Size nel mix | N | p50 (ms) | isolato (ms) |
+|---|---|---|---|
+| small | 59 | 88.0 | 24.8 |
+| medium | 41 | 86.0 | 84.4 |
+| large | 21 | 98.5 | 93.8 |
+
+Nel mix **tutte le classi convergono a ~86-98s**: una richiesta small si mette
+in coda dietro medium/large e passa da 25s a 88s (**~3.5× più lenta**). Questo è
+esattamente ciò che il Test C isola: senza interferenza cross-size ogni classe
+mostra il suo costo reale (small 25s, medium 84s). Il mix non ha errori perché
+le richieste completano in coda entro il timeout, ma a latenza uniformemente alta.
+
+**Large — ⚠️ problema dati, non (solo) di sistema.** 10 richieste totali su 10
+run: solo 3 run utili (run_1=4, run_2=5, run_5=1), **7 run su 10 a 0 richieste**.
+p50 ~94s, p95 ~114s, 0 errori ma su N=10. Causa: una richiesta large dura
+~90-120s e con 2 slot + STEADY_MIN=2 min una run completa al massimo 4-5
+richieste; con 20 utenti le richieste restano in coda e la run termina prima
+che ne completi. **N=3 run / 10 richieste non è statisticamente valido** e non è
+confrontabile con small/medium. Il limite non è la capacità (il pod la
+processa), è il protocollo di run: finestra di osservazione più corta del tempo
+di servizio. Servirebbe rifare a 4 utenti (come da runbook) o con steady più
+lungo.
+
+### 4.4 Decisione necessaria
 
 > ⚠️ I dati Test C large sono statisticamente insufficienti (2 run su 10).
 
@@ -136,14 +185,25 @@ a 4 utenti. Contro: le size class non sarebbero confrontabili (intensità divers
 
 ---
 
-## 5. Test D — ❌ Non eseguito
+## 5. Test D — ✅ Eseguito (26-08-2026)
 
-Nessuna directory `data/raw/testD/` presente. Il `day-run.sh` aveva `RUNS_D=0`
-di default (disabilitato per riempire la sessione col Test C).
+`data/raw/testD/run_1..3/`, sessione AWS us-east-1 (cluster nuovo, loadgen t3.micro).
+Parametri: `LOW_USERS=2 HIGH_USERS=12 NORMAL_SECS=120 BURST_SECS=60 CYCLES=2 RUNS=3`,
+collector a 20s.
 
-Il tooling è pronto (`exp-d.sh` + `burst_shape.py`), serve solo l'esecuzione
-in una sessione AWS. Test D è **opzionale** nel piano ma fornisce il plot 7
-(burst HPA reaction) che arricchisce il report.
+| Run | Richieste | Errori | req/s | avg (ms) | med (ms) | p95 (ms) |
+|---|---|---|---|---|---|---|
+| run_1 | 42 | 0 | 0.12 | 28799 | 47000 | 69000 |
+| run_2 | 48 | 0 | 0.14 | 26042 | 35000 | 156000 |
+| run_3 | 55 | 0 | 0.16 | 21216 | 32000 | 55000 |
+| **Totale** | **145** | **0** | — | — | — | — |
+
+**Reazione HPA (run_1, `hpa.csv` + `events.csv`):**
+- partenza 1 pod, CPU 0% → primo burst: CPU **86% → 106%**, `SuccessfulRescale` → **New size: 2** (~27s dal via).
+- tra i burst la CPU scende a **49-53%** ma l'HPA tiene 2 pod: la **finestra di stabilizzazione dello scale-in (300s)** è più lunga della fase low (120s) → **scale-in non osservabile** nel tempo di run. Da dichiarare nel report come limite del protocollo, non del sistema.
+- latenza più alta durante i burst (p95 55-156s), coerente con la coda su 2 slot.
+
+Test D produce il **plot 7** (burst HPA reaction). Dati validi e committati.
 
 ---
 
@@ -166,7 +226,7 @@ scritte.
 | Plot 1: scale-out 1→2 + scale-in 2→1 | A (generato da pipeline B) | ✅ |
 | Plot 2-4: pods/p50-p95/throughput vs intensity | A (generato da pipeline B) | ✅ |
 | Plot 5: small vs medium vs large | **B** | ⚠️ (generato, ma dati large scarsi) |
-| Plot 7: burst | **B** | ❌ (Test D non eseguito) |
+| Plot 7: burst | **B** | ✅ (Test D fatto 26-08, 3 run) |
 | R4: costo 6 mesi + Lambda | **B** | ✅ |
 | Sanity pass (errori comuni) | **B** | ✅ |
 | Bottleneck localizzato | **A** (pipeline B) | ✅ (plot 4 + delay breakdown) |
@@ -187,10 +247,11 @@ Decidere se i dati Test C a 20 utenti sono sufficienti o se rifare (vedi §4.3).
 - Se si accettano → procedere con l'analisi (large avrà solo 2 datapoint).
 - Se si rifanno → servono credenziali AWS + 1 sessione (~2-3h a 4 utenti).
 
-### 8.2 Test D (opzionale, se c'è una sessione AWS)
+### 8.2 Test D — ✅ Fatto (26-08-2026)
 
-Se si fa un'altra sessione per rifare Test C, aggiungere Test D nella stessa
-sessione (`RUNS_D=3`). ~30 min aggiuntivi.
+3 run completate, 0 errori, dati in `data/raw/testD/`. Generare il plot 7 con
+`just plots-b` e includerlo nel report. Nota: scale-in non osservabile (finestra
+stabilizzazione 300s vs fase low 120s) — dichiararlo nel report.
 
 ### 8.3 Scrivere le sezioni del report (Block 4)
 
