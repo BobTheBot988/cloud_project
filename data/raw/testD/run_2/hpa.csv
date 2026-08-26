@@ -1,0 +1,15 @@
+1787753990 llm-proxy   Deployment/llm-proxy   cpu: 105%/60%   1     2     2     17m
+1787754016 llm-proxy   Deployment/llm-proxy   cpu: 105%/60%   1     2     2     17m
+1787754041 llm-proxy   Deployment/llm-proxy   cpu: 97%/60%   1     2     2     18m
+1787754067 llm-proxy   Deployment/llm-proxy   cpu: 103%/60%   1     2     2     18m
+1787754093 llm-proxy   Deployment/llm-proxy   cpu: 97%/60%   1     2     2     18m
+1787754119 llm-proxy   Deployment/llm-proxy   cpu: 85%/60%   1     2     2     19m
+1787754145 llm-proxy   Deployment/llm-proxy   cpu: 100%/60%   1     2     2     19m
+1787754171 llm-proxy   Deployment/llm-proxy   cpu: 105%/60%   1     2     2     20m
+1787754198 llm-proxy   Deployment/llm-proxy   cpu: 102%/60%   1     2     2     20m
+1787754224 llm-proxy   Deployment/llm-proxy   cpu: 106%/60%   1     2     2     21m
+1787754251 llm-proxy   Deployment/llm-proxy   cpu: 94%/60%   1     2     2     21m
+1787754277 llm-proxy   Deployment/llm-proxy   cpu: 102%/60%   1     2     2     21m
+1787754303 llm-proxy   Deployment/llm-proxy   cpu: 91%/60%   1     2     2     22m
+1787754330 llm-proxy   Deployment/llm-proxy   cpu: 105%/60%   1     2     2     22m
+1787754355 llm-proxy   Deployment/llm-proxy   cpu: 105%/60%   1     2     2     23m
