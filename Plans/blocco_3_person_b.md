@@ -249,9 +249,11 @@ Decidere se i dati Test C a 20 utenti sono sufficienti o se rifare (vedi §4.3).
 
 ### 8.2 Test D — ✅ Fatto (26-08-2026)
 
-3 run completate, 0 errori, dati in `data/raw/testD/`. Generare il plot 7 con
-`just plots-b` e includerlo nel report. Nota: scale-in non osservabile (finestra
-stabilizzazione 300s vs fase low 120s) — dichiararlo nel report.
+3 run completate, 0 errori, dati in `data/raw/testD/`. Plot 7 generato con
+`just plots-b` (`plots/plot7_burst.png`) + `tables/testD_summary.csv`
+(0.136 req/s, p50 21.7s, p95 55.3s, 0% errori). Nota per il report:
+- **scale-out 1→2 visibile** in run_1 (CPU 0%→86%→106%, evento `SuccessfulRescale`), ma la media su N=3 appiattisce la linea replicas a 2 (le run 2-3 partono già a 2) → nel plot la reazione emerge dalla CPU sopra target, non dal gradino replicas.
+- **scale-in non osservabile** (finestra stabilizzazione 300s vs fase low 120s) — dichiararlo nel report.
 
 ### 8.3 Scrivere le sezioni del report (Block 4)
 

@@ -1,0 +1,5 @@
+size,n_runs,reqs,fails,error_rate_pct,req_s_mean,p50_ms_mean,p95_ms_mean,pods_steady_mean,cpu_pct_steady_mean,delay_total_ms,delay_upstream_ms,delay_orch_ms
+small,10,498,6,1.2,0.458,38000.0,45750.0,1.9,75.4,26338.3,26326.6,11.7
+medium,10,66,9,13.64,0.06,86875.0,109375.0,2.0,76.9,83674.1,83657.2,16.9
+large,10,10,0,0.0,0.009,92333.3,106666.7,2.0,104.0,87126.9,87115.4,11.5
+mix,10,121,0,0.0,0.105,92700.0,111400.0,2.0,103.2,86616.6,86599.9,16.7
