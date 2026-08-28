@@ -1,3 +1,0 @@
-Method,Name,Error,Occurrences,First Seen,Last Seen
-POST,/generate,HTTPError('504 Server Error: Gateway Timeout for url: /generate'),35,2026-08-28T14:54:02Z,2026-08-28T15:18:48Z
-POST,/generate,RemoteDisconnected('Remote end closed connection without response'),3,2026-08-28T15:18:16Z,2026-08-28T15:19:31Z
