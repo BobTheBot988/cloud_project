@@ -19,7 +19,36 @@ U_MAX="${U_MAX:-20}"
 SIZE="${SIZE:-mix}"
 TARGET="${TARGET:-http://127.0.0.1:8000}"
 LOADGEN="${LOADGEN:-}"
+FRESH_POD="${FRESH_POD:-0}"
 SCENARIO=testA
+
+# kubectl over ssh to the master (AWS) or local kubectl (kind smoke)
+kc() {
+  if [ -f "$DIR/.cluster-ips" ]; then
+    # shellcheck disable=SC1091
+    source "$DIR/.cluster-ips"
+  fi
+  if [ -n "${MASTER_PUB:-}" ]; then
+    local kargs="kubectl"
+    local a
+    for a in "$@"; do
+      printf -v kargs '%s %q' "$kargs" "$a"
+    done
+    timeout 180 ssh "${SSH_OPTS[@]}" "$SSH_USER@$MASTER_PUB" "sudo KUBECONFIG=/etc/kubernetes/admin.conf $kargs"
+  else
+    timeout 180 kubectl "$@"
+  fi
+}
+
+# restart the llama pod so every run starts from a fresh, non-degraded
+# llama-server (the server deadlocks under sustained concurrent load —
+# see Block3-a.md). Idempotent: any Running pod is deleted, then we wait
+# for the deployment rollout (readiness gate) before the run starts.
+fresh_pod() {
+  echo "==> fresh llama pod"
+  kc delete pod -l app=llm-proxy --wait=false >/dev/null 2>&1 || true
+  kc rollout status deployment/llm-proxy --timeout=180s
+}
 
 # shell-quote a value for safe embedding into the remote ssh command
 q() { printf '%q' "$1"; }
@@ -96,6 +125,9 @@ for i in $(seq "$RUN_START" "$RUNS"); do
   fi
   mkdir -p "$CUR_RUN_DIR"
   echo "==> Test A run $i/$RUNS (U_MAX=$U_MAX, SIZE=$SIZE)"
+  if [ "$FRESH_POD" = "1" ]; then
+    fresh_pod
+  fi
   bash "$DIR/collect.sh" start "$SCENARIO" "$i"
   RUN_TS=$(date -u +%s)
   {
