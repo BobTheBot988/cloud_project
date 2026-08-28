@@ -73,7 +73,7 @@ without elasticity and \$3{,}787 for an equivalent AWS Lambda deployment.
 
 \section{Introduction}
 
-LLM inference is an unusual target for autoscaling. Each request is long-lived,
+LLM inference is less commonly evaluated under reactive autoscaling. Each request is long-lived,
 compute-bound, and variable in cost: on CPU-only hardware a single generation
 occupies a core for tens of seconds while the model decodes one token at a
 time. Whether a reactive autoscaler can serve such a workload usefully is not
@@ -91,7 +91,7 @@ We report two campaigns, and the relationship between them is the spine of
 this paper. Campaign~A (Sec.~\ref{sec:campaignA}) measures the baseline
 deployment. Test~A drives it with a continuous ramp of users and shows that
 the HPA deterministically scales out $1{\to}2$ and back $2{\to}1$
-(scale-\emph{in} is the behaviour almost no experiment of this kind shows).
+(scale-\emph{in} under an idle drain is less commonly reported; many published profiles do not include a long idle period).
 Test~B sweeps fixed user counts from 10 to 50 and locates the saturation
 point: the two workers are the ceiling, and beyond roughly 20--30 users the
 p95 latency is pinned against the proxy's 300\,s timeout while the error rate
@@ -197,9 +197,9 @@ Three of our results restate known ones on a new workload: reactive
 autoscalers need headroom and react on a delayed signal; serverless loses to
 provisioned for long steady compute; and the bottleneck of a distributed
 service is usually not the orchestrator. Two are less standard. The clean
-$2{\to}1$ scale-\emph{in} under an idle drain is rarely shown in this literature
-because most load profiles never return to idle; Test~A demonstrates it in
-every replicate. And the $\approx$11\,ms orchestrator share of a 40\,s request
+$2{\to}1$ scale-\emph{in} under an idle drain is less commonly reported,
+because many published load profiles do not include a long idle period; Test~A
+demonstrates it in every replicate. And the $\approx$11\,ms orchestrator share of a 40\,s request
 is a direct measurement, using a timing header added to the proxy, of the
 claim that Kubernetes itself is cheap next to the work it schedules.
 
