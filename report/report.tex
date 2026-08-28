@@ -183,9 +183,10 @@ capacity input rather than arrival rate alone.
 
 \subsection{Economics: provisioned versus serverless}
 
-Adzic and Chatley~\cite{adzic2017} report large savings moving to serverless,
-and Eivy and Weinman~\cite{eivy2017} show the same conclusion reverses once
-traffic is steady and predictable. Our R4 evaluation (Sec.~\ref{sec:cost})
+Adzic and Chatley~\cite{adzic2017} report 66--95\% savings moving low-duty-cycle
+enterprise workloads to serverless, and Eivy and Weinman~\cite{eivy2017} show
+that the benefit depends on execution behavior and volumes and can reverse as
+traffic grows. Our R4 evaluation (Sec.~\ref{sec:cost})
 finds the same trade-off on an LLM workload: a peak-sized single instance
 without elasticity costs more than the autoscaled cluster, and a serverless
 deployment is roughly $7\times$ more expensive because long CPU-bound
