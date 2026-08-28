@@ -199,3 +199,7 @@ Per session (fresh Learner Lab, ~4h):
 8. Fallback trims if time runs short, in order: drop level 10 for the remainder → STEADY_MIN=1.5 → N=15 for the second variant. Log any trim in the run notes.
 
 Post-campaign: `just plots` → `artifacts/` (capacity/p95/error/availability, delay breakdown per level + per size, exp2 baseline), commit with `-f`.
+
+## Test A REDO — S2 results (2026-08-28, N=4 done of 10)
+
+Calibrated sawtooth ran on a fresh exp6 cluster: runs 1-4 clean (`interrupted=0`), consistent pattern **1→2→4→6→5→4→3→2→1** — up-leg 1→2→4→6, then 4-5 distinct scale-in steps mid-run. Errors ≤2/run (<0.4%, mostly 504 tails at the 50-user peak). Fresh-pod per run (`FRESH_POD=1`) eliminated the S1 llama.cpp hang contamination. HOLD1_USERS=20 overshoots to 4 pods (was targeting 3) — acceptable; valleys land ~4/3/2. Runs 5-10 remain for N=10 (next sessions). Teardown: manual — `03-down.sh` only got the stray S1 loadgen; cluster + EIPs + SG cleaned via direct AWS calls.
