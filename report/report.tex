@@ -150,9 +150,12 @@ is the work, and the work is a long decode.
 
 \subsection{The experimental environment}
 
-The deployment runs on AWS Academy Learner Lab, a sandbox with hard caps
-($\le$8 instances, $\le$31 vCPU, instance size $\le$medium) enforced by the
-course. Sessions last about two hours, credentials are temporary and
+The deployment runs on AWS Academy Learner Lab, a sandbox where we
+self-enforce stricter caps ($\le$8 instances, $\le$31 vCPU, instance size
+$\le$medium) below the lab's hard limits to eliminate the risk of account
+deactivation for quota breach; the caps are enforced by the course scripts
+(\code{guards.sh}/\code{01-launch.sh}) and fail the launch before any resource
+is created. Sessions last four hours, credentials are temporary and
 region-scoped (us-east-1 or us-west-2), and the lab auto-restarts instances
 left stopped, so every experiment is a fresh cluster built from scripts
 (\code{infra/}) and torn down afterwards. Load generation must stay inside the
@@ -335,9 +338,9 @@ teardown (\code{just cluster-down}).
 
 All conclusions apply to a 0.8B CPU-bound model on t-series instances; GPU
 serving, batched inference or a larger model would change service time, hence
-the elasticity axis, though not the method. The lab's hard caps (8 instances /
-31 vCPU) bound the variant campaign to $N{=}20$ and six workers, and its
-temporary, region-scoped credentials meant runs span two regions
+the elasticity axis, though not the method. Our self-enforced caps
+(8 instances / 31 vCPU) bound the variant campaign to $N{=}20$ and six workers,
+and the lab's temporary, region-scoped credentials meant runs span two regions
 (us-east-1, us-west-2).
 
 \section{Campaign A: Elasticity and Capacity}
