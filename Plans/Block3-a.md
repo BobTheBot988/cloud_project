@@ -2,6 +2,63 @@
 
 Companion to `Plans/Block3.md` (metrics/procedure source of truth) and `Plans/Block3-WORKSPLIT.md` (role split). Scope: **Person A Phase 0** — the offline tooling for Test A (continuous ramp) and Test B (load-capacity curve), plus the local smoke gate. AWS sessions 1-2 execute later with this tooling.
 
+---
+
+## Test A REDO — sawtooth `1→3→6→4→2` (N=10, max 6 pods)
+
+**SUPERSEDES** the original Test A below (N=5, max-2 HPA, continuous ramp). Old `testA/run_1..5` data is overwritten in session 1 (`FORCE=1`); it stays recoverable in git history.
+
+**Why:** the original single out-and-back `1→2→1` proved one scale cycle. The sawtooth proves repeated bidirectional elasticity — scale-out AND scale-in firing mid-run — and exercises the 6-pod ceiling on the exp6 cluster.
+
+### Shape (`ramp_shape.py`, rewritten in place)
+
+```
+WARMUP   60s @  1      baseline, 1 pod
+RAMP1    60s @ 25      short ramp -> ~3 pods
+HOLD1   300s @ 25      settle at 3 pods
+RAMP2    60s @ 50      short ramp up -> ~6 pods (ceiling)
+HOLD2   480s @ 50      settle at 6 pods
+VALLEY1 360s @ 15      -> ~4 pods (scale-in #1)
+VALLEY2 360s @ 10      -> ~2 pods (scale-in #2)
+RAMPDOWN 60s @  0      load off
+DRAIN   480s @  0      idle -> 1 pod
+```
+
+~39 min/run. All durations/users env-overridable. **Hard floors:** VALLEY1/2 ≥ 360s and DRAIN ≥ 480s — below that HPA's 300s scale-down stabilization never fires and scale-in evidence is lost. RAMP1/RAMP2/RAMPDOWN shortened to 60s per operator request.
+
+**Emergent, not guaranteed:** pod counts follow CPU vs the 60% target; expect approx `1→3→6→4→2→1`, not exact. User levels (25/50/15/10) are first-guesses — **calibrate after run 1** (if HOLD1 doesn't reach 3 pods, raise HOLD1_USERS; if VALLEY1 doesn't shed pods, lower VALLEY1_USERS).
+
+### Config
+
+- **Cluster:** `WORKERS=6 just exp6-up` (8 inst / 16 vCPU, at cap) — 6 replicas can't schedule on the default 2-worker cluster.
+- **HPA:** `bash infra/swap-hpa.sh exp6` (`maxReplicas: 6`, deletes base max-2 + the other variant HPA).
+- **Load:** `U_MAX=50 SIZE=mix`; **N=10**, `RUN_START` multi-session resume.
+- **Data:** overwrite `data/raw/testA/run_1..10`.
+
+### Session runbook (3 × 3:30, 4 runs/session comfy)
+
+Per session (fresh Learner Lab): creds (region-scoped) → `WORKERS=6 just exp6-up` → `just loadgen-up` (export `LOADGEN`) → deploy + `swap-hpa.sh exp6` → `just exp-a` with `U_MAX=50 SIZE=mix TARGET=http://<master>:30080 LOADGEN=ec2-user@<ip>` →
+
+- S1: `RUN_START=1  RUNS=4  FORCE=1`  (overwrites old N=5 data)
+- S2: `RUN_START=5  RUNS=8`
+- S3: `RUN_START=9  RUNS=10`
+
+→ verify `interrupted=0` in every `notes.md` → `git add -f data/raw/testA/` + commit → `just cluster-down` (mandatory). If setup overruns, 3 runs/session is fine — resume from the actual `RUN_START`.
+
+**Fallback trims (in order):** HOLD2_SECS 480→360 → HOLD1_SECS 300→240 → DRAIN_SECS 480→420. Log any trim in `notes.md`.
+
+### Post-data (deferred until S3 lands)
+
+- `infra/plots.py`: `N=5` label (line 333) → data-driven; `testA_scale_latencies` hardcoded `==2` logic (lines 212-216) → first `>1` / last drop to `1`; sanity checks + report line ~871 (`1->2->1`).
+- `report.tex`: §Test A rewrite (sawtooth, N=20→10, ramp to 50, cluster note), Fig 1 regen.
+- `Plans/PLAN.md` + `AGENTS.md`: shape/status.
+
+### Cross-test config note
+
+Test A redo runs on the **6-worker/max-6** cluster; existing Test B/C/D data was collected on **2-worker/max-2**. Report must state the per-test cluster config (cheap one-line note) to preempt reviewer questions. The sawtooth shape itself does NOT affect Test B/C/D — independent shapes, data dirs, recipes.
+
+---
+
 ## Deliverables
 
 | File | Content |
@@ -81,7 +138,7 @@ Both sessions: `just cluster-down` at end (budget rule), account clean (0 instan
 
 ## Results (Sessions 1-2, AWS us-west-2)
 
-**Test A — N=5 complete** (`data/raw/testA/run_1..5`). All runs show scale-out 1→2 (CPU crossing 60%) AND scale-in 2→1 (drain, ≥10min zero load) in `replicas.csv`; `SuccessfulRescale` events in runs 2-5 (run_1's `events.csv` was lost to the ssh hang). Totals: 1142 reqs, 89 fails (**7.8%**, per-run 0-13%; run_5 clean at 0%). Avg response 35-49s, p95 72-90s. U_MAX=12, `--parallel 2`.
+**Test A — N=5 complete** (`data/raw/testA/run_1..5`) — **SUPERSEDED by the sawtooth redo above** (data overwritten). All runs show scale-out 1→2 (CPU crossing 60%) AND scale-in 2→1 (drain, ≥10min zero load) in `replicas.csv`; `SuccessfulRescale` events in runs 2-5 (run_1's `events.csv` was lost to the ssh hang). Totals: 1142 reqs, 89 fails (**7.8%**, per-run 0-13%; run_5 clean at 0%). Avg response 35-49s, p95 72-90s. U_MAX=12, `--parallel 2`.
 
 **Test B — 25 runs** (`data/raw/testB/run_1..25`). STEADY_MIN=6. **All levels 10/20/30/40/50 = 5 runs each (N=5)**; level 50 runs 24-25 completed in a follow-up session (initial teardown lost them; stray level-10 `run_24` removed). Totals: 1776 reqs, 617 fails (**34.7%** overall). Error rate noisy per run but trends up with intensity: 10u 0-35% (run_1 outlier 91%), 20u 0-55%, 30u 0-34%, 40u 29-68%, 50u 5-75% (avg ~34%). Failure split: 503 busy=254, 504 timeout=231, 502=132. **p95 pins at 300s** (proxy timeout) at high intensity → compute saturation at max 2 pods; pods steady at 2 for all levels ≥10 users (maxReplicas cap).
 
