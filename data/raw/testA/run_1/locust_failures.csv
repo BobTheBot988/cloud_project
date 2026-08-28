@@ -1,3 +1,2 @@
-Method,Name,Error,Occurrences
-POST,/generate,HTTPError('503 Server Error: Service Unavailable for url: /generate'),7
-POST,/generate,HTTPError('502 Server Error: Bad Gateway for url: /generate'),4
+Method,Name,Error,Occurrences,First Seen,Last Seen
+POST,/generate,HTTPError('504 Server Error: Gateway Timeout for url: /generate'),1,2026-08-28T14:13:48Z,2026-08-28T14:13:48Z

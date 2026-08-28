@@ -1,14 +1,3 @@
-# scenario=testA run=1
-collect_start=1787925384
-interval_sec=60
-run=1
-run_start=1787925386
-test=TestA(ramp)
-u_max=50 size=mix
-target=http://52.43.216.224:30080 loadgen=ec2-user@54.83.155.35
-runs_total=4
-collect_stop=1787927740
---- events ---
 44m     Normal    Starting                       node/ip-172-31-17-115.us-west-2.compute.internal   
 45m     Normal    Starting                       node/ip-172-31-37-144.us-west-2.compute.internal   
 46m     Normal    Starting                       node/ip-172-31-34-42.us-west-2.compute.internal    
@@ -188,6 +177,3 @@ collect_stop=1787927740
 2m50s   Normal    SuccessfulDelete               replicaset/llm-proxy-7dc458997b                    Deleted pod: llm-proxy-7dc458997b-9dwsh
 2m50s   Normal    SuccessfulDelete               replicaset/llm-proxy-7dc458997b                    Deleted pod: llm-proxy-7dc458997b-p2zdm
 2m50s   Normal    ScalingReplicaSet              deployment/llm-proxy                               Scaled down replica set llm-proxy-7dc458997b from 3 to 1
-run_end=1787927740
-interrupted=0
-sawtooth=partial 1->2->4->6, valleys not distinct (HPA pinned at ceiling, scale-in only during drain)
