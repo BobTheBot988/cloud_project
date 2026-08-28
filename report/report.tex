@@ -506,7 +506,9 @@ exp2/exp4/exp6. More pods, lower tail and fewer errors.}
 \centering
 \includegraphics[width=\columnwidth]{figures/variant_delay_breakdown}
 \caption{Delay split (total / upstream / orchestrator) per level. The
-orchestrator share is $\approx$11\,ms; llama decode dominates.}
+orchestrator share is $\approx$11\,ms; llama decode dominates. A small
+$x$-position jitter ($\pm$0.6 users) is applied so the overlapping
+\texttt{total} and \texttt{upstream} lines remain separately visible.}
 \label{fig:delay_variant}
 \end{figure}
 
