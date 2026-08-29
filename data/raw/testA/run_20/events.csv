@@ -1,14 +1,3 @@
-# scenario=testA run=20
-collect_start=1788025942
-interval_sec=60
-run=20
-run_start=1788025945
-test=TestA(ramp)
-u_max=50 size=mix
-target=http://184.33.208.162:30080 loadgen=ec2-user@35.153.201.75
-runs_total=20
-collect_stop=1788028305
---- events ---
 47m     Normal    Starting                       node/ip-172-31-17-210.us-west-2.compute.internal   
 43m     Normal    Starting                       node/ip-172-31-18-41.us-west-2.compute.internal    
 45m     Normal    Starting                       node/ip-172-31-19-34.us-west-2.compute.internal    
@@ -208,5 +197,3 @@ collect_stop=1788028305
 2m50s   Normal    SuccessfulDelete               replicaset/llm-proxy-7dc458997b                    Deleted pod: llm-proxy-7dc458997b-nzq64
 2m50s   Normal    SuccessfulDelete               replicaset/llm-proxy-7dc458997b                    Deleted pod: llm-proxy-7dc458997b-vx49l
 2m50s   Normal    ScalingReplicaSet              deployment/llm-proxy                               Scaled down replica set llm-proxy-7dc458997b from 3 to 1
-run_end=1788028305
-interrupted=0
