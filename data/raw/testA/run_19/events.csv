@@ -1,14 +1,3 @@
-# scenario=testA run=19
-collect_start=1788021484
-interval_sec=60
-run=19
-run_start=1788021487
-test=TestA(ramp)
-u_max=50 size=mix
-target=http://52.42.189.223:30080 loadgen=ec2-user@98.85.252.197
-runs_total=20
-collect_stop=1788023846
---- events ---
 45m     Normal    ScalingReplicaSet              deployment/llm-proxy                     Scaled down replica set llm-proxy-7dc458997b from 6 to 4
 45m     Normal    SuccessfulDelete               replicaset/llm-proxy-7dc458997b          Deleted pod: llm-proxy-7dc458997b-pxqb9
 45m     Normal    SuccessfulDelete               replicaset/llm-proxy-7dc458997b          Deleted pod: llm-proxy-7dc458997b-h4tr8
@@ -140,5 +129,3 @@ collect_stop=1788023846
 2m59s   Normal    Killing                        pod/llm-proxy-7dc458997b-l47dw           Stopping container llama-server
 2m59s   Normal    SuccessfulDelete               replicaset/llm-proxy-7dc458997b          Deleted pod: llm-proxy-7dc458997b-l47dw
 2m59s   Normal    ScalingReplicaSet              deployment/llm-proxy                     Scaled down replica set llm-proxy-7dc458997b from 3 to 1
-run_end=1788023846
-interrupted=0
