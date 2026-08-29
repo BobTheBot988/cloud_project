@@ -1,14 +1,3 @@
-# scenario=testA run=20
-collect_start=1788023902
-interval_sec=60
-run=20
-run_start=1788023905
-test=TestA(ramp)
-u_max=50 size=mix
-target=http://52.42.189.223:30080 loadgen=ec2-user@98.85.252.197
-runs_total=20
-collect_stop=1788024557
---- events ---
 57m     Normal    ScalingReplicaSet              deployment/llm-proxy                     Scaled down replica set llm-proxy-7dc458997b from 6 to 4
 57m     Normal    Killing                        pod/llm-proxy-7dc458997b-pxqb9           Stopping container llama-server
 57m     Normal    Killing                        pod/llm-proxy-7dc458997b-h4tr8           Stopping container llama-server
@@ -224,5 +213,3 @@ collect_stop=1788024557
 2m19s   Normal    Created                        pod/llm-proxy-7dc458997b-d9b94           Container created
 2m19s   Normal    Started                        pod/llm-proxy-7dc458997b-d9b94           Container started
 2m18s   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-d9b94           Readiness probe failed: Get "http://10.244.1.8:8000/health": dial tcp 10.244.1.8:8000: connect: connection refused
-interrupted=1
-run_end=1788024557
