@@ -24,3 +24,5 @@
 1788027531 llm-proxy-exp6   Deployment/llm-proxy   cpu: 53%/60%   1     6     6     28m
 1788027600 llm-proxy-exp6   Deployment/llm-proxy   cpu: 50%/60%   1     6     6     29m
 1788027669 llm-proxy-exp6   Deployment/llm-proxy   cpu: 52%/60%   1     6     6     30m
+1788027738 llm-proxy-exp6   Deployment/llm-proxy   cpu: 53%/60%   1     6     6     31m
+1788027808 llm-proxy-exp6   Deployment/llm-proxy   cpu: 42%/60%   1     6     6     33m
