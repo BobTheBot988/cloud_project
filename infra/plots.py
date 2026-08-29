@@ -331,11 +331,25 @@ def plot1(testA_avg, lat):
     max_pods = int(np.nanmax(testA_avg["replicas_avg"]))
     fig, ax1 = plt.subplots(figsize=(11, 5))
     t = testA_avg["t_sec"].to_numpy() / 60.0
-    ax1.step(t, testA_avg["replicas_avg"], where="mid", color="tab:blue", linewidth=2,
-             label=f"Pods (avg, N={n})")
+
+    # per-run replica traces (thin, translucent) show the discrete sawtooth
+    # steps that the N-run average smears; drawn first, behind the average
+    for d in run_dirs("testA"):
+        meta = parse_notes(d)
+        t0 = first_int(meta.get("run_start"))
+        if t0 is None:
+            continue
+        reps = load_replicas(d)
+        if reps.empty:
+            continue
+        tr = rel_time(reps, t0) / 60.0
+        ax1.step(tr, reps["replicas"], where="mid", color="tab:blue", lw=0.6,
+                 alpha=0.35, zorder=1)
+    ax1.step(t, testA_avg["replicas_avg"], where="mid", color="tab:blue", linewidth=2.2,
+             label=f"Pods (avg, N={n})", zorder=3)
     ax1.fill_between(t, testA_avg["replicas_avg"] - testA_avg["replicas_std"],
                      testA_avg["replicas_avg"] + testA_avg["replicas_std"],
-                     step="mid", alpha=0.2, color="tab:blue", label="±1σ pods")
+                     step="mid", alpha=0.15, color="tab:blue", label="±1σ pods", zorder=2)
     ax1.set_xlabel("time since load start (min)")
     ax1.set_ylabel("replicas", color="tab:blue")
     ax1.set_ylim(0, max_pods + 1)
@@ -343,17 +357,18 @@ def plot1(testA_avg, lat):
 
     ax2 = ax1.twinx()
     ax2.plot(t, testA_avg["cpu_pct_avg"], color="tab:red", linewidth=1.5,
-             label="HPA CPU% (avg)")
+             label="HPA CPU% (avg)", zorder=3)
     ax2.fill_between(t, testA_avg["cpu_pct_avg"] - testA_avg["cpu_pct_std"],
                      testA_avg["cpu_pct_avg"] + testA_avg["cpu_pct_std"],
-                     alpha=0.15, color="tab:red", label="±1σ CPU%")
+                     alpha=0.12, color="tab:red", label="±1σ CPU%", zorder=2)
     ax2.axhline(HPA_TARGET, color="black", ls="--", lw=1.5, label=f"HPA target {HPA_TARGET:.0f}%")
     ax2.set_ylabel("HPA CPU utilization (%)", color="tab:red")
     ax2.set_ylim(0, 130)
 
     l1, lb1 = ax1.get_legend_handles_labels()
     l2, lb2 = ax2.get_legend_handles_labels()
-    ax1.legend(l1 + l2, lb1 + lb2, loc="center left", fontsize=8)
+    ax1.legend(l1 + l2, lb1 + lb2, loc="upper left", bbox_to_anchor=(1.02, 1.0),
+               fontsize=8, framealpha=0.9)
 
     ok = lat.dropna(subset=["scale_out_latency_s", "scale_in_latency_s"])
     if not ok.empty:
@@ -363,7 +378,7 @@ def plot1(testA_avg, lat):
                      xytext=(t_out + 1, max_pods + 0.5), fontsize=8, ha="center", arrowprops=dict(arrowstyle="->"))
         ax1.annotate(f"scale-in\n({ok['scale_in_latency_s'].mean():.0f}s)", (t_in, 1.12),
                      xytext=(t_in - 1, 1.45), fontsize=8, ha="center", arrowprops=dict(arrowstyle="->"))
-    fig.tight_layout()
+    fig.tight_layout(rect=[0, 0, 0.84, 1])
     fig.savefig(PLOTS / "plot1_elasticity.png", dpi=150)
     plt.close(fig)
 
