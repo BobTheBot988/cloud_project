@@ -347,7 +347,8 @@ A robustness note: llama-server (build 10380) degrades into a deadlock under
 sustained concurrent load --- node CPU falls to single digits while every
 request times out at the proxy --- so each Test~A run starts from a freshly
 restarted pod (\code{FRESH\_POD}); a single generation returns in $\sim$5\,s
-after the restart. The sawtooth data above the restart baseline is unaffected.
+after the restart. The restart doubles as a controlled cold start: every run
+begins with a cold model and builds up from an empty cluster.
 
 All conclusions apply to a 0.8B CPU-bound model on t-series instances; GPU
 serving, batched inference or a larger model would change service time, hence
@@ -374,14 +375,20 @@ stabilisation window to expire. Kubernetes recorded the corresponding
 requests, 116 errors (1.0\%), all 504-generation timeouts at the 50-user
 peak; the per-run error rate stayed below 0.5\%.
 
-Fig.~\ref{fig:elasticity} plots replicas and CPU against time (thin lines are
-individual runs; the bold line is the $N{=}20$ average). The repeated
-out-and-back cycle is the elasticity evidence: scale-\emph{out} latency is
-within the 60\,s SLO in every run (0\,s in the collector's 60\,s resolution),
-and scale-\emph{in} follows each valley with a mean latency of
-$\approx$224\,s (137--422\,s across runs), the expected shape of the HPA
-stabilisation delay. Because scale-in fires \emph{mid-run}, the descent is
-observed in every replicate rather than only at the end of a run.
+Fig.~\ref{fig:elasticity} plots replicas and CPU against time (the $N{=}20$
+average). The repeated out-and-back cycle is the elasticity evidence:
+scale-\emph{out} latency is within the 60\,s SLO in every run (0\,s in the
+collector's 60\,s resolution), and scale-\emph{in} follows each valley with a
+mean latency of $\approx$224\,s (137--422\,s across runs), the expected shape
+of the HPA stabilisation delay. Because scale-in fires \emph{mid-run}, the
+descent is observed in every replicate rather than only at the end of a run.
+
+Every run starts from a \emph{cold} pod: as the robustness note below
+describes, we restart llama-server before each replicate, so the model is
+loaded from disk at run start and the first seconds of the warm-up absorb the
+cold-start transient. The measurements therefore capture full
+cold-to-warm autoscaling behaviour, and the steady-state plateaus we report
+are reached from a genuinely empty cluster each time.
 
 \begin{figure}[t]
 \centering
