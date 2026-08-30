@@ -213,7 +213,8 @@ def testA_scale_latencies():
         up = t_rel_r[rt["replicas"].to_numpy() > 1]
         p1_after = t_rel_r[(rt["replicas"].to_numpy() == 1) & (t_rel_r > (up.min() if up.size else 0))]
         t_scaleout = None if (not up.size or started_scaled) else int(up.min())
-        t_scalein = int(p1_after.max()) if p1_after.size else None
+        # scale-in: FIRST return to 1 pod (not the last sample of the run)
+        t_scalein = int(p1_after.min()) if p1_after.size else None
         cpu_over = t_rel_h[ht["cpu_pct"].to_numpy() >= HPA_TARGET]
         idle = t_rel_h[(ht["cpu_pct"].to_numpy() < 1) & (t_rel_h < (t_scalein if t_scalein else 1e18))]
         t_cpu60 = int(cpu_over.min()) if cpu_over.size else None
@@ -229,14 +230,21 @@ def testA_scale_latencies():
                     if (gaps[k:] <= 90).all():
                         t_load0 = int(idle[k])
                         break
+        # full scale-in: first time CPU falls below the target after the last
+        # peak (the descent begins) -> first return to 1 pod. This spans the
+        # HPA's 300s scale-down stabilisation window plus the stepped downscales.
+        below = t_rel_h[(t_rel_h > (cpu_over.max() if cpu_over.size else 0)) &
+                        (ht["cpu_pct"].to_numpy() < HPA_TARGET)]
+        t_below60 = int(below.min()) if below.size else None
         rows.append({
             "run": run,
             "t_cpu60": t_cpu60,
             "t_scaleout": t_scaleout,
             "scale_out_latency_s": (t_scaleout - t_cpu60) if (t_scaleout and t_cpu60) else None,
             "t_load0": t_load0,
+            "t_below60": t_below60,
             "t_scalein": t_scalein,
-            "scale_in_latency_s": (t_scalein - t_load0) if (t_scalein and t_load0) else None,
+            "scale_in_latency_s": (t_scalein - t_below60) if (t_scalein and t_below60) else None,
         })
     df = pd.DataFrame(rows).sort_values("run").reset_index(drop=True)
     return df
@@ -873,7 +881,7 @@ def write_report():
              "",
              "- `plot1_elasticity.png`: replicas_avg + CPU%_avg vs time (N={len(lat)}). Verified sawtooth: scale-out 1->2->4->6 under the ramp, repeated scale-in steps (6->5->4->3->2->1) as load drops, CPU above 60% target during load, 0% at idle.",
              f"- scale-out latency: same 60-s sample bucket in all captured runs (0 s, resolution-limited <= 60 s).",
-             f"- scale-in latency: mean {lat['scale_in_latency_s'].mean(skipna=True):.0f} s (range {lat['scale_in_latency_s'].dropna().min():.0f}-{lat['scale_in_latency_s'].dropna().max():.0f} s), consistent with HPA scale-down stabilization.",
+             f"- scale-in latency (CPU<60% target -> 1 pod): mean {lat['scale_in_latency_s'].mean(skipna=True):.0f} s (range {lat['scale_in_latency_s'].dropna().min():.0f}-{lat['scale_in_latency_s'].dropna().max():.0f} s), consistent with the HPA 300 s scale-down stabilization window plus the stepped descent 6->5->4->3->2->1.",
              "- `plot2_pods_vs_reqs.png`: pods steady ~1.8 (level 10) then 2.0 (levels >= 20) — maxReplicas cap reached from 20 users up.",
              "- `plot3_latency_vs_reqs.png`: p95 climbs to 165-300 s, pinned at the 300 s proxy timeout from level 50 (and some level 10-40 runs).",
              "- `plot4_offered_vs_received.png`: received (successful req/s) falls below offered as intensity grows; divergence = saturation (503 busy / 504 timeout), not network loss.",

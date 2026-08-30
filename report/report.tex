@@ -378,9 +378,11 @@ peak; the per-run error rate stayed below 0.5\%.
 Fig.~\ref{fig:elasticity} plots replicas and CPU against time (the $N{=}20$
 average). The repeated out-and-back cycle is the elasticity evidence:
 scale-\emph{out} latency is within the 60\,s SLO in every run (0\,s in the
-collector's 60\,s resolution), and scale-\emph{in} follows each valley with a
-mean latency of $\approx$224\,s (137--422\,s across runs), the expected shape
-of the HPA stabilisation delay. Because scale-in fires \emph{mid-run}, the
+collector's 60\,s resolution). The full scale-\emph{in} back to one pod takes
+a mean of $\approx$740\,s (range 352--1{,}614\,s) from the moment CPU falls
+below the 60\% target: roughly the first 300\,s is the HPA's scale-down
+stabilisation window, after which the deployment steps down through
+$6{\to}5{\to}4{\to}3{\to}2{\to}1$. Because scale-in fires \emph{mid-run}, the
 descent is observed in every replicate rather than only at the end of a run.
 
 Every run starts from a \emph{cold} pod: as the robustness note below
@@ -589,7 +591,7 @@ Table~\ref{tab:sla} evaluates the objectives of Sec.~\ref{sec:sla}.
 Objective & Target & Measured & \\
 \midrule
 Elasticity scale-out & $\le$60 s & 0 s (Test A) & pass \\
-Elasticity scale-in  & after valleys & every run, $\approx$224 s mean (Test A) & pass \\
+Elasticity scale-in  & after load recedes & every run, $\approx$740 s mean (Test A) & pass \\
 Availability (2xx) @20u & $\ge$99\% & 98.8\% (Test C small) & pass \\
 Error rate @20u      & $<$10\%  & 24\% (exp6 level 20) & \textbf{fail} \\
 p95, small class     & $<$300 s  & 45.8 s (Test C) & pass \\
@@ -668,7 +670,7 @@ We evaluated a CPU-based HPA as the elasticity mechanism for an LLM inference
 service on AWS Learner Lab, with a six-pod ceiling. Test~A drives the
 deployment with a sawtooth profile and the HPA scales out $1{\to}2{\to}4{\to}6$
 and back $6{\to}5{\to}4{\to}3{\to}2{\to}1$ in every one of $N{=}20$ runs,
-including mid-run scale-\emph{in} with a mean latency of $\approx$224\,s, the
+including mid-run scale-\emph{in} with a mean latency of $\approx$740\,s, the
 HPA stabilisation delay. Attributing
 client wait time per request showed that llama decode accounts for the whole
 latency budget while the orchestrator and transport contribute $\approx$11\,ms,
