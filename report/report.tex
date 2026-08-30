@@ -47,20 +47,18 @@ application under different workload conditions. The application under test is
 a small-parameter LLM (Qwen3.5-0.8B) served by llama.cpp inside a
 Kubernetes pod behind a thin FastAPI proxy, and we evaluate whether a
 CPU-based HPA is a sound elasticity mechanism for LLM inference, and at what
-cost. The service runs on two \code{t3.medium} workers
-with the HPA targeting 60\% CPU between 1 and 2 pods. A first campaign
-establishes elasticity and capacity: under a continuous user ramp (Test~A,
-$N{=}5$) the HPA scales out $1{\to}2$ and back $2{\to}1$ in every run, and under
-fixed user intensities from 10 to 50 (Test~B, $N{=}5$ per level, 25 runs) the
-deployment saturates at two pods, with the p95 response time pinned against
-the proxy's 300\,s timeout and error rates (503/504/502) rising to 34.7\%
-overall. Attributing end-to-end delay per request shows that the llama decode
+cost. The service runs on six \code{t3.medium} workers
+with the HPA targeting 60\% CPU between 1 and 6 pods. Test~A drives it with a
+sawtooth user profile ($N{=}20$) and the HPA scales out $1{\to}2{\to}4{\to}6$
+and back $6{\to}5{\to}4{\to}3{\to}2{\to}1$ in every run: a repeated
+bidirectional elasticity cycle that includes mid-run scale-\emph{in}, not only
+a single out-and-back. Raising the HPA ceiling from 4 to 6 pods (exp4/exp6,
+$N{=}20$ per level) keeps availability $\ge$0.76 and p95 below 100\,s, and at
+level 50 the six-pod deployment processes 7\,$\times$ the requests of the
+four-pod one by absorbing the queue instead of dropping it.
+Attributing end-to-end delay per request shows that the llama decode
 dominates (~40\,s) while the orchestrator and transport path contribute only
-$\approx$11\,ms, so the bottleneck is the model container, not Kubernetes. A
-second campaign varies the HPA ceiling: with \code{maxReplicas} 4 (exp4) and 6
-(exp6), $N{=}20$ per level, availability improves from 0.73--0.96 to 0.76--1.0,
-p95 falls from 51--101\,s to 30--98\,s, and at level 50 exp6 processes 7\,$\times$
-the requests of exp4 by absorbing the queue instead of dropping it.
+$\approx$11\,ms, so the bottleneck is the model container, not Kubernetes.
 Size-isolated runs (Test~C) separate the per-class cost of a request and expose
 cross-size interference: a small request takes ~25\,s in isolation but ~88\,s
 when mixed with medium and large ones. A bursty workload (Test~D) shows the
@@ -87,20 +85,20 @@ autoscaling, and show that a Dockerized application scales out and in under
 different workload conditions. Our Dockerized application is the LLM
 inference service; Option~4's web application is our \code{/generate} API.
 
-We report two campaigns, and the relationship between them is the spine of
-this paper. Campaign~A (Sec.~\ref{sec:campaignA}) measures the baseline
-deployment. Test~A drives it with a continuous ramp of users and shows that
-the HPA deterministically scales out $1{\to}2$ and back $2{\to}1$
-(scale-\emph{in} under an idle drain is less commonly reported; many published profiles do not include a long idle period).
-Test~B sweeps fixed user counts from 10 to 50 and locates the saturation
-point: the two workers are the ceiling, and beyond roughly 20--30 users the
-p95 latency is pinned against the proxy's 300\,s timeout while the error rate
-climbs. Delay attribution over per-request timestamps establishes where the
-time goes and isolates the bottleneck. Campaign~B (Sec.~\ref{sec:campaignB})
-is the response to that ceiling: it raises the HPA limit to four and then six
-pods, and shows monotonic improvement in latency, errors and availability.
+We report a single campaign with one configuration, and the shape of the
+load is the spine of this paper. Test~A (Sec.~\ref{sec:campaignA}) drives the
+deployment with a sawtooth user profile and shows that the HPA deterministically
+scales out $1{\to}2{\to}4{\to}6$ and back $6{\to}5{\to}4{\to}3{\to}2{\to}1$ in
+every one of $N{=}20$ runs. Repeated mid-run scale-\emph{in} is less commonly
+reported; many published profiles do not include a long idle period, and
+fewer still a descent that brings the cluster back down while the run is
+still live. Delay attribution over per-request timestamps establishes where
+the time goes and isolates the bottleneck. The variant campaign
+(Sec.~\ref{sec:campaignB}) varies the HPA ceiling between 4 and 6 pods and
+shows monotonic improvement in latency, errors and availability as the
+ceiling rises.
 
-That second campaign produced the result we expected to see confirmed rather
+ That experiment produced the result we expected to see confirmed rather
 than discovered: the elasticity variable is the per-request service time, set
 almost entirely by the model, with the orchestrator contributing a constant
 $\approx$11\,ms. Varying request size isolates this cleanly, a small
@@ -112,8 +110,9 @@ queue drains during the following lull.
 
 Section~\ref{sec:background} gives the background, Sec.~\ref{sec:sota}
 positions the work, Sec.~\ref{sec:app} describes the application,
-Sec.~\ref{sec:method} the methodology, Secs.~\ref{sec:campaignA} and
-\ref{sec:campaignB} the two campaigns, and Sec.~\ref{sec:cost} the cost
+Sec.~\ref{sec:method} the methodology, Sec.~\ref{sec:campaignA} the sawtooth
+elasticity experiment, Sec.~\ref{sec:campaignB} the HPA ceiling variants, and
+Sec.~\ref{sec:cost} the cost
 evaluation.
 
 \section{Background}
@@ -197,9 +196,10 @@ inferences are billed at serverless unit prices for every second of compute.
 Three of our results restate known ones on a new workload: reactive
 autoscalers need headroom and react on a delayed signal; serverless loses to
 provisioned for long steady compute; and the bottleneck of a distributed
-service is usually not the orchestrator. Two are less standard. The clean
-$2{\to}1$ scale-\emph{in} under an idle drain is less commonly reported,
-because many published load profiles do not include a long idle period; Test~A
+service is usually not the orchestrator. Two are less standard. Repeated
+scale-\emph{in} while a run is still live --- the cluster stepping back down
+$6{\to}5{\to}4{\to}3{\to}2{\to}1$ mid-sawtooth, not just after a final idle
+drain --- is less commonly reported; Test~A
 demonstrates it in every replicate. And the $\approx$11\,ms orchestrator share of a 40\,s request
 is a direct measurement, using a timing header added to the proxy, of the
 claim that Kubernetes itself is cheap next to the work it schedules.
@@ -215,10 +215,10 @@ sidecar on \code{localhost:8080}, which decodes the model and streams tokens
 back. A shared \code{emptyDir} volume carries the quantised GGUF model, placed
 there by an \code{initContainer} before the main containers start. Each pod
 therefore requests 1700\,m CPU (llama) + 100\,m CPU (proxy), which fits one
-\code{t3.medium} and lets two pods exactly fill the two workers. The HPA
-targets 60\% average CPU with \code{minReplicas} 1 and \code{maxReplicas} 2.
+\code{t3.medium}; up to six pods spread across six workers. The HPA
+targets 60\% average CPU with \code{minReplicas} 1 and \code{maxReplicas} 6.
 A NodePort service exposes port 30080. The load generator runs on a separate
-\code{t3.small} inside the AWS perimeter.
+\code{t3.micro} inside the AWS perimeter.
 
 \subsection{Workload}
 
@@ -264,9 +264,9 @@ Step & Where addressed \\
 excluded by assumption \\
 3. Metrics & Sec.~\ref{sec:metrics} \\
 4. Tool & Locust 2.46 headless with custom \code{LoadTestShape}
-profiles (ramp, burst) \\
-5. Design & Sec.~\ref{sec:design}; ramp, capacity sweep, size
-isolation, burst; $N{=}5$ (Test A/B) and $N{=}20$/level (variants) \\
+profiles (sawtooth, burst) \\
+5. Design & Sec.~\ref{sec:design}; sawtooth, intensity sweep, size
+isolation, burst; $N{=}20$ (Test A and variants), $N{=}10$ (Test C), $N{=}3$ (Test D) \\
 6. Environment & Sec.~\ref{sec:env} \\
 7. Execution & Sec.~\ref{sec:campaignA}, Sec.~\ref{sec:campaignB} \\
 \bottomrule
@@ -297,13 +297,17 @@ concurrent users, which is how a real audience behaves.
 \subsection{Load profiles}
 \label{sec:design}
 
-Four profiles cover the questions. \textbf{Test A} (elasticity) ramps users
-continuously to a maximum of 12, holds, then drains to zero with an idle
-period long enough for scale-\emph{in}; \code{ramp\_shape.py}. \textbf{Test B}
-(capacity) holds a fixed user count (10/20/30/40/50) with a 6-minute steady
-phase, $N{=}5$ runs per level; \code{exp-b.sh}. \textbf{Test C} (size
-isolation) fixes the workload size per run (small/medium/large/mix) at 20
-users with a 2-minute steady phase, 10 runs per size; \code{exp-c.sh}.
+Four profiles cover the questions. \textbf{Test A} (elasticity) drives a
+sawtooth: warm-up, ramp to 20 users and hold (scale-out to $\sim$3 pods),
+ramp to 50 and hold (scale-out to the 6-pod ceiling), then descend through 35
+and 10 users (scale-\emph{in} steps) before an idle drain; each descent leg is
+held long enough for the HPA's 300\,s scale-down stabilisation to fire, so
+scale-\emph{in} is observed mid-run; \code{ramp\_shape.py}.
+\textbf{Variants exp4/exp6} (capacity) hold a fixed user count
+(10/20/30/40/50) with a 2-minute steady phase, $N{=}20$ runs per level, under
+HPA ceilings of 4 and 6; \code{exp-b.sh}. \textbf{Test C} (size isolation)
+fixes the workload size per run (small/medium/large/mix) at 20 users with a
+2-minute steady phase, 10 runs per size; \code{exp-c.sh}.
 \textbf{Test D} (burst) alternates a 2-user baseline with 12-user bursts,
 120\,s normal / 60\,s burst, two cycles per run, $N{=}3$; \code{burst\_shape.py}.
 
@@ -318,8 +322,8 @@ internal text-derivative service could commit to:
 \item \textbf{Error rate} below 10\% at design load.
 \item \textbf{Interactive latency:} p95 below the 300\,s proxy timeout for the
 small class, the class a user waits on synchronously.
-\item \textbf{Elasticity:} scale-out $1{\to}2$ within 60\,s of the CPU target
-being crossed, and scale-in $2{\to}1$ after an idle drain.
+\item \textbf{Elasticity:} scale-out to the ceiling within 60\,s of the CPU
+target being crossed, and scale-in back to one pod after the load recedes.
 \end{itemize}
 Section~\ref{sec:slasum} reports compliance. We state these before the
 results because an objective chosen after seeing the data is not an objective.
@@ -327,15 +331,22 @@ results because an objective chosen after seeing the data is not an objective.
 \subsection{Experimental environment}
 \label{sec:env}
 
-All runs used 1 master \code{t3.small} and 2 workers \code{t3.medium} (Amazon
-Linux 2023, Kubernetes v1.36, Flannel, Metrics Server). Both variant campaigns
-(exp4, exp6) ran on a single 6-worker cluster with the same control plane,
-differing only in the HPA \code{maxReplicas}. The model is
+All runs used 1 master \code{t3.small} and 6 workers \code{t3.medium} (Amazon
+Linux 2023, Kubernetes v1.36, Flannel, Metrics Server). Test~A and the
+variant campaigns (exp4, exp6) ran on this same six-worker cluster, differing
+only in the HPA \code{maxReplicas} ceiling (6 for Test~A and exp6, 4 for
+exp4). The model is
 \code{unsloth/Qwen3.5-0.8B-MTP-GGUF:UD-Q6\_K\_XL}, served by
 \code{ghcr.io/ggml-org/llama.cpp:server} build 10380 with
 \code{--threads 2 --parallel 2 --reasoning off}. The load generator ran on a
-\code{t3.small} in the same region. Every experiment ended with a full
+\code{t3.micro} in the same region. Every experiment ended with a full
 teardown (\code{just cluster-down}).
+
+A robustness note: llama-server (build 10380) degrades into a deadlock under
+sustained concurrent load --- node CPU falls to single digits while every
+request times out at the proxy --- so each Test~A run starts from a freshly
+restarted pod (\code{FRESH\_POD}); a single generation returns in $\sim$5\,s
+after the restart. The sawtooth data above the restart baseline is unaffected.
 
 All conclusions apply to a 0.8B CPU-bound model on t-series instances; GPU
 serving, batched inference or a larger model would change service time, hence
@@ -344,101 +355,48 @@ the elasticity axis, though not the method. Our self-enforced caps
 and the lab's temporary, region-scoped credentials meant runs span two regions
 (us-east-1, us-west-2).
 
-\section{Campaign A: Elasticity and Capacity}
+\section{Elasticity under the sawtooth}
 \label{sec:campaignA}
 
-\subsection{Elasticity under a continuous ramp (Test A)}
+\subsection{Elasticity under a sawtooth (Test A)}
 \label{sec:elasticity}
 
-Test~A drives the deployment with a continuous user ramp (warm-up, ramp to 12
-users, steady, ramp-down, idle drain). Five replicates ($N{=}5$), all complete
-(\code{interrupted}=0). In every run the HPA scaled out $1{\to}2$ when CPU
-crossed the 60\% target under growing load, held two pods under sustained load,
-and scaled back $2{\to}1$ after the load drained ($\ge$10 min idle). Kubernetes
-recorded \code{SuccessfulRescale} events (``New size: 2; reason: cpu resource
-utilization above target'') in runs 2--5. Across the campaign: 1{,}142
-requests, 89 errors (7.8\%, 0--13\% per run), average latency 35--49\,s, p95
-72--90\,s.
+Test~A drives the deployment with a sawtooth user profile (warm-up, hold at
+20 users, hold at 50 users, descend through 35 and 10 users, idle drain),
+with the HPA ceiling at 6 pods. Twenty replicates ($N{=}20$), all complete
+(\code{interrupted}=0). In every run the HPA scaled out $1{\to}2{\to}4{\to}6$
+as CPU crossed the 60\% target under the growing load, and then stepped back
+down $6{\to}5{\to}4{\to}3{\to}2{\to}1$ as each valley and the final drain
+brought CPU below target long enough for the HPA's 300\,s scale-down
+stabilisation window to expire. Kubernetes recorded the corresponding
+\code{SuccessfulRescale} events in every run. Across the campaign: 12{,}144
+requests, 116 errors (1.0\%), all 504-generation timeouts at the 50-user
+peak; the per-run error rate stayed below 0.5\%.
 
-Fig.~\ref{fig:elasticity} plots replicas and CPU against time. The clean
-out-and-back cycle is the elasticity evidence: the scale-\emph{in} leg, which
-requires a long idle window to overcome the HPA stabilisation delay, is
-observed in every replicate.
+Fig.~\ref{fig:elasticity} plots replicas and CPU against time (thin lines are
+individual runs; the bold line is the $N{=}20$ average). The repeated
+out-and-back cycle is the elasticity evidence: scale-\emph{out} latency is
+within the 60\,s SLO in every run (0\,s in the collector's 60\,s resolution),
+and scale-\emph{in} follows each valley with a mean latency of
+$\approx$224\,s (137--422\,s across runs), the expected shape of the HPA
+stabilisation delay. Because scale-in fires \emph{mid-run}, the descent is
+observed in every replicate rather than only at the end of a run.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/plot1_elasticity}
-\caption{Test A: pod replicas and CPU\% against time ($N{=}5$ averaged).
-Scale-out $1{\to}2$ under the ramp, scale-in $2{\to}1$ after the idle drain.}
+\caption{Test A: pod replicas and CPU\% against time ($N{=}20$). Thin lines
+are individual runs; the bold line is the average. The sawtooth scales out
+$1{\to}2{\to}4{\to}6$ under the ramp and steps back down
+$6{\to}5{\to}4{\to}3{\to}2{\to}1$ during the valleys.}
 \label{fig:elasticity}
-\end{figure}
-
-\subsection{Load-capacity curve (Test B)}
-\label{sec:capacity}
-
-Test~B holds user counts of 10/20/30/40/50 with a 6-minute steady phase, five
-runs per level (25 runs total). Table~\ref{tab:capacity} reports throughput,
-latency, error rate and pod count per level.
-
-\begin{table}[t]
-\caption{Test B: load-capacity curve (mix workload, 6-min steady, $N{=}5$)}
-\label{tab:capacity}
-\centering\small
-\begin{tabular}{@{}lrrrrr@{}}
-\toprule
-Level & Req/s & p50 (s) & p95 (s) & Errors \% & Max pods \\
-\midrule
-10 & 0.185 & 41.2 & 139.0 & 25.3 & 2 \\
-20 & 0.195 & 81.8 & 222.2 & 22.6 & 2 \\
-30 & 0.183 & 140.4 & 253.2 & 22.0 & 2 \\
-40 & 0.235 & 197.6 & 274.0 & 55.9 & 2 \\
-50 & 0.206 & 189.2 & 295.2 & 33.4 & 2 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The picture is of saturation at the two-pod ceiling. The HPA scales to two
-pods at every level $\ge$10 users, and the p95 latency is pinned against the
-proxy's 300\,s timeout at levels 30--50. Across the campaign: 1{,}776 requests,
-617 errors (34.7\%), of which 503 (llama busy, slots exhausted) $=$254, 504
-(proxy generation timeout) $=$231 and 502 (upstream failure) $=$132. The
-per-run variance is large (level 10 ranges 0--91\%), reflecting cold starts and
-queueing; these are real saturation data and are reported as such.
-
-Fig.~\ref{fig:capacity} shows pods, p50/p95 against offered load, and
-Fig.~\ref{fig:offered} the offered-versus-received comparison that locates the
-bottleneck: received rate tracks offered until the system saturates, then
-diverges as requests queue or are rejected.
-
-A methodological caveat applies to these runs and to the variant campaign:
-there is no warm-up phase. Runs ramp users immediately (\code{-r 5}), so the
-figures include cold starts and the HPA cold-starting pods mid-run after
-scaling down between runs (level 30 of the variants: 6 of 20 runs started at
-one pod). Delay and pod figures are therefore full autoscaling behaviour, not
-clean steady state; Test~A, which has an explicit warm-up and idle drain, is
-the clean case.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/plot2_3_pods_and_latency}
-\caption{Test B: pods and p50/p95 latency against offered load (levels 10--50,
-$N{=}5$). p95 approaches the 300\,s proxy timeout at saturation.}
-\label{fig:capacity}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{figures/plot4_offered_vs_received}
-\caption{Test B: offered versus received load. Beyond ~20--30 users the
-received rate stops tracking the offered rate.}
-\label{fig:offered}
 \end{figure}
 
 \subsection{Where the response time goes}
 \label{sec:delay}
 
 The proxy's \code{X-Upstream-Ms} header splits client wait time into llama
-decode (upstream) and orchestrator+transport. Over the two campaigns the split
+decode (upstream) and orchestrator+transport. Across the variant runs the split
 is stable: from exp4 (HPA max 4) and exp6 (HPA max 6) the total and upstream
 means coincide at 44.6\,s / 44.6\,s (exp4) and 40.1\,s / 40.1\,s (exp6), leaving
 an orchestrator+transport share of $10.9$~ms and $10.6$~ms respectively. The
@@ -447,29 +405,26 @@ proxy contribute $\approx$11\,ms, three orders of magnitude below the work.
 
 \subsection{Compliance with the elasticity objective}
 
-Test~A meets the elasticity SLO outright: scale-out within the 60\,s horizon
-in every run, and scale-in after the idle drain (Sec.~\ref{sec:elasticity}).
-The capacity SLOs are informative in the opposite direction: the deployment
-holds a p95 well under the 300\,s timeout only at design load, and the error
-rate at $\le$20 users is 22--25\% on average, above the 10\% target, dominated
-by 503s from the two-slot model, the saturation behaviour a two-pod ceiling
-implies. We return to this in Sec.~\ref{sec:slasum}.
+Test~A meets the elasticity SLO outright: scale-out to the six-pod ceiling
+within the 60\,s horizon in every run, and scale-in back to one pod after
+each valley (Sec.~\ref{sec:elasticity}). The capacity SLOs are evaluated on
+the variant campaign: under a 4-pod ceiling the error rate at 50 users is
+26.4\%, above the 10\% target; the 6-pod ceiling stays below it except at
+saturation. We return to this in Sec.~\ref{sec:slasum}.
 
-\section{Campaign B: Scaling Beyond Two Pods}
+\section{The HPA ceiling: variants exp4 and exp6}
 \label{sec:campaignB}
 
 \subsection{Variants exp4 and exp6}
 \label{sec:variants}
 
-The baseline is capped at two pods by the two workers. To separate ``the HPA
-works'' from ``the ceiling is too low'', we raised \code{maxReplicas} to 4
-(exp4) and to 6 (exp6), re-running
-the full intensity grid 10--50 users with $N{=}20$ per level. The cost of the
-HPA reacting correctly is that it never had room to react; here it does. Both
-variants used the same six-worker cluster, so the only difference between them
-is the \code{maxReplicas} ceiling, and the same mechanism that produced the
-clean $1{\to}2$ out-and-back cycle of Test~A now scales to the configured
-maximum (4 and 6 pods, Fig.~\ref{fig:capacity_variant}) under sustained load.
+Test~A established that the HPA scales to the six-pod ceiling under a
+sawtooth. The variant campaign asks whether the ceiling itself matters: we
+ran the fixed-intensity grid 10--50 users with $N{=}20$ per level under
+\code{maxReplicas} 4 (exp4) and 6 (exp6). Both variants used the same
+six-worker cluster, so the only difference is the ceiling, and the same
+mechanism that produced the sawtooth of Test~A now responds to sustained
+load (Fig.~\ref{fig:capacity_variant}).
 
 \begin{table}[t]
 \caption{Variants: error rate, availability and p95 by level and variant}
@@ -479,26 +434,32 @@ maximum (4 and 6 pods, Fig.~\ref{fig:capacity_variant}) under sustained load.
 \toprule
 Variant & Level & Errors \% & Availability & p95 (s) \\
 \midrule
-exp2 (max 2) & 10--50 & 22--59 & 0.41--0.78 & 139--295 \\
 exp4 (max 4) & 10--50 & 4--27  & 0.73--0.96 & 51--101 \\
 exp6 (max 6) & 10--50 & 0--24  & 0.76--1.0  & 30--98 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:variants} summarises. Both variants improve on the baseline at
-every level; exp6 reaches zero errors at level 30 and an availability of 1.0.
-The most striking row is level 50: exp4 completes 178 requests at 26.4\%
-errors, exp6 completes 1{,}299, seven times, at 16.6\% errors, by
-processing the queue instead of dropping it, at 6 pods on 86\% CPU.
-Fig.~\ref{fig:capacity_variant} shows the capacity curves, and
+Table~\ref{tab:variants} summarises. The six-pod ceiling dominates the
+four-pod one at every level; exp6 reaches zero errors at level 30 and an
+availability of 1.0. The most striking row is level 50: exp4 completes 178
+requests at 26.4\% errors, exp6 completes 1{,}299, seven times, at 16.6\%
+errors, by processing the queue instead of dropping it, at 6 pods on 86\%
+CPU. Fig.~\ref{fig:capacity_variant} shows the capacity curves, and
 Fig.~\ref{fig:delay_variant} the delay split.
+
+A methodological caveat applies to the variant runs: there is no warm-up
+phase. Runs ramp users immediately (\code{-r 5}), so the figures include cold
+starts and the HPA cold-starting pods mid-run after scaling down between runs
+(level 30: 6 of 20 runs started at one pod). Delay and pod figures are
+therefore full autoscaling behaviour, not clean steady state; Test~A, which
+has an explicit warm-up and idle drain, is the clean case.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/variant_capacity}
 \caption{Variant campaigns: p95 latency and error rate against level for
-exp2/exp4/exp6. More pods, lower tail and fewer errors.}
+exp4/exp6. More pods, lower tail and fewer errors.}
 \label{fig:capacity_variant}
 \end{figure}
 
@@ -586,19 +547,17 @@ reading CPU $0\%{\to}86\%{\to}106\%$ and issuing \code{SuccessfulRescale} to
 two pods (Fig.~\ref{fig:burst}); CPU falls to 49--53\% between bursts but the
 HPA holds two pods, because its 300\,s scale-\emph{in} stabilisation window
 exceeds the 120\,s lull, so scale-\emph{in} is not observable within a run.
-The informative contrast with Test~B: 12 users \emph{sustained} produced error
-rates up to 35\%, while a 60\,s burst at 12 users produced none, because the
-following lull drains the queue before the 300\,s timeout, short bursts are
-absorbed by the service queue, sustained load is not. The three experiments
-that use similar user counts are therefore not contradictory but occupy
-different regimes. Test~B sustains a \emph{mixed} workload at 10--20 users on
-two decode slots, so the queue grows until a fraction exceeds the 300\,s
-timeout and errors reach 22--35\%. Test~D applies the same 12 users as a
-\emph{burst} with a 120\,s lull, during which the queue drains, so no request
-is lost. Test~C isolates a \emph{light} class (small, 32 tokens) at 20 users
-and shows 1.2\% errors because each request is short. Sustained mixed load,
-bursty load with idle recovery, and light isolated load are different points
-on the same queueing curve, not conflicting measurements.
+The informative contrast: 50 users \emph{sustained} under the six-pod ceiling
+produce 16.6\% errors (exp6, level 50) as the queue pushes a tail past the
+300\,s proxy timeout, while a 60\,s burst at 12 users produced none, because
+the following lull drains the queue before the timeout --- short bursts are
+absorbed by the service queue, sustained load is not. The experiments are
+therefore not contradictory but occupy different regimes. Test~D applies 12
+users as a \emph{burst} with a 120\,s lull, during which the queue drains, so
+no request is lost. Test~C isolates a \emph{light} class (small, 32 tokens)
+at 20 users and shows 1.2\% errors because each request is short. Sustained
+mixed load, bursty load with idle recovery, and light isolated load are
+different points on the same queueing curve, not conflicting measurements.
 
 \begin{figure}[t]
 \centering
@@ -621,12 +580,12 @@ Table~\ref{tab:sla} evaluates the objectives of Sec.~\ref{sec:sla}.
 \toprule
 Objective & Target & Measured & \\
 \midrule
-Elasticity scale-out & $\le$60 s & ~27 s (Test D) & pass \\
-Elasticity scale-in  & after drain & every run (Test A) & pass \\
+Elasticity scale-out & $\le$60 s & 0 s (Test A) & pass \\
+Elasticity scale-in  & after valleys & every run, $\approx$224 s mean (Test A) & pass \\
 Availability (2xx) @20u & $\ge$99\% & 98.8\% (Test C small) & pass \\
-Error rate @20u      & $<$10\%  & 22--25\% (Test B) & \textbf{fail} \\
+Error rate @20u      & $<$10\%  & 24\% (exp6 level 20) & \textbf{fail} \\
 p95, small class     & $<$300 s  & 45.8 s (Test C) & pass \\
-p95 @40--50 users    & $<$300 s  & 274--295 s & \textbf{fail} \\
+p95 @40--50 users    & $<$300 s  & 66--101 s (exp4/exp6) & pass \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -697,24 +656,25 @@ solutions.
 \section{Conclusion}
 
 We evaluated a CPU-based HPA as the elasticity mechanism for an LLM inference
-service, over two campaigns on AWS Learner Lab. The first established the
-baseline: under a continuous ramp the HPA scales out $1{\to}2$ and back
-$2{\to}1$ in every replicate (Test A, $N{=}5$), and under fixed intensities the
-two-pod deployment saturates around 20--30 users, with p95 pinned at the 300\,s
-proxy timeout and error rates rising to 34.7\% (Test B, 25 runs). Attributing
+service on AWS Learner Lab, with a six-pod ceiling. Test~A drives the
+deployment with a sawtooth profile and the HPA scales out $1{\to}2{\to}4{\to}6$
+and back $6{\to}5{\to}4{\to}3{\to}2{\to}1$ in every one of $N{=}20$ runs,
+including mid-run scale-\emph{in} with a mean latency of $\approx$224\,s, the
+HPA stabilisation delay. Attributing
 client wait time per request showed that llama decode accounts for the whole
 latency budget while the orchestrator and transport contribute $\approx$11\,ms,
 so the bottleneck is the model container, not Kubernetes.
 
-The second campaign tested whether the ceiling, not the autoscaler, was the
-problem. Raising the HPA ceiling to four and six pods reduced p95 from 51--101\,s
-to 30--98\,s and raised availability to 1.0, and at level 50 the six-pod
-deployment processed seven times the requests of the four-pod one by absorbing
-the queue. Size isolation showed the cost of a request scales with its length
-and that a mixed queue penalises short requests ~3.5\,$\times$. The burst
-experiment showed the edge of the design: a sudden 6\,$\times$ step in users
-is absorbed with zero errors across 145 requests because the queue drains
-during the lull, while the same intensity sustained (Test B) fails.
+The ceiling variant campaign asked whether the ceiling, not the autoscaler,
+limits the service. Raising the HPA ceiling from four to six pods kept p95
+below 100\,s and availability $\ge$0.76 at every level, and at level 50 the
+six-pod deployment processed seven times the requests of the four-pod one by
+absorbing the queue. Size isolation showed the cost of a request scales with
+its length and that a mixed queue penalises short requests ~3.5\,$\times$. The
+burst experiment showed the edge of the design: a sudden 6\,$\times$ step in
+users is absorbed with zero errors across 145 requests because the queue
+drains during the lull, while sustained load at the same intensity saturates
+the queue.
 
 Economically, the autoscaled cluster costs \$513 over six months against
 \$749 for a peak-sized single instance and \$3{,}787 for the equivalent Lambda

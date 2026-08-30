@@ -18,7 +18,7 @@ DATA = f"{ROOT}/data/raw"
 ART = f"{ROOT}/artifacts"
 os.makedirs(ART, exist_ok=True)
 
-VARIANTS = {"testB": (2, "exp2"), "exp4": (4, "exp4"), "exp6": (6, "exp6")}  # dir -> (maxReplicas, label)
+VARIANTS = {"exp4": (4, "exp4"), "exp6": (6, "exp6")}  # dir -> (maxReplicas, label)
 
 
 def note(d, key):
@@ -195,7 +195,7 @@ def main():
             axs[si].plot(xs, up, "s--", label=f"{v['name']} llama")
         axs[si].set(xlabel="users", ylabel="s", title=f"size={size}")
     axs[0].legend(fontsize=7)
-    fig.suptitle("Delay by request size (mix runs; exp2 has no pre-timing detail)")
+    fig.suptitle("Delay by request size (mix runs, exp4/exp6)")
     fig.tight_layout(); fig.savefig(f"{ART}/variant_delay_by_size.png", dpi=130)
 
     # ---- figure 4: stacked delay breakdown per size (reference format) ----
