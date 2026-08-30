@@ -1,0 +1,4 @@
+solution,compute_6mo_usd,requests_6mo_usd,storage_6mo_usd,total_6mo_usd,notes
+K8s/EC2 stack (this project),1192.18,0.0,134.4,1326.58,always-on; 1 master + 6 workers; HPA 1-6 pods; 40GB gp3 each
+Single m5.4xlarge (no autoscaling),4207.68,0.0,19.2,4226.88,"16 vCPU / 64GB, 40GB gp3; same peak capacity as 6x t3.medium, no elasticity"
+AWS Lambda (same AI app),3786.67,0.57,0.0,3787.24,"2GB, 40s/inv, 2840000 inv/6mo"

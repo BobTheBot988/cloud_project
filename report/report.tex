@@ -65,7 +65,7 @@ when mixed with medium and large ones. A bursty workload (Test~D) shows the
 HPA reacts to a sudden 6\,$\times$ step in users within ~27\,s (CPU $0\%{\to}86\text{--}106\%$)
 with zero errors over 145 requests, although short bursts are absorbed by the
 service queue rather than rejected. Projected over six months, the autoscaled
-cluster costs \$513, versus \$749 for a single peak-sized \code{t3.xlarge}
+cluster costs \$1{,}327, versus \$4{,}227 for a single peak-sized instance
 without elasticity and \$3{,}787 for an equivalent AWS Lambda deployment.
 \end{abstract}
 
@@ -186,10 +186,11 @@ Adzic and Chatley~\cite{adzic2017} report 66--95\% savings moving low-duty-cycle
 enterprise workloads to serverless, and Eivy and Weinman~\cite{eivy2017} show
 that the benefit depends on execution behavior and volumes and can reverse as
 traffic grows. Our R4 evaluation (Sec.~\ref{sec:cost})
-finds the same trade-off on an LLM workload: a peak-sized single instance
-without elasticity costs more than the autoscaled cluster, and a serverless
-deployment is roughly $7\times$ more expensive because long CPU-bound
-inferences are billed at serverless unit prices for every second of compute.
+finds the same trade-off on an LLM workload: a serverless
+deployment is roughly $2.9\times$ the cost of the autoscaled cluster because
+long CPU-bound inferences are billed at serverless unit prices for every
+second of compute, and a peak-sized single instance without elasticity costs
+even more.
 
 \subsection{Position of this study}
 
@@ -606,10 +607,10 @@ assumed (instance prices, 24/7 runtime; `r4\_cost.py`).
 
 \subsection{Method}
 
-The cluster runs continuously: 1 master \code{t3.small} (\$0.02/h) + 2 workers
+The cluster runs continuously: 1 master \code{t3.small} (\$0.02/h) + 6 workers
 \code{t3.medium} (\$0.042/h each) with a 40\,GB gp3 root volume each. We cost
 three solutions for six months: (a) this stack with the HPA absorbing the
-load; (b) a single \code{t3.xlarge} (4 vCPU / 16\,GB, no elasticity) sized for
+load; (b) a single \code{m5.4xlarge} (16 vCPU / 64\,GB, no elasticity) sized for
 the same peak demand; (c) an equivalent AWS Lambda function (2\,GB memory,
 40\,s mean invocation, 2.84M invocations per six months).
 
@@ -623,27 +624,28 @@ the same peak demand; (c) an equivalent AWS Lambda function (2\,GB memory,
 \toprule
 Solution & Compute & Total 6 mo \\
 \midrule
-K8s/EC2 stack (this project) & -- & \textbf{\$513.43} \\
-Single t3.xlarge (no autoscaling) & -- & \$748.53 \\
+K8s/EC2 stack (this project) & -- & \textbf{\$1{,}326.58} \\
+Single m5.4xlarge (no autoscaling) & -- & \$4{,}226.88 \\
 AWS Lambda (same AI app) & -- & \$3{,}787.24 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The autoscaled cluster is cheapest (\$513.43; master \$106.86 + workers
-\$406.57; the test-only load generator adds \$67.41). The single \code{t3.xlarge}
-costs more (\$748.53) despite having the same peak capacity, because without
-elasticity it runs at full size even when idle. Lambda is $7\times$ the
-cluster (\$3{,}787.24): a long CPU-bound inference is billed at serverless
-unit prices for every second of decode, so a workload whose invocations last
-tens of seconds defeats the serverless pricing model. The break-even duty
-cycle against a peak-sized instance is well below 100\%, the HPA pays for
-itself whenever the service is not saturated continuously.
+The autoscaled cluster is cheapest (\$1{,}326.58; master \$106.86 + workers
+\$1{,}219.73; the test-only load generator adds \$67.41). A single peak-sized
+\code{m5.4xlarge} (16 vCPU, the same capacity as the six-worker fleet) costs
+\$4{,}226.88, because without elasticity it runs at full size even when idle.
+Lambda (\$3{,}787.24) sits in between, $\approx$2.9$\times$ the cluster: a long
+CPU-bound inference is billed at serverless unit prices for every second of
+decode, so a workload whose invocations last tens of seconds defeats the
+serverless pricing model. The break-even duty cycle against a peak-sized
+instance is well below 100\%, the HPA pays for itself whenever the service is
+not saturated continuously.
 
 The comparison is best read as a duty cycle, since that is the variable that
-decides the architecture. At a fixed peak requirement (two workers) the
-autoscaled cluster is \$513 only if it may scale down when idle; a
-\code{t3.xlarge} paid for six months is the cost of never scaling. The
+decides the architecture. At a fixed peak requirement (six workers) the
+autoscaled cluster is \$1{,}327 only if it may scale down when idle; an
+\code{m5.4xlarge} paid for six months is the cost of never scaling. The
 serverless alternative is the mirror image: at low and bursty volumes Lambda
 is competitive, but its unit cost per second of compute is so high that
 sustaining ~0.2~req/s of LLM decode for six months ($\approx$3.1M seconds of
@@ -676,10 +678,10 @@ users is absorbed with zero errors across 145 requests because the queue
 drains during the lull, while sustained load at the same intensity saturates
 the queue.
 
-Economically, the autoscaled cluster costs \$513 over six months against
-\$749 for a peak-sized single instance and \$3{,}787 for the equivalent Lambda
-deployment, so elasticity pays for itself and the CPU of an LLM service is a
-sound scaling signal, provided the HPA ceiling is set to the worker count
+Economically, the autoscaled cluster costs \$1{,}327 over six months against
+\$4{,}227 for a peak-sized single instance and \$3{,}787 for the equivalent
+Lambda deployment, so elasticity pays for itself and the CPU of an LLM service
+is a sound scaling signal, provided the HPA ceiling is set to the worker count
 the load actually needs. Measured against the objectives fixed in advance, the
 deployment is elastic and correct; its limits are the number of workers and
 the patience of the 300\,s timeout, not the autoscaler that decides how many

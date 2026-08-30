@@ -20,6 +20,7 @@ T3_SMALL = float(os.environ.get("T3_SMALL", "0.020"))
 T3_MEDIUM = float(os.environ.get("T3_MEDIUM", "0.042"))
 T3_MICRO = float(os.environ.get("T3_MICRO", "0.011"))
 T3_XLARGE = float(os.environ.get("T3_XLARGE", "0.1664"))
+M5_4XLARGE = float(os.environ.get("M5_4XLARGE", "0.96"))
 EBS_GP3_PER_GB_MO = float(os.environ.get("EBS_GP3", "0.08"))
 EBS_GB = int(os.environ.get("EBS_GB", "40"))
 LAMBDA_PER_1M = float(os.environ.get("LAMBDA_PER_1M", "0.20"))
@@ -38,12 +39,12 @@ def build():
     TABLES.mkdir(parents=True, exist_ok=True)
     rows = []
 
-    n_master, n_worker = 1, 2
+    n_master, n_worker = 1, 6
     stack_compute = n_master * T3_SMALL * HOURS_6MO + n_worker * T3_MEDIUM * HOURS_6MO
     stack_ebs = (n_master + n_worker) * EBS_GB * EBS_GP3_PER_GB_MO * 6
     stack = stack_compute + stack_ebs
 
-    single = ec2_line("t3.xlarge (4 vCPU, no autoscaling)", 1, T3_XLARGE, EBS_GB)
+    single = ec2_line("m5.4xlarge (16 vCPU, no autoscaling)", 1, M5_4XLARGE, EBS_GB)
 
     loadgen = T3_MICRO * HOURS_6MO + EBS_GB * EBS_GP3_PER_GB_MO * 6
 
@@ -73,20 +74,20 @@ def build():
     comp = pd.DataFrame({
         "solution": [
             "K8s/EC2 stack (this project)",
-            "Single t3.xlarge (no autoscaling)",
+            "Single m5.4xlarge (no autoscaling)",
             "AWS Lambda (same AI app)",
         ],
         "compute_6mo_usd": [
             round(stack_compute, 2),
-            round(T3_XLARGE * HOURS_6MO, 2),
+            round(M5_4XLARGE * HOURS_6MO, 2),
             round(lambda_compute, 2),
         ],
         "requests_6mo_usd": [0.0, 0.0, round(lambda_req, 2)],
         "storage_6mo_usd": [round(stack_ebs, 2), round(EBS_GB * EBS_GP3_PER_GB_MO * 6, 2), 0.0],
         "total_6mo_usd": [round(stack, 2), round(single, 2), round(lambda_total, 2)],
         "notes": [
-            f"always-on; {n_master} master + {n_worker} workers; HPA 1-2 pods; {EBS_GB}GB gp3 each",
-            f"4 vCPU / 16GB, {EBS_GB}GB gp3; same capacity as 2x t3.medium, no elasticity",
+            f"always-on; {n_master} master + {n_worker} workers; HPA 1-6 pods; {EBS_GB}GB gp3 each",
+            f"16 vCPU / 64GB, {EBS_GB}GB gp3; same peak capacity as 6x t3.medium, no elasticity",
             f"{LAMBDA_GB:.0f}GB, {LAMBDA_DUR_S:.0f}s/inv, {invocations_6mo:.0f} inv/6mo",
         ],
     })
@@ -94,7 +95,7 @@ def build():
 
     print("R4 cost tables ->", TABLES)
     print(f"  EC2 stack 6mo: ${stack + loadgen:.2f} (${stack:.2f} without load-gen)")
-    print(f"  Single t3.xlarge 6mo: ${single:.2f}")
+    print(f"  Single m5.4xlarge 6mo: ${single:.2f}")
     print(f"  Lambda 6mo: ${lambda_total:.2f}  ({lambda_gbs:.0f} GB-s, {lambda_req:.2f} req charges)")
     return 0
 
