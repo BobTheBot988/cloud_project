@@ -332,19 +332,6 @@ def plot1(testA_avg, lat):
     fig, ax1 = plt.subplots(figsize=(11, 5))
     t = testA_avg["t_sec"].to_numpy() / 60.0
 
-    # per-run replica traces (thin, translucent) show the discrete sawtooth
-    # steps that the N-run average smears; drawn first, behind the average
-    for d in run_dirs("testA"):
-        meta = parse_notes(d)
-        t0 = first_int(meta.get("run_start"))
-        if t0 is None:
-            continue
-        reps = load_replicas(d)
-        if reps.empty:
-            continue
-        tr = rel_time(reps, t0) / 60.0
-        ax1.step(tr, reps["replicas"], where="mid", color="tab:blue", lw=0.6,
-                 alpha=0.35, zorder=1)
     ax1.step(t, testA_avg["replicas_avg"], where="mid", color="tab:blue", linewidth=2.2,
              label=f"Pods (avg, N={n})", zorder=3)
     ax1.fill_between(t, testA_avg["replicas_avg"] - testA_avg["replicas_std"],
