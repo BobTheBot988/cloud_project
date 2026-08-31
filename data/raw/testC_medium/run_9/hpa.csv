@@ -1,0 +1,3 @@
+1788180255 llm-proxy-exp6   Deployment/llm-proxy   cpu: 0%/60%   6     6     6     13h
+1788180321 llm-proxy-exp6   Deployment/llm-proxy   cpu: 106%/60%   6     6     6     13h
+1788180387 llm-proxy-exp6   Deployment/llm-proxy   cpu: 100%/60%   6     6     6     13h
