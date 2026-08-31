@@ -111,7 +111,34 @@ small nel mix si accoda dietro le large (+40%); con 2 slot l'audit misurava 3.5�
 
 ---
 
-## 3. Output offline rigenerato (31-08-2026)
+## 3. Test D (invariato dal reset)
+
+`data/raw/testD/run_1..3/` — eseguito 26-08-2026, cluster us-east-1 (loadgen
+t3.micro). Parametri: `LOW_USERS=2 HIGH_USERS=12 NORMAL_SECS=120 BURST_SECS=60
+CYCLES=2 RUNS=3`, collector a 20s. Dati **non toccati** dal reset (erano già su
+origin/main); `exp-d.sh` è stato aggiornato solo per il venv persistente
+(`~/exp`), nessun impatto sui dati.
+
+| Run | Richieste | Errori | req/s | avg (ms) | med (ms) | p95 (ms) | p99 (ms) |
+|---|---|---|---|---|---|---|---|
+| run_1 | 42 | 0 | 0.117 | 28.8s | 22.0s | 56.0s | 69.0s |
+| run_2 | 48 | 0 | 0.135 | 26.0s | 17.0s | 58.0s | 156.0s |
+| run_3 | 55 | 0 | 0.157 | 21.2s | 20.0s | 52.0s | 63.0s |
+| **Totale** | **145** | **0** | — | — | — | — | — |
+
+**Reazione HPA (run_1, `hpa.csv` + `events.csv`):** partenza 1 pod, CPU 0% →
+primo burst CPU 86%→106%, `SuccessfulRescale` → **New size: 2** (~27s dal via).
+Lo **scale-in 2→1 non è osservabile**: la finestra di stabilizzazione HPA (300s)
+è più lunga della fase low (120s) — da dichiarare come limite del protocollo,
+non del sistema (l'evidenza di scale-in resta Test A).
+
+**Insight chiave:** i burst vengono assorbiti senza errori (0 su 145 richieste)
+mentre lo stesso carico *sostenuto* in Test B fallisce — il picco corto viene
+smaltito dalla coda su 2 slot e drenato nella fase low prima del timeout proxy.
+
+---
+
+## 4. Output offline rigenerato (31-08-2026)
 
 | File | Contenuto |
 |---|---|
@@ -125,7 +152,7 @@ Sanity: **0 errori** (i warning sono saturazione attesa di testB).
 
 ---
 
-## 4. Stato checklist
+## 5. Stato checklist
 
 | Criterio | Stato |
 |---|---|
@@ -134,12 +161,13 @@ Sanity: **0 errori** (i warning sono saturazione attesa di testB).
 | Test C large | ✅ 10/10, 0 err |
 | Test C mix | ✅ 10/10, 0 err |
 | Plot 5 + tabelle | ✅ rigenerati |
+| Test D (invariato) | ✅ 3/3 run, 145 req, 0 err |
 | R4 (invariato) | ✅ |
-| Report (Block 4) | ⚠️ aggiornare i numeri Test C con la tabella §2 |
-| Teardown cluster | ⏳ `NO_TEARDOWN=1` — cluster ancora su (manual: `just cluster-down`) |
+| Report (Block 4) | ✅ Test C aggiornato + PDF ricompilato (commit `a865847`) |
+| Teardown cluster | ✅ EIP + SG rilasciate |
 
-## 5. Prossimi passi
+## 6. Prossimi passi
 
-1. Aggiornare le sezioni Test C del report LaTeX con i numeri della tabella §2.
-2. (`just cluster-down`) quando la sessione AWS finisce.
-3. Se si rifà: riusare `testc-6pod-up` + day-run con `RESTART_EVERY_C=5`.
+1. (Opzionale) Push dei commit locali (`origin` è a 9 commit indietro).
+2. Se si rifà una campagna: riusare `testc-6pod-up` + day-run con
+   `RESTART_EVERY_C=5`.
