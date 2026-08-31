@@ -595,7 +595,10 @@ exceeds the 120\,s lull, so scale-\emph{in} is not observable within a run.
 The informative contrast with Test~B: 12 users \emph{sustained} produced error
 rates up to 35\%, while a 60\,s burst at 12 users produced none, because the
 following lull drains the queue before the 300\,s timeout --- short bursts are
-absorbed by the service queue, sustained load is not.
+absorbed by the service queue, sustained load is not. Pod memory grew from
+~0.4 to ~2.3\,GiB across the three runs; the leak documented in
+Sec.~\ref{sec:limits} stayed below the degradation threshold, so the bursts
+still completed with zero errors.
 
 \begin{figure}[t]
 \centering
