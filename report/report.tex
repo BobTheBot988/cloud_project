@@ -303,7 +303,9 @@ period long enough for scale-\emph{in}; \code{ramp\_shape.py}. \textbf{Test B}
 (capacity) holds a fixed user count (10/20/30/40/50) with a 6-minute steady
 phase, $N{=}5$ runs per level; \code{exp-b.sh}. \textbf{Test C} (size
 isolation) fixes the workload size per run (small/medium/large/mix) at 20
-users with a 2-minute steady phase, 10 runs per size; \code{exp-c.sh}.
+users with a 3-minute steady phase, 10 runs per size, on six fixed pods (12
+parallel decode slots); \code{day-run.sh}. A 90\,s drain between runs and a
+pod restart every five runs keep the server out of the degradation region.
 \textbf{Test D} (burst) alternates a 2-user baseline with 12-user bursts,
 120\,s normal / 60\,s burst, two cycles per run, $N{=}3$; \code{burst\_shape.py}.
 
@@ -493,48 +495,51 @@ orchestrator share is $\approx$11\,ms; llama decode dominates.}
 \subsection{Size-isolated cost of a request (Test C)}
 \label{sec:size}
 
-Test~C fixes the workload size per run at 20 users (2-min steady, 10 runs per
-size). Table~\ref{tab:size} reports the outcome.
+Test~C fixes the workload size per run at 20 users (3-min steady, 10 runs per
+size, on six fixed pods --- 12 parallel decode slots). Table~\ref{tab:size}
+reports the outcome.
 
 \begin{table}[t]
-\caption{Test C: size-isolated workload @20 users ($N{=}10$ per size)}
+\caption{Test C: size-isolated workload @20 users, six fixed pods ($N{=}10$ per size)}
 \label{tab:size}
 \centering\small
 \begin{tabular}{@{}lrrrrrr@{}}
 \toprule
 Size & Req & Req/s & p50 (s) & p95 (s) & Err \% & Orch. (ms) \\
 \midrule
-small  & 498 & 0.458 & 38.0 & 45.8 & 1.2  & 11.7 \\
-medium &  66 & 0.060 & 86.9 & 109.4 & 13.6 & 16.9 \\
-large  &  10 & 0.009 & 92.3 & 106.7 & 0.0  & 12.5 \\
-mix    & 121 & 0.105 & 92.7 & 111.4 & 0.0  & 16.6 \\
+small  & 2793 & 1.56 &  7.4 &  15.7 & 0.0 &  8.9 \\
+medium &  910 & 0.51 & 30.1 &  59.4 & 0.0 &  9.4 \\
+large  &  441 & 0.25 & 52.4 & 120.7 & 0.0 & 10.2 \\
+mix    & 1083 & 0.61 & 25.2 &  65.2 & 0.0 &  9.5 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Two things stand out. First, small requests are the healthy regime: ~0.46
-req/s, p50 ~25\,s (successful rows), 1.2\% errors, orchestrator 11.7\,ms.
-Medium is degraded (13.6\% errors, p50 ~84\,s); at 20 users with only two
-decode slots the queue grows and a fraction exceeds the 300\,s timeout.
-Second, the mix workload exposes cross-size interference: splitting the mix
-detail by size, a \emph{small} request takes a p50 of ~88\,s when mixed with
-medium and large ones, against ~25\,s isolated --- a 3.5\,$\times$ penalty
-caused purely by queueing behind longer requests. Fig.~\ref{fig:size} shows
-latency, delay breakdown and scaling per size.
+All 5{,}227 requests complete with \textbf{zero errors} and no empty run: the
+twelve parallel slots (6 pods $\times$ \code{--parallel 2}) remove the queue
+collapse that a two-slot deployment showed at the same intensity. The cost
+scales with the request: throughput drops from 1.56\,req/s (small) to
+0.25\,req/s (large) while p50 grows from 7.4\,s to 52.4\,s, and the
+orchestrator adds only ~9--10\,ms. The mix still exposes cross-size
+interference --- a small request is ~1.4\,$\times$ slower inside the mix
+(p50 10.9\,s vs 7.7\,s isolated) because it queues behind longer ones --- but
+the penalty is much weaker than the 3.5\,$\times$ measured with two slots.
+Fig.~\ref{fig:size} shows latency, delay breakdown and scaling per size.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{figures/plot5_size}
 \caption{Test C: latency and delay breakdown per size class. Small is served
-fast in isolation but is penalised ~3.5\,$\times$ inside the mixed queue.}
+fast in isolation but is penalised ~1.4\,$\times$ inside the mixed queue; all
+classes complete with zero errors on six fixed pods.}
 \label{fig:size}
 \end{figure}
 
-The large class is a data-quality caveat rather than a clean measurement: 10
-requests across 10 runs, 7 of which completed nothing, because a single large
-request lasts ~90--120\,s and the 2-minute steady window at two slots leaves
-most runs empty. We report it as a limitation (Sec.~\ref{sec:limits}) rather
-than a result.
+One operational caveat: \code{llama-server} leaks memory under sustained load
+(~2.9\,GiB in ~45 min, limit 3\,GiB) and stops completing requests once it
+degrades. The campaign restarts the pods every five runs (and drains 90\,s
+between runs) to stay out of that region; a production deployment would need a
+leak fix or a memory-triggered restart policy.
 
 \subsection{Response to bursty load (Test D)}
 \label{sec:burst}
@@ -592,9 +597,9 @@ Objective & Target & Measured & \\
 \midrule
 Elasticity scale-out & $\le$60 s & ~27 s (Test D) & pass \\
 Elasticity scale-in  & after drain & every run (Test A) & pass \\
-Availability (2xx) @20u & $\ge$99\% & 98.8\% (Test C small) & pass \\
+Availability (2xx) @20u & $\ge$99\% & 100\% (Test C, 6 pods) & pass \\
 Error rate @20u      & $<$10\%  & 22--25\% (Test B) & \textbf{fail} \\
-p95, small class     & $<$300 s  & 45.8 s (Test C) & pass \\
+p95, small class     & $<$300 s  & 15.7 s (Test C) & pass \\
 p95 @40--50 users    & $<$300 s  & 274--295 s & \textbf{fail} \\
 \bottomrule
 \end{tabular}
@@ -673,11 +678,21 @@ pod). Delay and pod figures are therefore full autoscaling behaviour, not clean
 steady state; Test A is the clean case. This is stated explicitly rather than
 hidden.
 
-\emph{Test C large is underpowered.} Ten requests across ten runs, seven of
-which were empty, because the run protocol (2-min steady, 20 users) is shorter
-than the service time (~90--120\,s) at two slots. The large class is not
-statistically comparable with the others; isolating it would need a 4-user
-regime as the runbook recommended, which was not executed.
+\emph{Test C large was underpowered at two slots.} The earlier two-slot run
+collected ten requests in ten runs (seven empty) because the protocol is
+shorter than the ~90--120\,s service time. The six-pod run reported in
+Sec.~\ref{sec:size} removes this: 441 large requests across ten full runs.
+Test C is therefore a \emph{capacity} measurement at a fixed configuration
+(six pods, HPA pinned); reactive autoscaling behaviour is covered by Test~B,
+the exp4/exp6 variants and Test~D.
+
+\emph{llama.cpp memory leak under sustained load.} \code{llama-server} grows
+to ~2.9\,GiB (of a 3\,GiB limit) after ~45 min of continuous load and stops
+completing requests once degraded; no reset command exists in the server API,
+so a fresh process is required. The campaign stays out of the degraded region
+with a 90\,s drain between runs and a pod restart every five runs. Without a
+leak fix or a memory-triggered restart policy, sustained campaigns will
+eventually stall.
 
 \emph{No scale-in observable in Test D.} The HPA's 300\,s scale-in
 stabilisation window exceeds the 120\,s lull, so the burst experiment cannot
@@ -713,8 +728,9 @@ The second campaign tested whether the ceiling, not the autoscaler, was the
 problem. Raising the HPA ceiling to four and six pods reduced p95 from 51--101\,s
 to 30--98\,s and raised availability to 1.0, and at level 50 the six-pod
 deployment processed seven times the requests of the four-pod one by absorbing
-the queue. Size isolation showed the cost of a request scales with its length
-and that a mixed queue penalises short requests ~3.5\,$\times$. The burst
+the queue. Size isolation at six fixed pods showed the cost of a request
+scales with its length and that a mixed queue penalises short requests
+~1.4\,$\times$, with zero errors across 5{,}227 requests. The burst
 experiment showed the edge of the design: a sudden 6\,$\times$ step in users
 is absorbed with zero errors across 145 requests because the queue drains
 during the lull, while the same intensity sustained (Test B) fails.
