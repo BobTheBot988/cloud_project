@@ -64,13 +64,13 @@ run_locust() {
   local run_dir="$1"
   if [ -n "$LOADGEN" ]; then
     # remote: run locust on the in-AWS load-gen node, pull CSVs back
-    ssh "${SSH_OPTS[@]}" "$LOADGEN" "mkdir -p /tmp/exp"
+    ssh "${SSH_OPTS[@]}" "$LOADGEN" "mkdir -p ~/exp"
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
-      "$REPO/locustfile.py" "$REPO/burst_shape.py" "$LOADGEN:/tmp/exp/"
+      "$REPO/locustfile.py" "$REPO/burst_shape.py" "$LOADGEN:~/exp/"
     timeout "${LOCUST_MAX:-1800}" ssh "${SSH_OPTS[@]}" "$LOADGEN" \
-      "cd /tmp/exp && export PATH=/tmp/exp/.venv/bin:\$HOME/.local/bin:\$PATH && LOW_USERS=$(q "$LOW_USERS") HIGH_USERS=$(q "$HIGH_USERS") NORMAL_SECS=$(q "$NORMAL_SECS") BURST_SECS=$(q "$BURST_SECS") CYCLES=$(q "$CYCLES") locust -f locustfile.py,burst_shape.py --headless --host $(q "$TARGET") --exit-code-on-error 0 --csv /tmp/exp/locust < /dev/null" || true
+      "cd ~/exp && export PATH=~/exp/.venv/bin:\$HOME/.local/bin:\$PATH && LOW_USERS=$(q "$LOW_USERS") HIGH_USERS=$(q "$HIGH_USERS") NORMAL_SECS=$(q "$NORMAL_SECS") BURST_SECS=$(q "$BURST_SECS") CYCLES=$(q "$CYCLES") locust -f locustfile.py,burst_shape.py --headless --host $(q "$TARGET") --exit-code-on-error 0 --csv ~/exp/locust < /dev/null" || true
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
-      "$LOADGEN:/tmp/exp/locust_stats.csv" "$LOADGEN:/tmp/exp/locust_failures.csv" "$run_dir/"
+      "$LOADGEN:~/exp/locust_stats.csv" "$LOADGEN:~/exp/locust_failures.csv" "$run_dir/"
     if ! test -s "$run_dir/locust_stats.csv" || ! test -s "$run_dir/locust_failures.csv"; then
       echo "FATAL: missing locust CSV after remote run"
       exit 1

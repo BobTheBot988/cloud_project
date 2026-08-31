@@ -175,6 +175,16 @@ day-run:
 variant-hpa v:
 	bash infra/swap-hpa.sh {{v}}
 
+# Test C @20 users su 6 POD FISSI: pin HPA exp6 min=max=6 + scale a 6 + wait Ready
+# (12 slot paralleli: 6 pod x --parallel 2 — il vero collo di bottiglia era il
+# numero di slot, non la CPU). `down` ripristina l'autoscaling (min=1/max=6).
+# Da eseguire DOPO cluster-up+deploy, PRIMA di `day-run` / `exp-c`.
+testc-6pod-up:
+	bash infra/testc-6pod.sh up
+
+testc-6pod-down:
+	bash infra/testc-6pod.sh down
+
 # 4-worker cluster bring-up (exp4); quota guard enforces 6 inst/12 vCPU
 exp4-up: launch4
 	bash infra/bootstrap-all.sh

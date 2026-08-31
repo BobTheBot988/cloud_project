@@ -1,0 +1,5 @@
+item,qty,price_per_h,compute_6mo_usd,ebs_6mo_usd,total_6mo_usd
+master t3.small,1,0.02,87.66,19.2,106.86
+worker t3.medium,2,0.042,368.17,38.4,406.57
+load-gen t3.micro (test only),1,0.011,48.21,19.2,67.41
+STACK TOTAL (incl. load-gen),,,504.05,76.8,580.85

@@ -7,7 +7,13 @@
 # Env: RUNS (default 5), LEVELS (default "10 20 30 40 50", in users),
 #      STEADY_MIN (default 8), SIZE (default mix),
 #      TARGET (default http://127.0.0.1:8000), LOADGEN (ssh user@host,
-#      required when TARGET is not localhost — load must stay in AWS).
+#      required when TARGET is not localhost — load must stay in AWS),
+#      RUN_TAG (optional, recorded in notes.md — e.g. "6pod-fixed slots=12"),
+#      DRAIN_SECS (default 0; pause between runs so a saturated queue drains
+#      before the next run — prevents the run-N collapse under sustained load),
+#      RESTART_EVERY (default 0=off; after every Nth run run RESTART_HOOK —
+#      e.g. 5 to restart llama before its memory leak degrades the server),
+#      RESTART_HOOK (shell command, e.g. "bash infra/restart-pods.sh").
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,6 +28,9 @@ SIZE="${SIZE:-mix}"
 TARGET="${TARGET:-http://127.0.0.1:8000}"
 LOADGEN="${LOADGEN:-}"
 SCENARIO="${SCENARIO:-testB}"
+DRAIN_SECS="${DRAIN_SECS:-0}"
+RESTART_EVERY="${RESTART_EVERY:-0}"
+RESTART_HOOK="${RESTART_HOOK:-}"
 
 # shell-quote a value for safe embedding into the remote ssh command
 q() { printf '%q' "$1"; }
@@ -66,15 +75,15 @@ run_locust() {
     # remote: run locust on the in-AWS load-gen node, pull CSVs back.
     # timeout guards against a hung ssh session stalling the whole run
     # (same fix as exp-a; locust CSVs are pulled by scp regardless).
-    ssh "${SSH_OPTS[@]}" "$LOADGEN" "mkdir -p /tmp/exp && rm -f /tmp/exp/requests_detail.csv"
+    ssh "${SSH_OPTS[@]}" "$LOADGEN" "mkdir -p ~/exp && rm -f ~/exp/requests_detail.csv"
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
-      "$REPO/locustfile.py" "$LOADGEN:/tmp/exp/"
+      "$REPO/locustfile.py" "$LOADGEN:~/exp/"
     timeout "${LOCUST_MAX:-600}" ssh "${SSH_OPTS[@]}" "$LOADGEN" \
-      "cd /tmp/exp && export PATH=/tmp/exp/.venv/bin:\$HOME/.local/bin:\$PATH && SIZE=$(q "$SIZE") DETAIL_CSV=/tmp/exp/requests_detail.csv locust -f locustfile.py --headless --host $(q "$TARGET") -u $(q "$users") -r 5 --run-time $(q "${STEADY_MIN}m") --exit-code-on-error 0 --csv /tmp/exp/locust" || true
+      "cd ~/exp && export PATH=~/exp/.venv/bin:\$HOME/.local/bin:\$PATH && SIZE=$(q "$SIZE") DETAIL_CSV=~/exp/requests_detail.csv locust -f locustfile.py --headless --host $(q "$TARGET") -u $(q "$users") -r 5 --run-time $(q "${STEADY_MIN}m") --exit-code-on-error 0 --csv ~/exp/locust" || true
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
-      "$LOADGEN:/tmp/exp/locust_stats.csv" "$LOADGEN:/tmp/exp/locust_failures.csv" "$run_dir/"
+      "$LOADGEN:~/exp/locust_stats.csv" "$LOADGEN:~/exp/locust_failures.csv" "$run_dir/"
     scp -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new \
-      "$LOADGEN:/tmp/exp/requests_detail.csv" "$run_dir/" || true
+      "$LOADGEN:~/exp/requests_detail.csv" "$run_dir/" || true
     if ! test -s "$run_dir/locust_stats.csv" || ! test -s "$run_dir/locust_failures.csv"; then
       echo "FATAL: missing locust CSV after remote run"
       exit 1
@@ -131,6 +140,7 @@ for level in $LEVELS; do
       echo "target=$TARGET loadgen=${LOADGEN:-local}"
       echo "runs_total=$RUNS"
     } >> "$CUR_RUN_DIR/notes.md"
+    [ -n "${RUN_TAG:-}" ] && echo "run_tag=$RUN_TAG" >> "$CUR_RUN_DIR/notes.md"
     run_locust "$CUR_RUN_DIR" "$level"
     bash "$DIR/collect.sh" stop "$SCENARIO" "$RUN_INDEX"
     {
@@ -138,6 +148,15 @@ for level in $LEVELS; do
       echo "interrupted=0"
     } >> "$CUR_RUN_DIR/notes.md"
     echo "        done -> $CUR_RUN_DIR"
+    if [ "$DRAIN_SECS" -gt 0 ] 2>/dev/null; then
+      echo "    drain ${DRAIN_SECS}s (smaltisci coda prima della prossima run)"
+      sleep "$DRAIN_SECS"
+    fi
+    if [ "$RESTART_EVERY" -gt 0 ] 2>/dev/null && [ $((RUN_INDEX % RESTART_EVERY)) -eq 0 ] \
+       && [ -n "$RESTART_HOOK" ] && [ "$RUN_INDEX" -lt $((RUNS * $(echo "$LEVELS" | wc -w))) ]; then
+      echo "==> periodic restart (every $RESTART_EVERY runs, after run $RUN_INDEX)"
+      eval "$RESTART_HOOK"
+    fi
   done
 done
 
