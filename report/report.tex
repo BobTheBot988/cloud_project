@@ -520,11 +520,34 @@ twelve parallel slots (6 pods $\times$ \code{--parallel 2}) remove the queue
 collapse that a two-slot deployment showed at the same intensity. The cost
 scales with the request: throughput drops from 1.56\,req/s (small) to
 0.25\,req/s (large) while p50 grows from 7.4\,s to 52.4\,s, and the
-orchestrator adds only ~9--10\,ms. The mix still exposes cross-size
-interference --- a small request is ~1.4\,$\times$ slower inside the mix
-(p50 10.9\,s vs 7.7\,s isolated) because it queues behind longer ones --- but
-the penalty is much weaker than the 3.5\,$\times$ measured with two slots.
-Fig.~\ref{fig:size} shows latency, delay breakdown and scaling per size.
+orchestrator adds only ~9--10\,ms. \textbf{The bottleneck is therefore the
+number of parallel decode slots, not raw CPU capacity:} raising the slot count
+from two to twelve turned a collapsing queue into zero-error service at the
+same 20-user intensity, while the per-request cost remains dominated by
+llama's sequential token decode.
+
+\begin{table}[t]
+\caption{Cross-size interference: p50 latency isolated vs inside the mixed workload}
+\label{tab:cross}
+\centering\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Size & Isolated (s) & Mix (s) & Penalty \\
+\midrule
+small  & 7.7 & 10.9 & 1.4\,$\times$ \\
+medium & 30.1 & 27.4 & 1.0\,$\times$ \\
+large  & 47.6 & 48.0 & 1.0\,$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The mix still exposes cross-size interference: Table~\ref{tab:cross} shows a
+\emph{small} request ~1.4\,$\times$ slower inside the mix (p50 10.9\,s vs
+7.7\,s isolated) because it queues behind longer ones; medium and large are
+unaffected (1.0\,$\times$). The penalty is much weaker than the 3.5\,$\times$
+measured with two slots, because the larger slot pool drains the mixed queue
+faster. Fig.~\ref{fig:size} shows latency, delay breakdown and scaling per
+size.
 
 \begin{figure}[t]
 \centering
