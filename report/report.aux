@@ -1,0 +1,102 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {II}Background}{1}{section.2}\protected@file@percent }
+\newlabel{sec:background}{{II}{1}{Background}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Kubernetes and the Horizontal Pod Autoscaler}{1}{subsection.2.1}\protected@file@percent }
+\citation{casalicchio2017}
+\citation{casalicchio2020}
+\citation{little}
+\citation{adzic2017}
+\citation{eivy2017}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}llama.cpp and CPU-based LLM inference}{2}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}The experimental environment}{2}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {III}State of the Art}{2}{section.3}\protected@file@percent }
+\newlabel{sec:sota}{{III}{2}{State of the Art}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Autoscaling of containers}{2}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Autoscaling LLM inference}{2}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Economics: provisioned versus serverless}{2}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-D}}Position of this study}{2}{subsection.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Application}{2}{section.4}\protected@file@percent }
+\newlabel{sec:app}{{IV}{2}{Application}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Architecture}{2}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Workload}{2}{subsection.4.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Mapping of the evaluation onto the standard procedure for measurement-based cloud service performance evaluation}}{3}{table.1}\protected@file@percent }
+\newlabel{tab:procedure}{{I}{3}{Mapping of the evaluation onto the standard procedure for measurement-based cloud service performance evaluation}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Instrumentation}{3}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {V}Performance Evaluation Methodology}{3}{section.5}\protected@file@percent }
+\newlabel{sec:method}{{V}{3}{Performance Evaluation Methodology}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Metrics}{3}{subsection.5.1}\protected@file@percent }
+\newlabel{sec:metrics}{{\mbox  {V-A}}{3}{Metrics}{subsection.5.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Tool selection}{3}{subsection.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Load profiles}{3}{subsection.5.3}\protected@file@percent }
+\newlabel{sec:design}{{\mbox  {V-C}}{3}{Load profiles}{subsection.5.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Service level objectives}{3}{subsection.5.4}\protected@file@percent }
+\newlabel{sec:sla}{{\mbox  {V-D}}{3}{Service level objectives}{subsection.5.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Experimental environment}{3}{subsection.5.5}\protected@file@percent }
+\newlabel{sec:env}{{\mbox  {V-E}}{3}{Experimental environment}{subsection.5.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Campaign A: Elasticity and Capacity}{3}{section.6}\protected@file@percent }
+\newlabel{sec:campaignA}{{VI}{3}{Campaign A: Elasticity and Capacity}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-A}}Elasticity under a continuous ramp (Test A)}{3}{subsection.6.1}\protected@file@percent }
+\newlabel{sec:elasticity}{{\mbox  {VI-A}}{3}{Elasticity under a continuous ramp (Test A)}{subsection.6.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Test A: pod replicas and CPU\% against time ($N{=}5$ averaged). Scale-out $1{\to }2$ under the ramp, scale-in $2{\to }1$ after the idle drain.}}{4}{figure.1}\protected@file@percent }
+\newlabel{fig:elasticity}{{1}{4}{Test A: pod replicas and CPU\% against time ($N{=}5$ averaged). Scale-out $1{\to }2$ under the ramp, scale-in $2{\to }1$ after the idle drain}{figure.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Test B: load-capacity curve (mix workload, 6-min steady, $N{=}5$)}}{4}{table.2}\protected@file@percent }
+\newlabel{tab:capacity}{{II}{4}{Test B: load-capacity curve (mix workload, 6-min steady, $N{=}5$)}{table.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-B}}Load-capacity curve (Test B)}{4}{subsection.6.2}\protected@file@percent }
+\newlabel{sec:capacity}{{\mbox  {VI-B}}{4}{Load-capacity curve (Test B)}{subsection.6.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Test B: pods and p50/p95 latency against offered load (levels 10--50, $N{=}5$). p95 approaches the 300\,s proxy timeout at saturation.}}{4}{figure.2}\protected@file@percent }
+\newlabel{fig:capacity}{{2}{4}{Test B: pods and p50/p95 latency against offered load (levels 10--50, $N{=}5$). p95 approaches the 300\,s proxy timeout at saturation}{figure.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Test B: offered versus received load. Beyond ~20--30 users the received rate stops tracking the offered rate.}}{4}{figure.3}\protected@file@percent }
+\newlabel{fig:offered}{{3}{4}{Test B: offered versus received load. Beyond ~20--30 users the received rate stops tracking the offered rate}{figure.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-C}}Where the response time goes}{4}{subsection.6.3}\protected@file@percent }
+\newlabel{sec:delay}{{\mbox  {VI-C}}{4}{Where the response time goes}{subsection.6.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VI-D}}Compliance with the elasticity objective}{4}{subsection.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {VII}Campaign B: Scaling Beyond Two Pods}{4}{section.7}\protected@file@percent }
+\newlabel{sec:campaignB}{{VII}{4}{Campaign B: Scaling Beyond Two Pods}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-A}}Variants exp4 and exp6}{4}{subsection.7.1}\protected@file@percent }
+\newlabel{sec:variants}{{\mbox  {VII-A}}{4}{Variants exp4 and exp6}{subsection.7.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Variants: error rate, availability and p95 by level and variant}}{5}{table.3}\protected@file@percent }
+\newlabel{tab:variants}{{III}{5}{Variants: error rate, availability and p95 by level and variant}{table.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Variant campaigns: p95 latency and error rate against level for exp2/exp4/exp6. More pods, lower tail and fewer errors.}}{5}{figure.4}\protected@file@percent }
+\newlabel{fig:capacity_variant}{{4}{5}{Variant campaigns: p95 latency and error rate against level for exp2/exp4/exp6. More pods, lower tail and fewer errors}{figure.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-B}}Size-isolated cost of a request (Test C)}{5}{subsection.7.2}\protected@file@percent }
+\newlabel{sec:size}{{\mbox  {VII-B}}{5}{Size-isolated cost of a request (Test C)}{subsection.7.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Delay split (total / upstream / orchestrator) per level. The orchestrator share is $\approx $11\,ms; llama decode dominates.}}{5}{figure.5}\protected@file@percent }
+\newlabel{fig:delay_variant}{{5}{5}{Delay split (total / upstream / orchestrator) per level. The orchestrator share is $\approx $11\,ms; llama decode dominates}{figure.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Test C: size-isolated workload @20 users, six fixed pods ($N{=}10$ per size)}}{5}{table.4}\protected@file@percent }
+\newlabel{tab:size}{{IV}{5}{Test C: size-isolated workload @20 users, six fixed pods ($N{=}10$ per size)}{table.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-C}}Response to bursty load (Test D)}{5}{subsection.7.3}\protected@file@percent }
+\newlabel{sec:burst}{{\mbox  {VII-C}}{5}{Response to bursty load (Test D)}{subsection.7.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-D}}Availability and SLO summary}{5}{subsection.7.4}\protected@file@percent }
+\newlabel{sec:slasum}{{\mbox  {VII-D}}{5}{Availability and SLO summary}{subsection.7.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Cross-size interference: p50 latency isolated vs inside the mixed workload}}{6}{table.5}\protected@file@percent }
+\newlabel{tab:cross}{{V}{6}{Cross-size interference: p50 latency isolated vs inside the mixed workload}{table.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Test C: latency and delay breakdown per size class. Small is served fast in isolation but is penalised ~1.4\,$\times $ inside the mixed queue; all classes complete with zero errors on six fixed pods.}}{6}{figure.6}\protected@file@percent }
+\newlabel{fig:size}{{6}{6}{Test C: latency and delay breakdown per size class. Small is served fast in isolation but is penalised ~1.4\,$\times $ inside the mixed queue; all classes complete with zero errors on six fixed pods}{figure.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VIII}Cost Evaluation}{6}{section.8}\protected@file@percent }
+\newlabel{sec:cost}{{VIII}{6}{Cost Evaluation}{section.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-A}}Method}{6}{subsection.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-B}}Results}{6}{subsection.8.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {VI}{\ignorespaces Test D: bursty workload ($N{=}3$)}}{6}{table.6}\protected@file@percent }
+\newlabel{tab:burst}{{VI}{6}{Test D: bursty workload ($N{=}3$)}{table.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Test D: HPA reaction to bursts. CPU exceeds the 60\% target during each burst and the HPA scales to two pods.}}{6}{figure.7}\protected@file@percent }
+\newlabel{fig:burst}{{7}{6}{Test D: HPA reaction to bursts. CPU exceeds the 60\% target during each burst and the HPA scales to two pods}{figure.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {IX}Limitations and Threats to Validity}{6}{section.9}\protected@file@percent }
+\newlabel{sec:limits}{{IX}{6}{Limitations and Threats to Validity}{section.9}{}}
+\bibcite{casalicchio2017}{1}
+\bibcite{casalicchio2020}{2}
+\bibcite{little}{3}
+\bibcite{adzic2017}{4}
+\bibcite{eivy2017}{5}
+\bibcite{llamacpp}{6}
+\bibcite{k8s}{7}
+\@writefile{lot}{\contentsline {table}{\numberline {VII}{\ignorespaces Compliance against the objectives stated in Sec.~\ref {sec:sla}}}{7}{table.7}\protected@file@percent }
+\newlabel{tab:sla}{{VII}{7}{Compliance against the objectives stated in Sec.~\ref {sec:sla}}{table.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VIII}{\ignorespaces Six-month cost projection}}{7}{table.8}\protected@file@percent }
+\newlabel{tab:cost}{{VIII}{7}{Six-month cost projection}{table.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {X}Conclusion}{7}{section.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{7}{section*.1}\protected@file@percent }
+\gdef \@abspage@last{7}

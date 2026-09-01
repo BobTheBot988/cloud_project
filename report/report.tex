@@ -502,7 +502,7 @@ reports the outcome.
 \begin{table}[t]
 \caption{Test C: size-isolated workload @20 users, six fixed pods ($N{=}10$ per size)}
 \label{tab:size}
-\centering\small
+\centering\small\setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}lrrrrrr@{}}
 \toprule
 Size & Req & Req/s & p50 (s) & p95 (s) & Err \% & Orch. (ms) \\
@@ -617,9 +617,9 @@ Table~\ref{tab:sla} evaluates the objectives of Sec.~\ref{sec:sla}.
 \caption{Compliance against the objectives stated in Sec.~\ref{sec:sla}}
 \label{tab:sla}
 \centering\small
-\begin{tabular}{@{}llll@{}}
+\begin{tabular}{@{}p{2.5cm}p{1.3cm}p{2.4cm}l@{}}
 \toprule
-Objective & Target & Measured & \\
+Objective & Target & Measured & Verdict \\
 \midrule
 Elasticity scale-out & $\le$60 s & ~27 s (Test D) & pass \\
 Elasticity scale-in  & after drain & every run (Test A) & pass \\
