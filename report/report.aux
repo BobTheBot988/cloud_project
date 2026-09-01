@@ -20,9 +20,9 @@
 \newlabel{sec:app}{{IV}{2}{Application}{section.4}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-A}}Architecture}{2}{subsection.4.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-B}}Workload}{2}{subsection.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Instrumentation}{2}{subsection.4.3}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Mapping of the evaluation onto the standard procedure for measurement-based cloud service performance evaluation}}{3}{table.1}\protected@file@percent }
 \newlabel{tab:procedure}{{I}{3}{Mapping of the evaluation onto the standard procedure for measurement-based cloud service performance evaluation}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {IV-C}}Instrumentation}{3}{subsection.4.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {V}Performance Evaluation Methodology}{3}{section.5}\protected@file@percent }
 \newlabel{sec:method}{{V}{3}{Performance Evaluation Methodology}{section.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Metrics}{3}{subsection.5.1}\protected@file@percent }
@@ -53,37 +53,37 @@
 \newlabel{fig:capacity_variant}{{2}{5}{Variant campaigns: p95 latency and error rate against level for exp4/exp6. More pods, lower tail and fewer errors}{figure.2}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Delay split (total / upstream / orchestrator) per level. The orchestrator share is $\approx $11\,ms; llama decode dominates. A small x-position jitter ($\pm $0.6 users) is applied so the overlapping total and upstream lines remain separately visible.}}{5}{figure.3}\protected@file@percent }
 \newlabel{fig:delay_variant}{{3}{5}{Delay split (total / upstream / orchestrator) per level. The orchestrator share is $\approx $11\,ms; llama decode dominates. A small x-position jitter ($\pm $0.6 users) is applied so the overlapping total and upstream lines remain separately visible}{figure.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-B}}Size-isolated cost of a request (Test C)}{5}{subsection.7.2}\protected@file@percent }
-\newlabel{sec:size}{{\mbox  {VII-B}}{5}{Size-isolated cost of a request (Test C)}{subsection.7.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-B}}Effect of request size (Test C)}{5}{subsection.7.2}\protected@file@percent }
+\newlabel{sec:size}{{\mbox  {VII-B}}{5}{Effect of request size (Test C)}{subsection.7.2}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Test C: size-isolated workload @20 users, six fixed pods ($N{=}10$ per size)}}{5}{table.3}\protected@file@percent }
 \newlabel{tab:size}{{III}{5}{Test C: size-isolated workload @20 users, six fixed pods ($N{=}10$ per size)}{table.3}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Cross-size interference: p50 latency isolated vs inside the mixed workload}}{5}{table.4}\protected@file@percent }
 \newlabel{tab:cross}{{IV}{5}{Cross-size interference: p50 latency isolated vs inside the mixed workload}{table.4}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-C}}Response to bursty load (Test D)}{5}{subsection.7.3}\protected@file@percent }
 \newlabel{sec:burst}{{\mbox  {VII-C}}{5}{Response to bursty load (Test D)}{subsection.7.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-D}}Availability and SLO summary}{5}{subsection.7.4}\protected@file@percent }
-\newlabel{sec:slasum}{{\mbox  {VII-D}}{5}{Availability and SLO summary}{subsection.7.4}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Test C: latency and delay breakdown per size class. Small is served fast in isolation but is penalised ~1.4\,$\times $ inside the mixed queue; all classes complete with zero errors on six fixed pods.}}{6}{figure.4}\protected@file@percent }
 \newlabel{fig:size}{{4}{6}{Test C: latency and delay breakdown per size class. Small is served fast in isolation but is penalised ~1.4\,$\times $ inside the mixed queue; all classes complete with zero errors on six fixed pods}{figure.4}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Test D: bursty workload ($N{=}3$)}}{6}{table.5}\protected@file@percent }
 \newlabel{tab:burst}{{V}{6}{Test D: bursty workload ($N{=}3$)}{table.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VII-D}}Availability and SLO summary}{6}{subsection.7.4}\protected@file@percent }
+\newlabel{sec:slasum}{{\mbox  {VII-D}}{6}{Availability and SLO summary}{subsection.7.4}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {VIII}Cost Evaluation}{6}{section.8}\protected@file@percent }
 \newlabel{sec:cost}{{VIII}{6}{Cost Evaluation}{section.8}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-A}}Method}{6}{subsection.8.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-B}}Results}{6}{subsection.8.2}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Test D: HPA reaction to bursts. CPU exceeds the 60\% target during each burst and the HPA scales to two pods.}}{6}{figure.5}\protected@file@percent }
 \newlabel{fig:burst}{{5}{6}{Test D: HPA reaction to bursts. CPU exceeds the 60\% target during each burst and the HPA scales to two pods}{figure.5}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {VI}{\ignorespaces Compliance against the objectives stated in Sec.~\ref {sec:sla}}}{6}{table.6}\protected@file@percent }
 \newlabel{tab:sla}{{VI}{6}{Compliance against the objectives stated in Sec.~\ref {sec:sla}}{table.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {IX}Limitations and Threats to Validity}{6}{section.9}\protected@file@percent }
-\newlabel{sec:limits}{{IX}{6}{Limitations and Threats to Validity}{section.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {VIII-B}}Results}{6}{subsection.8.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {VII}{\ignorespaces Six-month cost projection}}{7}{table.7}\protected@file@percent }
+\newlabel{tab:cost}{{VII}{7}{Six-month cost projection}{table.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {IX}Limitations and Threats to Validity}{7}{section.9}\protected@file@percent }
+\newlabel{sec:limits}{{IX}{7}{Limitations and Threats to Validity}{section.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {X}Conclusion}{7}{section.10}\protected@file@percent }
 \bibcite{little}{1}
 \bibcite{adzic2017}{2}
 \bibcite{eivy2017}{3}
 \bibcite{llamacpp}{4}
 \bibcite{k8s}{5}
-\@writefile{lot}{\contentsline {table}{\numberline {VII}{\ignorespaces Six-month cost projection}}{7}{table.7}\protected@file@percent }
-\newlabel{tab:cost}{{VII}{7}{Six-month cost projection}{table.7}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {X}Conclusion}{7}{section.10}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{References}{7}{section*.1}\protected@file@percent }
-\gdef \@abspage@last{7}
+\@writefile{toc}{\contentsline {section}{References}{8}{section*.1}\protected@file@percent }
+\gdef \@abspage@last{8}
