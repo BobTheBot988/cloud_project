@@ -39,12 +39,22 @@ def build():
     TABLES.mkdir(parents=True, exist_ok=True)
     rows = []
 
-    n_master, n_worker = 1, 6
-    stack_compute = n_master * T3_SMALL * HOURS_6MO + n_worker * T3_MEDIUM * HOURS_6MO
-    stack_ebs = (n_master + n_worker) * EBS_GB * EBS_GP3_PER_GB_MO * 6
-    stack = stack_compute + stack_ebs
+    # two EC2 footprints: the 2-worker service footprint (production) and
+    # the 6-worker bench actually used for the measurements
+    def ec2_stack(n_master, n_worker, label, single_label, single_price):
+        comp = n_master * T3_SMALL * HOURS_6MO + n_worker * T3_MEDIUM * HOURS_6MO
+        ebs = (n_master + n_worker) * EBS_GB * EBS_GP3_PER_GB_MO * 6
+        single = single_price * HOURS_6MO + EBS_GB * EBS_GP3_PER_GB_MO * 6
+        return {
+            "label": label, "n_master": n_master, "n_worker": n_worker,
+            "compute": comp, "ebs": ebs, "total": comp + ebs,
+            "single_label": single_label, "single": single,
+        }
 
-    single = ec2_line("m5.4xlarge (16 vCPU, no autoscaling)", 1, M5_4XLARGE, EBS_GB)
+    footprint = ec2_stack(1, 2, "Service footprint (1 master + 2 workers, HPA 1-2 pods)",
+                          "Single t3.xlarge (4 vCPU, no autoscaling)", T3_XLARGE)
+    bench = ec2_stack(1, 6, "Experiment bench (1 master + 6 workers, HPA 1-6 pods)",
+                      "Single m5.4xlarge (16 vCPU, no autoscaling)", M5_4XLARGE)
 
     loadgen = T3_MICRO * HOURS_6MO + EBS_GB * EBS_GP3_PER_GB_MO * 6
 
@@ -55,8 +65,8 @@ def build():
     lambda_total = lambda_req + lambda_compute
 
     items = [
-        ("master t3.small", n_master, T3_SMALL, n_master * T3_SMALL * HOURS_6MO, n_master * EBS_GB * EBS_GP3_PER_GB_MO * 6),
-        ("worker t3.medium", n_worker, T3_MEDIUM, n_worker * T3_MEDIUM * HOURS_6MO, n_worker * EBS_GB * EBS_GP3_PER_GB_MO * 6),
+        ("master t3.small", footprint["n_master"], T3_SMALL, footprint["n_master"] * T3_SMALL * HOURS_6MO, footprint["n_master"] * EBS_GB * EBS_GP3_PER_GB_MO * 6),
+        ("worker t3.medium", footprint["n_worker"], T3_MEDIUM, footprint["n_worker"] * T3_MEDIUM * HOURS_6MO, footprint["n_worker"] * EBS_GB * EBS_GP3_PER_GB_MO * 6),
         ("load-gen t3.micro (test only)", 1, T3_MICRO, loadgen - EBS_GB * EBS_GP3_PER_GB_MO * 6, EBS_GB * EBS_GP3_PER_GB_MO * 6),
     ]
     for name, qty, price, comp, ebs in items:
@@ -66,36 +76,46 @@ def build():
             "total_6mo_usd": round(comp + ebs, 2),
         })
     rows.append({"item": "STACK TOTAL (incl. load-gen)", "qty": "", "price_per_h": "",
-                 "compute_6mo_usd": round(stack_compute + loadgen - EBS_GB * EBS_GP3_PER_GB_MO * 6, 2),
-                 "ebs_6mo_usd": round(stack_ebs + EBS_GB * EBS_GP3_PER_GB_MO * 6, 2),
-                 "total_6mo_usd": round(stack + loadgen, 2)})
+                 "compute_6mo_usd": round(footprint["compute"] + loadgen - EBS_GB * EBS_GP3_PER_GB_MO * 6, 2),
+                 "ebs_6mo_usd": round(footprint["ebs"] + EBS_GB * EBS_GP3_PER_GB_MO * 6, 2),
+                 "total_6mo_usd": round(footprint["total"] + loadgen, 2)})
     pd.DataFrame(rows).to_csv(TABLES / "r4_cost_6mo.csv", index=False)
 
     comp = pd.DataFrame({
         "solution": [
-            "K8s/EC2 stack (this project)",
-            "Single m5.4xlarge (no autoscaling)",
+            footprint["label"],
+            footprint["single_label"],
+            bench["label"],
+            bench["single_label"],
             "AWS Lambda (same AI app)",
         ],
         "compute_6mo_usd": [
-            round(stack_compute, 2),
+            round(footprint["compute"], 2),
+            round(T3_XLARGE * HOURS_6MO, 2),
+            round(bench["compute"], 2),
             round(M5_4XLARGE * HOURS_6MO, 2),
             round(lambda_compute, 2),
         ],
-        "requests_6mo_usd": [0.0, 0.0, round(lambda_req, 2)],
-        "storage_6mo_usd": [round(stack_ebs, 2), round(EBS_GB * EBS_GP3_PER_GB_MO * 6, 2), 0.0],
-        "total_6mo_usd": [round(stack, 2), round(single, 2), round(lambda_total, 2)],
+        "requests_6mo_usd": [0.0, 0.0, 0.0, 0.0, round(lambda_req, 2)],
+        "storage_6mo_usd": [round(footprint["ebs"], 2), round(EBS_GB * EBS_GP3_PER_GB_MO * 6, 2),
+                            round(bench["ebs"], 2), round(EBS_GB * EBS_GP3_PER_GB_MO * 6, 2), 0.0],
+        "total_6mo_usd": [round(footprint["total"], 2), round(footprint["single"], 2),
+                          round(bench["total"], 2), round(bench["single"], 2), round(lambda_total, 2)],
         "notes": [
-            f"always-on; {n_master} master + {n_worker} workers; HPA 1-6 pods; {EBS_GB}GB gp3 each",
-            f"16 vCPU / 64GB, {EBS_GB}GB gp3; same peak capacity as 6x t3.medium, no elasticity",
+            f"always-on; {footprint['n_master']} master + {footprint['n_worker']} workers; HPA 1-2 pods; {EBS_GB}GB gp3 each",
+            f"4 vCPU / 16GB, {EBS_GB}GB gp3; same peak as 2x t3.medium, no elasticity",
+            f"always-on; {bench['n_master']} master + {bench['n_worker']} workers; HPA 1-6 pods; {EBS_GB}GB gp3 each",
+            f"16 vCPU / 64GB, {EBS_GB}GB gp3; same peak as 6x t3.medium, no elasticity",
             f"{LAMBDA_GB:.0f}GB, {LAMBDA_DUR_S:.0f}s/inv, {invocations_6mo:.0f} inv/6mo",
         ],
     })
     comp.to_csv(TABLES / "r4_comparison.csv", index=False)
 
     print("R4 cost tables ->", TABLES)
-    print(f"  EC2 stack 6mo: ${stack + loadgen:.2f} (${stack:.2f} without load-gen)")
-    print(f"  Single m5.4xlarge 6mo: ${single:.2f}")
+    print(f"  Service footprint 6mo: ${footprint['total']:.2f}")
+    print(f"  Single t3.xlarge 6mo: ${footprint['single']:.2f}")
+    print(f"  Experiment bench 6mo: ${bench['total']:.2f}")
+    print(f"  Single m5.4xlarge 6mo: ${bench['single']:.2f}")
     print(f"  Lambda 6mo: ${lambda_total:.2f}  ({lambda_gbs:.0f} GB-s, {lambda_req:.2f} req charges)")
     return 0
 

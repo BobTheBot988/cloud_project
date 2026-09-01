@@ -105,7 +105,7 @@ wait_ssh() {
   echo "FATAL: ssh not reachable on $ip"; exit 1
 }
 
-# setup_locust: create /tmp/exp venv with locust. Locust >=2.46 requires
+# setup_locust: create ~/exp venv with locust. Locust >=2.46 requires
 # Python 3.11+; AL2023 defaults to 3.9, so install python3.11 via dnf FIRST
 # and build the venv with it (the old fallback silently used 3.9's pip 21.3.1,
 # which cannot resolve locust 2.46.3). Fail loudly if 3.11 is unavailable.
@@ -121,10 +121,10 @@ setup_locust() {
     *) echo "FATAL: python3.11 not available on load-gen node (got '$pyver')"; exit 1 ;;
   esac
   ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 "$SSH_USER@$ip" \
-    "rm -rf /tmp/exp/.venv && python3.11 -m venv /tmp/exp/.venv && /tmp/exp/.venv/bin/pip install -q --upgrade pip && /tmp/exp/.venv/bin/pip install -q 'locust==$LOCUST_VERSION'"
+    "rm -rf ~/exp/.venv && python3.11 -m venv ~/exp/.venv && ~/exp/.venv/bin/pip install -q --upgrade pip && ~/exp/.venv/bin/pip install -q 'locust==$LOCUST_VERSION'"
   local ver
   ver="$(ssh -i "$SSH_KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 "$SSH_USER@$ip" \
-    "/tmp/exp/.venv/bin/locust --version 2>/dev/null || echo MISSING")"
+    "~/exp/.venv/bin/locust --version 2>/dev/null || echo MISSING")"
   echo "    locust on node: $ver"
   case "$ver" in
     *MISSING*) echo "FATAL: locust install failed on load-gen node"; exit 1 ;;

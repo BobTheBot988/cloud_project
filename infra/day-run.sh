@@ -20,7 +20,12 @@
 #
 # Env: REGION/AZ1/AZ2 (cluster region), SESSION_HOURS, START_AT, LEVELS_C
 #      (default 20), RUNS_C (default 10), STEADY_MIN_C (default 2),
-#      TESTC_SCENARIOS, RUNS_D (default 0 = Test D off), LOW_USERS,
+#      TESTC_SCENARIOS, RUN_TAG_C (recorded in notes.md, e.g. "6pod-fixed"),
+#      DRAIN_SECS_C (default 0; pause between runs to drain the saturated
+#      queue — prevents the run-N collapse under sustained load),
+#      RESTART_EVERY_C (default 0; restart llama pods every N runs within a
+#      scenario — its memory leak otherwise degrades the server),
+#      RUNS_D (default 0 = Test D off), LOW_USERS,
 #      HIGH_USERS, NORMAL_SECS, BURST_SECS, CYCLES, NO_TEARDOWN=1.
 set -euo pipefail
 
@@ -189,7 +194,9 @@ testc() {
     fi
     log "==> Test C $sc: redo runs $first..$RUNS_C (LEVELS=$LEVELS_C, steady=${STEADY_MIN_C}m)"
     SIZE="${sc#testC_}" SCENARIO="$sc" LEVELS="$LEVELS_C" RUNS="$RUNS_C" RUN_START="$first" \
-      STEADY_MIN="$STEADY_MIN_C" FORCE=1 bash "$DIR/exp-b.sh"
+      STEADY_MIN="$STEADY_MIN_C" FORCE=1 RUN_TAG="${RUN_TAG_C:-}" DRAIN_SECS="${DRAIN_SECS_C:-0}" \
+      RESTART_EVERY="${RESTART_EVERY_C:-0}" RESTART_HOOK="${RESTART_HOOK_C:-}" \
+      bash "$DIR/exp-b.sh"
   done
   commit_data "Test C @20 users (small/medium/large/mix)" \
     data/raw/testC_small data/raw/testC_medium data/raw/testC_large data/raw/testC_mix

@@ -1,102 +1,215 @@
 # scenario=testC_large run=4
-collect_start=1787560805
+collect_start=1788182087
 interval_sec=60
 run=4
-run_start=1787560807
+run_start=1788182089
 scenario=testC_large
 test=TestB(steady)
-level_users=20 steady_min=2 size=large
-target=http://52.72.252.177:30080 loadgen=ec2-user@3.90.17.85
+level_users=20 steady_min=3 size=large
+target=http://34.228.95.133:30080 loadgen=ec2-user@3.85.82.239
 runs_total=10
-collect_stop=1787560949
+run_tag=6pod-fixed slots=12 drain90 restart5
+collect_stop=1788182286
 --- events ---
-57m     Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b     Created pod: llm-proxy-7dc458997b-rfwgl
-57m     Normal    Scheduled                      pod/llm-proxy-7dc458997b-rfwgl      Successfully assigned default/llm-proxy-7dc458997b-rfwgl to ip-172-31-39-185.ec2.internal
-57m     Normal    Started                        pod/llm-proxy-7dc458997b-rfwgl      Container started
-57m     Normal    Created                        pod/llm-proxy-7dc458997b-rfwgl      Container created
-57m     Normal    Pulled                         pod/llm-proxy-7dc458997b-rfwgl      Successfully pulled image "curlimages/curl:8.21.0" in 784ms (784ms including waiting). Image size: 10652192 bytes.
-57m     Normal    Pulling                        pod/llm-proxy-7dc458997b-rfwgl      Pulling image "curlimages/curl:8.21.0"
-57m     Normal    Pulling                        pod/llm-proxy-7dc458997b-rfwgl      Pulling image "ghcr.io/ggml-org/llama.cpp:server"
-56m     Normal    Pulling                        pod/llm-proxy-7dc458997b-rfwgl      Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
-56m     Normal    Pulled                         pod/llm-proxy-7dc458997b-rfwgl      Successfully pulled image "ghcr.io/ggml-org/llama.cpp:server" in 13.306s (13.306s including waiting). Image size: 307240416 bytes.
-56m     Normal    Created                        pod/llm-proxy-7dc458997b-rfwgl      Container created
-56m     Normal    Started                        pod/llm-proxy-7dc458997b-rfwgl      Container started
-56m     Normal    Created                        pod/llm-proxy-7dc458997b-rfwgl      Container created
-56m     Normal    Pulled                         pod/llm-proxy-7dc458997b-rfwgl      Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 5.101s (5.101s including waiting). Image size: 64753325 bytes.
-56m     Normal    Started                        pod/llm-proxy-7dc458997b-rfwgl      Container started
-55m     Warning   Unhealthy                      pod/llm-proxy-7dc458997b-rfwgl      Readiness probe failed: Get "http://10.244.1.3:8000/health": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
-37m     Normal    Killing                        pod/llm-proxy-7dc458997b-rfwgl      Stopping container llama-server
-37m     Normal    Killing                        pod/llm-proxy-7dc458997b-rfwgl      Stopping container fastapi-proxy
-37m     Normal    SuccessfulDelete               replicaset/llm-proxy-7dc458997b     Deleted pod: llm-proxy-7dc458997b-rfwgl
-37m     Warning   Unhealthy                      pod/llm-proxy-7dc458997b-rfwgl      Readiness probe failed: Get "http://10.244.1.3:8000/health": dial tcp 10.244.1.3:8000: connect: connection refused
-34m     Normal    Scheduled                      pod/llm-proxy-7dc458997b-q65tb      Successfully assigned default/llm-proxy-7dc458997b-q65tb to ip-172-31-39-185.ec2.internal
-34m     Normal    Killing                        pod/llm-proxy-7dc458997b-j829t      Stopping container fastapi-proxy
-34m     Normal    Killing                        pod/llm-proxy-7dc458997b-j829t      Stopping container llama-server
-34m     Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b     Created pod: llm-proxy-7dc458997b-q65tb
-34m     Normal    Started                        pod/llm-proxy-7dc458997b-q65tb      Container started
-34m     Normal    Created                        pod/llm-proxy-7dc458997b-q65tb      Container created
-34m     Normal    Pulled                         pod/llm-proxy-7dc458997b-q65tb      Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
-34m     Warning   Unhealthy                      pod/llm-proxy-7dc458997b-j829t      Readiness probe failed: Get "http://10.244.2.2:8000/health": dial tcp 10.244.2.2:8000: connect: connection refused
-34m     Normal    Pulling                        pod/llm-proxy-7dc458997b-q65tb      Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
-34m     Normal    Started                        pod/llm-proxy-7dc458997b-q65tb      Container started
-34m     Normal    Created                        pod/llm-proxy-7dc458997b-q65tb      Container created
-34m     Normal    Pulled                         pod/llm-proxy-7dc458997b-q65tb      Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 117ms (117ms including waiting). Image size: 64753325 bytes.
-34m     Normal    Created                        pod/llm-proxy-7dc458997b-q65tb      Container created
-34m     Normal    Started                        pod/llm-proxy-7dc458997b-q65tb      Container started
-34m     Normal    Pulled                         pod/llm-proxy-7dc458997b-q65tb      Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
-33m     Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b     Created pod: llm-proxy-7dc458997b-x227f
-33m     Normal    Scheduled                      pod/llm-proxy-7dc458997b-x227f      Successfully assigned default/llm-proxy-7dc458997b-x227f to ip-172-31-13-209.ec2.internal
-33m     Normal    Started                        pod/llm-proxy-7dc458997b-x227f      Container started
-33m     Normal    Created                        pod/llm-proxy-7dc458997b-x227f      Container created
-33m     Normal    Pulled                         pod/llm-proxy-7dc458997b-x227f      Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
-32m     Normal    Pulled                         pod/llm-proxy-7dc458997b-x227f      Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
-32m     Normal    Created                        pod/llm-proxy-7dc458997b-x227f      Container created
-32m     Normal    Started                        pod/llm-proxy-7dc458997b-x227f      Container started
-32m     Normal    Pulling                        pod/llm-proxy-7dc458997b-x227f      Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
-32m     Normal    Pulled                         pod/llm-proxy-7dc458997b-x227f      Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 137ms (137ms including waiting). Image size: 64753325 bytes.
-32m     Normal    Created                        pod/llm-proxy-7dc458997b-x227f      Container created
-32m     Normal    Started                        pod/llm-proxy-7dc458997b-x227f      Container started
-32m     Warning   Unhealthy                      pod/llm-proxy-7dc458997b-x227f      Readiness probe failed: Get "http://10.244.2.3:8000/health": dial tcp 10.244.2.3:8000: connect: connection refused
-14m     Warning   Unhealthy                      pod/llm-proxy-7dc458997b-q65tb      Readiness probe failed: Get "http://10.244.1.4:8000/health": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
-11m     Normal    SuccessfulRescale              horizontalpodautoscaler/llm-proxy   New size: 1; reason: All metrics below target
-11m     Normal    ScalingReplicaSet              deployment/llm-proxy                Scaled down replica set llm-proxy-7dc458997b from 2 to 1
-11m     Normal    SuccessfulDelete               replicaset/llm-proxy-7dc458997b     Deleted pod: llm-proxy-7dc458997b-q65tb
-11m     Normal    Killing                        pod/llm-proxy-7dc458997b-q65tb      Stopping container fastapi-proxy
-11m     Normal    Killing                        pod/llm-proxy-7dc458997b-q65tb      Stopping container llama-server
-10m     Warning   Unhealthy                      pod/llm-proxy-7dc458997b-q65tb      Readiness probe failed: Get "http://10.244.1.4:8000/health": dial tcp 10.244.1.4:8000: connect: connection refused
-10m     Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b     Created pod: llm-proxy-7dc458997b-rcvws
-10m     Normal    Killing                        pod/llm-proxy-7dc458997b-x227f      Stopping container fastapi-proxy
-10m     Normal    Killing                        pod/llm-proxy-7dc458997b-x227f      Stopping container llama-server
-10m     Normal    Scheduled                      pod/llm-proxy-7dc458997b-rcvws      Successfully assigned default/llm-proxy-7dc458997b-rcvws to ip-172-31-39-185.ec2.internal
-10m     Normal    Started                        pod/llm-proxy-7dc458997b-rcvws      Container started
-10m     Normal    Pulled                         pod/llm-proxy-7dc458997b-rcvws      Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
-10m     Normal    Created                        pod/llm-proxy-7dc458997b-rcvws      Container created
-9m48s   Normal    Pulling                        pod/llm-proxy-7dc458997b-rcvws      Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
-9m48s   Normal    Started                        pod/llm-proxy-7dc458997b-rcvws      Container started
-9m48s   Normal    Pulled                         pod/llm-proxy-7dc458997b-rcvws      Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 313ms (313ms including waiting). Image size: 64753325 bytes.
-9m48s   Normal    Started                        pod/llm-proxy-7dc458997b-rcvws      Container started
-9m48s   Normal    Created                        pod/llm-proxy-7dc458997b-rcvws      Container created
-9m48s   Normal    Pulled                         pod/llm-proxy-7dc458997b-rcvws      Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
-9m48s   Normal    Created                        pod/llm-proxy-7dc458997b-rcvws      Container created
-9m47s   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-rcvws      Readiness probe failed: Get "http://10.244.1.5:8000/health": dial tcp 10.244.1.5:8000: connect: connection refused
-9m38s   Warning   FailedGetResourceMetric        horizontalpodautoscaler/llm-proxy   failed to get cpu utilization: unable to get metrics for resource cpu: no metrics returned from resource metrics API
-9m38s   Warning   FailedComputeMetricsReplicas   horizontalpodautoscaler/llm-proxy   invalid metrics (1 invalid out of 1), first error is: failed to get cpu resource metric value: failed to get cpu utilization: unable to get metrics for resource cpu: no metrics returned from resource metrics API
-9m23s   Warning   FailedGetResourceMetric        horizontalpodautoscaler/llm-proxy   failed to get cpu utilization: did not receive metrics for targeted pods (pods might be unready)
-9m23s   Warning   FailedComputeMetricsReplicas   horizontalpodautoscaler/llm-proxy   invalid metrics (1 invalid out of 1), first error is: failed to get cpu resource metric value: failed to get cpu utilization: did not receive metrics for targeted pods (pods might be unready)
-8m53s   Normal    Scheduled                      pod/llm-proxy-7dc458997b-c67bx      Successfully assigned default/llm-proxy-7dc458997b-c67bx to ip-172-31-13-209.ec2.internal
-8m53s   Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b     Created pod: llm-proxy-7dc458997b-c67bx
-8m53s   Normal    SuccessfulRescale              horizontalpodautoscaler/llm-proxy   New size: 2; reason: cpu resource utilization (percentage of request) above target
-8m53s   Normal    ScalingReplicaSet              deployment/llm-proxy                Scaled up replica set llm-proxy-7dc458997b from 1 to 2
-8m52s   Normal    Started                        pod/llm-proxy-7dc458997b-c67bx      Container started
-8m52s   Normal    Pulled                         pod/llm-proxy-7dc458997b-c67bx      Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
-8m52s   Normal    Created                        pod/llm-proxy-7dc458997b-c67bx      Container created
-8m31s   Normal    Pulled                         pod/llm-proxy-7dc458997b-c67bx      Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
-8m31s   Normal    Created                        pod/llm-proxy-7dc458997b-c67bx      Container created
-8m30s   Normal    Started                        pod/llm-proxy-7dc458997b-c67bx      Container started
-8m30s   Normal    Pulling                        pod/llm-proxy-7dc458997b-c67bx      Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
-8m30s   Normal    Pulled                         pod/llm-proxy-7dc458997b-c67bx      Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 147ms (147ms including waiting). Image size: 64753325 bytes.
-8m30s   Normal    Created                        pod/llm-proxy-7dc458997b-c67bx      Container created
-8m30s   Normal    Started                        pod/llm-proxy-7dc458997b-c67bx      Container started
-8m30s   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-c67bx      Readiness probe failed: Get "http://10.244.2.4:8000/health": dial tcp 10.244.2.4:8000: connect: connection refused
-run_end=1787560949
+49m   Normal    Killing                        pod/llm-proxy-7dc458997b-tr4hs           Stopping container llama-server
+49m   Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b          Created pod: llm-proxy-7dc458997b-hndtn
+49m   Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b          Created pod: llm-proxy-7dc458997b-k6dv8
+49m   Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b          Created pod: llm-proxy-7dc458997b-qg977
+49m   Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b          Created pod: llm-proxy-7dc458997b-mtj4g
+49m   Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b          Created pod: llm-proxy-7dc458997b-5f27d
+49m   Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b          Created pod: llm-proxy-7dc458997b-968sq
+49m   Normal    Killing                        pod/llm-proxy-7dc458997b-z5ltk           Stopping container fastapi-proxy
+49m   Normal    Killing                        pod/llm-proxy-7dc458997b-z5ltk           Stopping container llama-server
+49m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-z5ltk           Readiness probe failed: Get "http://10.244.1.11:8000/health": dial tcp 10.244.1.11:8000: connect: connection refused
+49m   Normal    Killing                        pod/llm-proxy-7dc458997b-wll5c           Stopping container fastapi-proxy
+49m   Normal    Killing                        pod/llm-proxy-7dc458997b-wll5c           Stopping container llama-server
+49m   Normal    Killing                        pod/llm-proxy-7dc458997b-tr4hs           Stopping container fastapi-proxy
+49m   Normal    Killing                        pod/llm-proxy-7dc458997b-ln97t           Stopping container llama-server
+49m   Normal    Killing                        pod/llm-proxy-7dc458997b-ln97t           Stopping container fastapi-proxy
+49m   Normal    Killing                        pod/llm-proxy-7dc458997b-mmn2x           Stopping container llama-server
+49m   Normal    Killing                        pod/llm-proxy-7dc458997b-mmn2x           Stopping container fastapi-proxy
+49m   Warning   FailedScheduling               pod/llm-proxy-7dc458997b-968sq           0/7 nodes are available: 1 node(s) had untolerated taint(s), 6 Insufficient cpu. no new claims to deallocate, preemption: 0/7 nodes are available: 1 Preemption is not helpful for scheduling, 6 No preemption victims found for incoming pod.
+49m   Normal    Killing                        pod/llm-proxy-7dc458997b-qz7kq           Stopping container fastapi-proxy
+49m   Normal    Killing                        pod/llm-proxy-7dc458997b-qz7kq           Stopping container llama-server
+49m   Warning   FailedScheduling               pod/llm-proxy-7dc458997b-qg977           0/7 nodes are available: 1 node(s) had untolerated taint(s), 6 Insufficient cpu. no new claims to deallocate, preemption: 0/7 nodes are available: 1 Preemption is not helpful for scheduling, 6 No preemption victims found for incoming pod.
+49m   Normal    Started                        pod/llm-proxy-7dc458997b-5f27d           Container started
+49m   Warning   FailedScheduling               pod/llm-proxy-7dc458997b-k6dv8           0/7 nodes are available: 1 node(s) had untolerated taint(s), 6 Insufficient cpu. no new claims to deallocate, preemption: 0/7 nodes are available: 1 Preemption is not helpful for scheduling, 6 No preemption victims found for incoming pod.
+49m   Normal    Scheduled                      pod/llm-proxy-7dc458997b-k6dv8           Successfully assigned default/llm-proxy-7dc458997b-k6dv8 to ip-172-31-43-11.ec2.internal
+49m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-ln97t           Readiness probe failed: Get "http://10.244.2.14:8000/health": dial tcp 10.244.2.14:8000: connect: connection refused
+49m   Warning   FailedScheduling               pod/llm-proxy-7dc458997b-5f27d           0/7 nodes are available: 1 node(s) had untolerated taint(s), 6 Insufficient cpu. no new claims to deallocate, preemption: 0/7 nodes are available: 1 Preemption is not helpful for scheduling, 6 No preemption victims found for incoming pod.
+49m   Normal    Scheduled                      pod/llm-proxy-7dc458997b-5f27d           Successfully assigned default/llm-proxy-7dc458997b-5f27d to ip-172-31-32-103.ec2.internal
+49m   Normal    Pulled                         pod/llm-proxy-7dc458997b-5f27d           Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
+49m   Normal    Created                        pod/llm-proxy-7dc458997b-5f27d           Container created
+49m   Warning   FailedScheduling               pod/llm-proxy-7dc458997b-mtj4g           0/7 nodes are available: 1 node(s) had untolerated taint(s), 6 Insufficient cpu. no new claims to deallocate, preemption: 0/7 nodes are available: 1 Preemption is not helpful for scheduling, 6 No preemption victims found for incoming pod.
+49m   Normal    Scheduled                      pod/llm-proxy-7dc458997b-mtj4g           Successfully assigned default/llm-proxy-7dc458997b-mtj4g to ip-172-31-3-254.ec2.internal
+49m   Normal    Pulled                         pod/llm-proxy-7dc458997b-mtj4g           Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
+49m   Normal    Scheduled                      pod/llm-proxy-7dc458997b-qg977           Successfully assigned default/llm-proxy-7dc458997b-qg977 to ip-172-31-9-11.ec2.internal
+49m   Warning   FailedScheduling               pod/llm-proxy-7dc458997b-hndtn           0/7 nodes are available: 1 node(s) had untolerated taint(s), 6 Insufficient cpu. no new claims to deallocate, preemption: 0/7 nodes are available: 1 Preemption is not helpful for scheduling, 6 No preemption victims found for incoming pod.
+49m   Normal    Started                        pod/llm-proxy-7dc458997b-968sq           Container started
+49m   Normal    Created                        pod/llm-proxy-7dc458997b-968sq           Container created
+49m   Normal    Pulled                         pod/llm-proxy-7dc458997b-968sq           Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
+49m   Normal    Scheduled                      pod/llm-proxy-7dc458997b-968sq           Successfully assigned default/llm-proxy-7dc458997b-968sq to ip-172-31-37-201.ec2.internal
+49m   Normal    Pulled                         pod/llm-proxy-7dc458997b-qg977           Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
+49m   Normal    Started                        pod/llm-proxy-7dc458997b-k6dv8           Container started
+49m   Normal    Started                        pod/llm-proxy-7dc458997b-mtj4g           Container started
+49m   Normal    Created                        pod/llm-proxy-7dc458997b-mtj4g           Container created
+49m   Normal    Pulled                         pod/llm-proxy-7dc458997b-k6dv8           Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
+49m   Normal    Created                        pod/llm-proxy-7dc458997b-k6dv8           Container created
+49m   Normal    Created                        pod/llm-proxy-7dc458997b-qg977           Container created
+49m   Normal    Started                        pod/llm-proxy-7dc458997b-qg977           Container started
+49m   Normal    Scheduled                      pod/llm-proxy-7dc458997b-hndtn           Successfully assigned default/llm-proxy-7dc458997b-hndtn to ip-172-31-13-86.ec2.internal
+49m   Normal    Pulled                         pod/llm-proxy-7dc458997b-hndtn           Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
+49m   Normal    Created                        pod/llm-proxy-7dc458997b-hndtn           Container created
+49m   Normal    Started                        pod/llm-proxy-7dc458997b-hndtn           Container started
+48m   Normal    Created                        pod/llm-proxy-7dc458997b-5f27d           Container created
+48m   Normal    Created                        pod/llm-proxy-7dc458997b-5f27d           Container created
+48m   Normal    Started                        pod/llm-proxy-7dc458997b-5f27d           Container started
+48m   Normal    Started                        pod/llm-proxy-7dc458997b-5f27d           Container started
+48m   Normal    Pulled                         pod/llm-proxy-7dc458997b-5f27d           Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+48m   Normal    Pulling                        pod/llm-proxy-7dc458997b-5f27d           Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
+48m   Normal    Pulled                         pod/llm-proxy-7dc458997b-5f27d           Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 134ms (134ms including waiting). Image size: 64753325 bytes.
+48m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-5f27d           Readiness probe failed: Get "http://10.244.3.13:8000/health": dial tcp 10.244.3.13:8000: connect: connection refused
+48m   Normal    Created                        pod/llm-proxy-7dc458997b-mtj4g           Container created
+48m   Normal    Pulled                         pod/llm-proxy-7dc458997b-mtj4g           Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+48m   Normal    Pulled                         pod/llm-proxy-7dc458997b-mtj4g           Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 132ms (132ms including waiting). Image size: 64753325 bytes.
+48m   Normal    Pulling                        pod/llm-proxy-7dc458997b-mtj4g           Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
+48m   Normal    Started                        pod/llm-proxy-7dc458997b-mtj4g           Container started
+48m   Normal    Created                        pod/llm-proxy-7dc458997b-mtj4g           Container created
+48m   Normal    Pulling                        pod/llm-proxy-7dc458997b-968sq           Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
+48m   Normal    Pulled                         pod/llm-proxy-7dc458997b-968sq           Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 159ms (159ms including waiting). Image size: 64753325 bytes.
+48m   Normal    Created                        pod/llm-proxy-7dc458997b-k6dv8           Container created
+48m   Normal    Started                        pod/llm-proxy-7dc458997b-k6dv8           Container started
+48m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-mtj4g           Readiness probe failed: Get "http://10.244.4.14:8000/health": dial tcp 10.244.4.14:8000: connect: connection refused
+48m   Normal    Started                        pod/llm-proxy-7dc458997b-mtj4g           Container started
+48m   Normal    Pulled                         pod/llm-proxy-7dc458997b-968sq           Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+48m   Normal    Created                        pod/llm-proxy-7dc458997b-968sq           Container created
+48m   Normal    Started                        pod/llm-proxy-7dc458997b-968sq           Container started
+48m   Normal    Pulled                         pod/llm-proxy-7dc458997b-k6dv8           Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+48m   Normal    Created                        pod/llm-proxy-7dc458997b-968sq           Container created
+48m   Normal    Started                        pod/llm-proxy-7dc458997b-968sq           Container started
+48m   Normal    Pulling                        pod/llm-proxy-7dc458997b-k6dv8           Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
+48m   Normal    Pulled                         pod/llm-proxy-7dc458997b-k6dv8           Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 114ms (114ms including waiting). Image size: 64753325 bytes.
+48m   Normal    Started                        pod/llm-proxy-7dc458997b-k6dv8           Container started
+48m   Normal    Created                        pod/llm-proxy-7dc458997b-k6dv8           Container created
+48m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-k6dv8           Readiness probe failed: Get "http://10.244.1.13:8000/health": dial tcp 10.244.1.13:8000: connect: connection refused
+48m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-968sq           Readiness probe failed: Get "http://10.244.5.9:8000/health": dial tcp 10.244.5.9:8000: connect: connection refused
+48m   Normal    Pulled                         pod/llm-proxy-7dc458997b-qg977           Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+48m   Normal    Created                        pod/llm-proxy-7dc458997b-qg977           Container created
+48m   Normal    Created                        pod/llm-proxy-7dc458997b-qg977           Container created
+48m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-qg977           Readiness probe failed: Get "http://10.244.6.17:8000/health": dial tcp 10.244.6.17:8000: connect: connection refused
+48m   Normal    Started                        pod/llm-proxy-7dc458997b-qg977           Container started
+48m   Normal    Pulling                        pod/llm-proxy-7dc458997b-qg977           Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
+48m   Normal    Pulled                         pod/llm-proxy-7dc458997b-qg977           Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 172ms (172ms including waiting). Image size: 64753325 bytes.
+48m   Normal    Started                        pod/llm-proxy-7dc458997b-qg977           Container started
+48m   Normal    Started                        pod/llm-proxy-7dc458997b-hndtn           Container started
+48m   Normal    Created                        pod/llm-proxy-7dc458997b-hndtn           Container created
+48m   Normal    Pulled                         pod/llm-proxy-7dc458997b-hndtn           Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+48m   Normal    Created                        pod/llm-proxy-7dc458997b-hndtn           Container created
+48m   Normal    Pulled                         pod/llm-proxy-7dc458997b-hndtn           Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 134ms (134ms including waiting). Image size: 64753325 bytes.
+48m   Normal    Pulling                        pod/llm-proxy-7dc458997b-hndtn           Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
+48m   Normal    Started                        pod/llm-proxy-7dc458997b-hndtn           Container started
+48m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-hndtn           Readiness probe failed: Get "http://10.244.2.15:8000/health": dial tcp 10.244.2.15:8000: connect: connection refused
+19m   Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b          Created pod: llm-proxy-7dc458997b-zhfbx
+19m   Normal    Killing                        pod/llm-proxy-7dc458997b-qg977           Stopping container fastapi-proxy
+19m   Normal    Killing                        pod/llm-proxy-7dc458997b-k6dv8           Stopping container fastapi-proxy
+19m   Normal    Killing                        pod/llm-proxy-7dc458997b-mtj4g           Stopping container llama-server
+19m   Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b          Created pod: llm-proxy-7dc458997b-qldww
+19m   Normal    Killing                        pod/llm-proxy-7dc458997b-hndtn           Stopping container llama-server
+19m   Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b          Created pod: llm-proxy-7dc458997b-g8lk5
+19m   Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b          Created pod: llm-proxy-7dc458997b-2mbf2
+19m   Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b          Created pod: llm-proxy-7dc458997b-zqjvv
+19m   Normal    Killing                        pod/llm-proxy-7dc458997b-k6dv8           Stopping container llama-server
+19m   Normal    Killing                        pod/llm-proxy-7dc458997b-qg977           Stopping container llama-server
+19m   Normal    Killing                        pod/llm-proxy-7dc458997b-968sq           Stopping container llama-server
+19m   Normal    Killing                        pod/llm-proxy-7dc458997b-968sq           Stopping container fastapi-proxy
+19m   Normal    SuccessfulCreate               replicaset/llm-proxy-7dc458997b          Created pod: llm-proxy-7dc458997b-6g7tv
+19m   Normal    Killing                        pod/llm-proxy-7dc458997b-5f27d           Stopping container llama-server
+19m   Normal    Killing                        pod/llm-proxy-7dc458997b-5f27d           Stopping container fastapi-proxy
+19m   Warning   FailedScheduling               pod/llm-proxy-7dc458997b-6g7tv           0/7 nodes are available: 1 node(s) had untolerated taint(s), 6 Insufficient cpu. no new claims to deallocate, preemption: 0/7 nodes are available: 1 Preemption is not helpful for scheduling, 6 No preemption victims found for incoming pod.
+19m   Normal    Killing                        pod/llm-proxy-7dc458997b-hndtn           Stopping container fastapi-proxy
+19m   Normal    Killing                        pod/llm-proxy-7dc458997b-mtj4g           Stopping container fastapi-proxy
+19m   Normal    Scheduled                      pod/llm-proxy-7dc458997b-6g7tv           Successfully assigned default/llm-proxy-7dc458997b-6g7tv to ip-172-31-13-86.ec2.internal
+19m   Warning   FailedScheduling               pod/llm-proxy-7dc458997b-qldww           0/7 nodes are available: 1 node(s) had untolerated taint(s), 6 Insufficient cpu. no new claims to deallocate, preemption: 0/7 nodes are available: 1 Preemption is not helpful for scheduling, 6 No preemption victims found for incoming pod.
+19m   Warning   FailedScheduling               pod/llm-proxy-7dc458997b-zqjvv           0/7 nodes are available: 1 node(s) had untolerated taint(s), 6 Insufficient cpu. no new claims to deallocate, preemption: 0/7 nodes are available: 1 Preemption is not helpful for scheduling, 6 No preemption victims found for incoming pod.
+19m   Normal    Scheduled                      pod/llm-proxy-7dc458997b-zqjvv           Successfully assigned default/llm-proxy-7dc458997b-zqjvv to ip-172-31-3-254.ec2.internal
+19m   Normal    Started                        pod/llm-proxy-7dc458997b-6g7tv           Container started
+19m   Normal    Created                        pod/llm-proxy-7dc458997b-6g7tv           Container created
+19m   Normal    Pulled                         pod/llm-proxy-7dc458997b-6g7tv           Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
+19m   Normal    Created                        pod/llm-proxy-7dc458997b-zhfbx           Container created
+19m   Normal    Pulled                         pod/llm-proxy-7dc458997b-zhfbx           Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
+19m   Normal    Scheduled                      pod/llm-proxy-7dc458997b-zhfbx           Successfully assigned default/llm-proxy-7dc458997b-zhfbx to ip-172-31-32-103.ec2.internal
+19m   Warning   FailedScheduling               pod/llm-proxy-7dc458997b-zhfbx           0/7 nodes are available: 1 node(s) had untolerated taint(s), 6 Insufficient cpu. no new claims to deallocate, preemption: 0/7 nodes are available: 1 Preemption is not helpful for scheduling, 6 No preemption victims found for incoming pod.
+19m   Normal    Scheduled                      pod/llm-proxy-7dc458997b-g8lk5           Successfully assigned default/llm-proxy-7dc458997b-g8lk5 to ip-172-31-43-11.ec2.internal
+19m   Normal    Scheduled                      pod/llm-proxy-7dc458997b-2mbf2           Successfully assigned default/llm-proxy-7dc458997b-2mbf2 to ip-172-31-9-11.ec2.internal
+19m   Warning   FailedScheduling               pod/llm-proxy-7dc458997b-g8lk5           0/7 nodes are available: 1 node(s) had untolerated taint(s), 6 Insufficient cpu. no new claims to deallocate, preemption: 0/7 nodes are available: 1 Preemption is not helpful for scheduling, 6 No preemption victims found for incoming pod.
+19m   Warning   FailedScheduling               pod/llm-proxy-7dc458997b-2mbf2           0/7 nodes are available: 1 node(s) had untolerated taint(s), 6 Insufficient cpu. no new claims to deallocate, preemption: 0/7 nodes are available: 1 Preemption is not helpful for scheduling, 6 No preemption victims found for incoming pod.
+19m   Normal    Started                        pod/llm-proxy-7dc458997b-qldww           Container started
+19m   Normal    Created                        pod/llm-proxy-7dc458997b-qldww           Container created
+19m   Normal    Pulled                         pod/llm-proxy-7dc458997b-qldww           Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
+19m   Normal    Scheduled                      pod/llm-proxy-7dc458997b-qldww           Successfully assigned default/llm-proxy-7dc458997b-qldww to ip-172-31-37-201.ec2.internal
+19m   Normal    Pulled                         pod/llm-proxy-7dc458997b-g8lk5           Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
+19m   Normal    Started                        pod/llm-proxy-7dc458997b-zhfbx           Container started
+19m   Normal    Pulled                         pod/llm-proxy-7dc458997b-zqjvv           Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
+19m   Normal    Created                        pod/llm-proxy-7dc458997b-zqjvv           Container created
+19m   Normal    Started                        pod/llm-proxy-7dc458997b-zqjvv           Container started
+19m   Normal    Started                        pod/llm-proxy-7dc458997b-2mbf2           Container started
+19m   Normal    Started                        pod/llm-proxy-7dc458997b-g8lk5           Container started
+19m   Normal    Created                        pod/llm-proxy-7dc458997b-g8lk5           Container created
+19m   Normal    Created                        pod/llm-proxy-7dc458997b-2mbf2           Container created
+19m   Normal    Pulled                         pod/llm-proxy-7dc458997b-2mbf2           Container image "curlimages/curl:8.21.0" already present on machine and can be accessed by the pod
+19m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-5f27d           Readiness probe failed: Get "http://10.244.3.13:8000/health": dial tcp 10.244.3.13:8000: connect: no route to host
+18m   Warning   FailedComputeMetricsReplicas   horizontalpodautoscaler/llm-proxy-exp6   invalid metrics (1 invalid out of 1), first error is: failed to get cpu resource metric value: failed to get cpu utilization: unable to get metrics for resource cpu: no metrics returned from resource metrics API
+18m   Warning   FailedGetResourceMetric        horizontalpodautoscaler/llm-proxy-exp6   failed to get cpu utilization: unable to get metrics for resource cpu: no metrics returned from resource metrics API
+18m   Normal    Pulled                         pod/llm-proxy-7dc458997b-g8lk5           Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 127ms (127ms including waiting). Image size: 64753325 bytes.
+18m   Normal    Created                        pod/llm-proxy-7dc458997b-g8lk5           Container created
+18m   Normal    Pulled                         pod/llm-proxy-7dc458997b-6g7tv           Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+18m   Normal    Pulled                         pod/llm-proxy-7dc458997b-6g7tv           Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 108ms (108ms including waiting). Image size: 64753325 bytes.
+18m   Normal    Created                        pod/llm-proxy-7dc458997b-6g7tv           Container created
+18m   Normal    Pulled                         pod/llm-proxy-7dc458997b-g8lk5           Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+18m   Normal    Pulling                        pod/llm-proxy-7dc458997b-g8lk5           Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
+18m   Normal    Pulling                        pod/llm-proxy-7dc458997b-6g7tv           Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
+18m   Normal    Started                        pod/llm-proxy-7dc458997b-6g7tv           Container started
+18m   Normal    Started                        pod/llm-proxy-7dc458997b-g8lk5           Container started
+18m   Normal    Created                        pod/llm-proxy-7dc458997b-6g7tv           Container created
+18m   Normal    Started                        pod/llm-proxy-7dc458997b-6g7tv           Container started
+18m   Normal    Created                        pod/llm-proxy-7dc458997b-g8lk5           Container created
+18m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-6g7tv           Readiness probe failed: Get "http://10.244.2.16:8000/health": dial tcp 10.244.2.16:8000: connect: connection refused
+18m   Normal    Started                        pod/llm-proxy-7dc458997b-g8lk5           Container started
+18m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-g8lk5           Readiness probe failed: Get "http://10.244.1.14:8000/health": dial tcp 10.244.1.14:8000: connect: connection refused
+18m   Normal    Started                        pod/llm-proxy-7dc458997b-zhfbx           Container started
+18m   Normal    Pulled                         pod/llm-proxy-7dc458997b-zhfbx           Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+18m   Normal    Pulled                         pod/llm-proxy-7dc458997b-zhfbx           Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 161ms (161ms including waiting). Image size: 64753325 bytes.
+18m   Normal    Created                        pod/llm-proxy-7dc458997b-zhfbx           Container created
+18m   Normal    Started                        pod/llm-proxy-7dc458997b-zhfbx           Container started
+18m   Normal    Created                        pod/llm-proxy-7dc458997b-2mbf2           Container created
+18m   Normal    Created                        pod/llm-proxy-7dc458997b-zhfbx           Container created
+18m   Normal    Pulling                        pod/llm-proxy-7dc458997b-zhfbx           Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
+18m   Normal    Started                        pod/llm-proxy-7dc458997b-2mbf2           Container started
+18m   Normal    Pulling                        pod/llm-proxy-7dc458997b-2mbf2           Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
+18m   Normal    Pulled                         pod/llm-proxy-7dc458997b-2mbf2           Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 119ms (119ms including waiting). Image size: 64753325 bytes.
+18m   Normal    Pulled                         pod/llm-proxy-7dc458997b-2mbf2           Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+18m   Normal    Started                        pod/llm-proxy-7dc458997b-2mbf2           Container started
+18m   Normal    Created                        pod/llm-proxy-7dc458997b-2mbf2           Container created
+18m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-2mbf2           Readiness probe failed: Get "http://10.244.6.18:8000/health": dial tcp 10.244.6.18:8000: connect: connection refused
+18m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-zhfbx           Readiness probe failed: Get "http://10.244.3.14:8000/health": dial tcp 10.244.3.14:8000: connect: connection refused
+18m   Normal    Started                        pod/llm-proxy-7dc458997b-zqjvv           Container started
+18m   Normal    Created                        pod/llm-proxy-7dc458997b-zqjvv           Container created
+18m   Normal    Pulled                         pod/llm-proxy-7dc458997b-zqjvv           Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 147ms (147ms including waiting). Image size: 64753325 bytes.
+18m   Normal    Pulling                        pod/llm-proxy-7dc458997b-zqjvv           Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
+18m   Normal    Started                        pod/llm-proxy-7dc458997b-zqjvv           Container started
+18m   Normal    Created                        pod/llm-proxy-7dc458997b-zqjvv           Container created
+18m   Normal    Pulled                         pod/llm-proxy-7dc458997b-zqjvv           Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+18m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-zqjvv           Readiness probe failed: Get "http://10.244.4.15:8000/health": dial tcp 10.244.4.15:8000: connect: connection refused
+18m   Normal    Started                        pod/llm-proxy-7dc458997b-qldww           Container started
+18m   Normal    Pulling                        pod/llm-proxy-7dc458997b-qldww           Pulling image "ghcr.io/bobthebot988/llm-proxy:latest"
+18m   Normal    Created                        pod/llm-proxy-7dc458997b-qldww           Container created
+18m   Normal    Pulled                         pod/llm-proxy-7dc458997b-qldww           Container image "ghcr.io/ggml-org/llama.cpp:server" already present on machine and can be accessed by the pod
+18m   Normal    Started                        pod/llm-proxy-7dc458997b-qldww           Container started
+18m   Normal    Created                        pod/llm-proxy-7dc458997b-qldww           Container created
+18m   Normal    Pulled                         pod/llm-proxy-7dc458997b-qldww           Successfully pulled image "ghcr.io/bobthebot988/llm-proxy:latest" in 203ms (203ms including waiting). Image size: 64753325 bytes.
+18m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-qldww           Readiness probe failed: Get "http://10.244.5.10:8000/health": dial tcp 10.244.5.10:8000: connect: connection refused
+17m   Warning   FailedGetResourceMetric        horizontalpodautoscaler/llm-proxy-exp6   failed to get cpu utilization: did not receive metrics for targeted pods (pods might be unready)
+17m   Warning   FailedComputeMetricsReplicas   horizontalpodautoscaler/llm-proxy-exp6   invalid metrics (1 invalid out of 1), first error is: failed to get cpu resource metric value: failed to get cpu utilization: did not receive metrics for targeted pods (pods might be unready)
+17m   Warning   Unhealthy                      pod/llm-proxy-7dc458997b-g8lk5           Readiness probe failed: Get "http://10.244.1.14:8000/health": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+run_end=1788182286
 interrupted=0
