@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.7.24)  3 SEP 2026 09:49
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.7.24)  3 SEP 2026 10:16
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -411,129 +411,123 @@ LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <9> not available
 
 
 ]
-Underfull \hbox (badness 4242) in paragraph at lines 221--231
+Underfull \hbox (badness 4242) in paragraph at lines 225--235
 \T1/cmr/m/n/10 re-quest to the FastAPI proxy in-side a pod. The
  []
 
-
-Underfull \hbox (badness 2426) in paragraph at lines 243--246
+[2]
+Underfull \hbox (badness 2426) in paragraph at lines 247--250
 []\T1/cmr/m/n/10 Two mea-sure-ments are mea-sure-ment in-fras-truc-ture
  []
 
-[2]
-Underfull \hbox (badness 10000) in paragraph at lines 271--271
+
+Underfull \hbox (badness 10000) in paragraph at lines 275--275
 []\T1/cmr/m/n/9 1. Pur-pose,
  []
 
 
-Underfull \hbox (badness 3343) in paragraph at lines 275--277
+Underfull \hbox (badness 3343) in paragraph at lines 279--281
 \T1/cmtt/m/n/9 LoadTestShape \T1/cmr/m/n/9 pro-files (saw-tooth,
  []
 
 
-Underfull \hbox (badness 1838) in paragraph at lines 346--355
+Underfull \hbox (badness 1838) in paragraph at lines 350--359
 []\T1/cmr/m/n/10 All runs used 1 mas-ter \T1/cmtt/m/n/10 t3.small \T1/cmr/m/n/1
 0 and 6 work-ers
  []
 
 
-Underfull \hbox (badness 2173) in paragraph at lines 346--355
+Underfull \hbox (badness 2173) in paragraph at lines 350--359
 \T1/cmr/m/n/10 ter, dif-fer-ing only in the HPA \T1/cmtt/m/n/10 maxReplicas \T1
 /cmr/m/n/10 ceil-ing
  []
 
 
-Underfull \hbox (badness 2401) in paragraph at lines 346--355
+Underfull \hbox (badness 2401) in paragraph at lines 350--359
 \T1/cmr/m/n/10 (6 for Test A and exp6, 4 for exp4). The model
  []
 
 
-Underfull \hbox (badness 5417) in paragraph at lines 346--355
+Underfull \hbox (badness 5417) in paragraph at lines 350--359
 \T1/cmr/m/n/10 with \T1/cmtt/m/n/10 --threads 2 --parallel 2 --reasoning off\T1
 /cmr/m/n/10 . The
  []
 
 [3]
-Underfull \hbox (badness 1635) in paragraph at lines 376--387
+Underfull \hbox (badness 1635) in paragraph at lines 380--392
 \T1/cmr/m/n/10 de-scend through 35 and 10 users, idle drain), with
  []
 
-<figures/plot1_elasticity.png, id=205, 794.97pt x 361.35pt>
+<figures/plot1_elasticity.png, id=206, 794.97pt x 361.35pt>
 File: figures/plot1_elasticity.png Graphic file (type png)
 <use figures/plot1_elasticity.png>
-Package pdftex.def Info: figures/plot1_elasticity.png  used on input line 408.
+Package pdftex.def Info: figures/plot1_elasticity.png  used on input line 413.
 (pdftex.def)             Requested size: 252.0pt x 114.54263pt.
 
-Underfull \hbox (badness 5077) in paragraph at lines 419--427
+Underfull \hbox (badness 5077) in paragraph at lines 424--432
 \T1/cmr/m/n/10 time into llama de-code (up-stream) and or-ches-tra-
  []
 
 [4 <./figures/plot1_elasticity.png>]
-<figures/variant_capacity.png, id=225, 1084.05pt x 289.08pt>
+<figures/variant_capacity.png, id=226, 1084.05pt x 289.08pt>
 File: figures/variant_capacity.png Graphic file (type png)
 <use figures/variant_capacity.png>
-Package pdftex.def Info: figures/variant_capacity.png  used on input line 477.
+Package pdftex.def Info: figures/variant_capacity.png  used on input line 482.
 (pdftex.def)             Requested size: 252.0pt x 67.19716pt.
-<figures/variant_delay_breakdown.png, id=226, 794.97pt x 361.35pt>
+<figures/variant_delay_breakdown.png, id=227, 794.97pt x 361.35pt>
 File: figures/variant_delay_breakdown.png Graphic file (type png)
 <use figures/variant_delay_breakdown.png>
 Package pdftex.def Info: figures/variant_delay_breakdown.png  used on input lin
-e 485.
+e 490.
 (pdftex.def)             Requested size: 252.0pt x 114.54263pt.
-<figures/plot5_size.png, id=230, 1156.32pt x 361.35pt>
+<figures/plot5_size.png, id=233, 1156.32pt x 361.35pt>
 File: figures/plot5_size.png Graphic file (type png)
 <use figures/plot5_size.png>
-Package pdftex.def Info: figures/plot5_size.png  used on input line 559.
+Package pdftex.def Info: figures/plot5_size.png  used on input line 576.
 (pdftex.def)             Requested size: 252.0pt x 78.74738pt.
  [5 <./figures/variant_capacity.png> <./figures/variant_delay_breakdown.png>]
-<figures/plot7_burst.png, id=247, 794.97pt x 361.35pt>
+<figures/plot7_burst.png, id=250, 794.97pt x 361.35pt>
 File: figures/plot7_burst.png Graphic file (type png)
 <use figures/plot7_burst.png>
-Package pdftex.def Info: figures/plot7_burst.png  used on input line 618.
+Package pdftex.def Info: figures/plot7_burst.png  used on input line 635.
 (pdftex.def)             Requested size: 252.0pt x 114.54263pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 637--637
+Underfull \hbox (badness 10000) in paragraph at lines 654--654
 []\T1/cmr/m/n/9 Elasticity scale-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 638--638
+Underfull \hbox (badness 10000) in paragraph at lines 655--655
 []\T1/cmr/m/n/9 after
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 638--638
+Underfull \hbox (badness 10000) in paragraph at lines 655--655
 \T1/cmr/m/n/9 load
  []
 
 
-Underfull \hbox (badness 5533) in paragraph at lines 639--639
+Underfull \hbox (badness 5533) in paragraph at lines 656--656
 []\T1/cmr/m/n/9 100% (Test C,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 642--642
+Underfull \hbox (badness 10000) in paragraph at lines 659--659
 []\T1/cmr/m/n/9 66--101 s
  []
 
 
-Underfull \hbox (badness 1655) in paragraph at lines 706--721
+Underfull \hbox (badness 1655) in paragraph at lines 723--738
 []\T1/cmr/m/n/10 The ser-vice foot-print is cheap-est ($513.43; mas-ter
  []
 
 [6 <./figures/plot5_size.png> <./figures/plot7_burst.png>]
-Underfull \hbox (badness 1616) in paragraph at lines 722--730
-\T1/cmtt/m/n/10 m5.4xlarge \T1/cmr/m/n/10 at $4,226.88, by $\OMS/cmsy/m/n/10 ^^
-Y$\T1/cmr/m/n/10 3$\OMS/cmsy/m/n/10 ^^B$\T1/cmr/m/n/10 ; Lambda re-mains
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 764--771
+Underfull \hbox (badness 10000) in paragraph at lines 782--789
 []\T1/cmr/m/it/10 llama.cpp mem-ory leak un-der sus-tained load.
  []
 
 
-Underfull \hbox (badness 1472) in paragraph at lines 764--771
+Underfull \hbox (badness 1472) in paragraph at lines 782--789
 \T1/cmtt/m/n/10 llama-server \T1/cmr/m/n/10 grows to  2.9GiB (of a 3GiB limit)
  []
 
@@ -549,34 +543,24 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-[leftcolumn badness]: 1000000 on 6.22595pt
-[rightcolumn badness]: 1000000 on 6.22595pt
-[leftcolumn badness]: 1000000 on 6.22595pt
-[rightcolumn badness]: 1000000 on 6.22595pt
-[leftcolumn badness]: 1000000 on 6.22595pt
-[rightcolumn badness]: 1000000 on 6.22595pt
-[leftcolumn badness]: 1000000 on 6.22595pt
-[rightcolumn badness]: 1000000 on 6.22595pt
-[leftcolumn badness]: 1000000 on 6.22595pt
-[rightcolumn badness]: 1000000 on 6.22595pt
-[leftcolumn badness]: 1000000 on 6.22595pt
-[rightcolumn badness]: 1000000 on 6.22595pt
-[leftcolumn badness]: 1000000 on 6.22595pt
-[rightcolumn badness]: 1000000 on 6.22595pt
-[leftcolumn badness]: 1000000 on 6.22595pt
-[rightcolumn badness]: 1000000 on 6.22595pt
+[leftcolumn badness]: 1000000 on 15.21281pt
+[rightcolumn badness]: 1000000 on 15.21281pt
+[leftcolumn badness]: 1000000 on 15.21281pt
+[rightcolumn badness]: 1000000 on 15.21281pt
+[leftcolumn badness]: 1000000 on 15.21281pt
+[rightcolumn badness]: 1000000 on 15.21281pt
 - LAST -
-Extra skip:17.77405pt
-Left:228.0pt/1.94397pt
-Right:212.16992pt/0.0pt
-Split: 228.08496pt
-Output:228.08496pt
+Extra skip:0.0pt
+Left:327.01314pt/2.49939pt
+Right:320.16992pt/0.0pt
+Split: 326.59152pt
+Output:326.59152pt
 Pageshrink: 0.0pt
 Pagestretch: 0.0pt
 @colht:672.0pt
-FLUSHEND [output]: 228.08496pt
-FLUSHEND [leftcolumn badness]: 0
-FUSHEND [rightcolumn badness]: 131
+FLUSHEND [output]: 326.59152pt
+FLUSHEND [leftcolumn badness]: 12
+FUSHEND [rightcolumn badness]: 9
 [8] (./report.aux)
  ***********
 LaTeX2e <2025-11-01>
@@ -588,7 +572,7 @@ Package rerunfilecheck Info: File `report.out' has not changed.
 Here is how much of TeX's memory you used:
  11085 strings out of 469296
  173256 string characters out of 5465561
- 619605 words of memory out of 6000000
+ 619640 words of memory out of 6000000
  39703 multiletter control sequences out of 15000+600000
  675300 words of font info for 134 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
@@ -616,10 +600,10 @@ frm1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfti0900
 .pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfti1000.pfb></
 usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sftt0900.pfb></usr/sha
 re/texlive/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb>
-Output written on report.pdf (8 pages, 892784 bytes).
+Output written on report.pdf (8 pages, 894646 bytes).
 PDF statistics:
- 400 PDF objects out of 1000 (max. 8388607)
- 322 compressed objects within 4 object streams
+ 403 PDF objects out of 1000 (max. 8388607)
+ 325 compressed objects within 4 object streams
  60 named destinations out of 1000 (max. 500000)
  298 words of extra memory for PDF output out of 10000 (max. 10000000)
 

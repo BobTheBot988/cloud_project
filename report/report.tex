@@ -149,7 +149,11 @@ Generation is autoregressive: the model emits one token at a time, and each
 token consumes the full model compute. On two virtual cores, our 0.8B-parameter
 model (Q6\_K quantisation, 791\,MB) decodes at $\approx$26\,tok/s
 (\code{MEASURE.md}), so a 256-token response takes roughly 10--20\,s of
-sustained single-core work. With \code{--parallel 2} each instance holds two
+sustained single-core work. This is the decode bound of a single generation
+on an otherwise idle slot, not the latency a request sees under concurrent
+load: once the queue fills, requests also wait for a free slot, so the
+end-to-end p50 measured for the 256-token class reaches $\approx$48--52\,s at
+20 users (Sec.~\ref{sec:size}). With \code{--parallel 2} each instance holds two
 decode slots, so a pod can serve two generations concurrently, after which
 requests queue inside the proxy. This is the entire mechanism of our load: CPU
 is the work, and the work is a long decode.
@@ -381,15 +385,16 @@ as CPU crossed the 60\% target under the growing load, and then stepped back
 down $6{\to}5{\to}4{\to}3{\to}2{\to}1$ as each valley and the final drain
 brought CPU below target long enough for the HPA's 300\,s scale-down
 stabilisation window to expire. Kubernetes recorded the corresponding
-\code{SuccessfulRescale} events in every run. Across the campaign: 12{,}144
-requests, 116 errors (1.0\%), all 504-generation timeouts at the 50-user
-peak; the per-run error rate stayed below 0.5\%.
+\code{SuccessfulRescale} events in every run. Across the campaign: 12{,}709
+requests, 127 errors (1.0\%), almost all 504-generation timeouts at the
+50-user plateau; per-run error rates ranged from 0\% (seven of the twenty
+runs) to 8.9\%.
 
 Fig.~\ref{fig:elasticity} plots replicas and CPU against time (the $N{=}20$
 average). The repeated out-and-back cycle is the elasticity evidence:
-scale-out is observed within the first 60\,s sampling window in every run
-(below the collector's 60\,s resolution, so the true delay is bounded
-above by 60\,s rather than measured directly. The full scale-in back to one
+scale-out is observed within the first 60\,s sampling window in every run;
+since the collector's resolution is 60\,s, the true scale-out delay is only
+bounded above by 60\,s, not measured directly. The full scale-in back to one
 pod takes a mean of $\approx$740\,s (range 352--1{,}614\,s) from the moment
 CPU falls below the 60\% target: roughly the first 300\,s is the HPA's
 scale-down stabilisation window, after which the deployment steps down through
@@ -518,6 +523,10 @@ large  &  441 & 0.25 & 52.4 & 120.7 & 0.0 & 10.2 \\
 mix    & 1083 & 0.61 & 25.2 &  65.2 & 0.0 &  9.5 \\
 \bottomrule
 \end{tabular}
+
+\vspace{2pt}\footnotesize p50/p95 are the means of the per-run percentiles
+reported by Locust (ten runs); the per-request pooled medians are used in
+Table~\ref{tab:cross}.
 \end{table}
 
 All 5{,}227 requests complete with \textbf{zero errors} and no empty run: the
@@ -532,7 +541,7 @@ same 20-user intensity, while the per-request service time remains dominated by
 llama's sequential token decode.
 
 \begin{table}[t]
-\caption{Cross-size interference: p50 latency isolated vs inside the mixed workload}
+\caption{Cross-size interference: p50 latency isolated vs inside the mixed workload (pooled medians over all requests)}
 \label{tab:cross}
 \centering\small
 \begin{tabular}{@{}lrrr@{}}
@@ -540,19 +549,27 @@ llama's sequential token decode.
 Size & Isolated (s) & Mix (s) & Penalty \\
 \midrule
 small  & 7.7 & 10.9 & 1.4\,$\times$ \\
-medium & 30.1 & 27.4 & 1.0\,$\times$ \\
+medium & 30.5 & 27.4 & 0.9\,$\times$ \\
 large  & 47.6 & 48.0 & 1.0\,$\times$ \\
 \bottomrule
 \end{tabular}
+
+\vspace{2pt}\footnotesize Medians pooled over the successful per-request
+samples (ten runs); isolated and mix are computed identically, so the ratio is
+meaningful. Isolated values here differ slightly from Table~\ref{tab:size}
+(7.4/30.1/52.4\,s), which averages the per-run Locust percentiles instead.
 \end{table}
 
 The mix still exposes cross-size interference: Table~\ref{tab:cross} shows a
 \emph{small} request ~1.4\,$\times$ slower inside the mix (p50 10.9\,s vs
-7.7\,s isolated) because it queues behind longer ones; medium and large are
-unaffected (1.0\,$\times$). The penalty is much weaker than the 3.5\,$\times$
-measured with two slots, because the larger slot pool drains the mixed queue
-faster. Fig.~\ref{fig:size} shows latency, delay breakdown and scaling per
-size.
+7.7\,s isolated) because it queues behind longer ones. Medium and large are
+unaffected within noise (0.9\,$\times$ and 1.0\,$\times$); the sub-1
+medium figure is not a mix speedup but run-to-run variance -- isolated medium
+medians range 21--39\,s across the ten runs -- so 27.4\,s vs 30.5\,s is well
+inside that spread. The interference penalty is much weaker than the
+3.5\,$\times$ measured with two slots, because the larger slot pool drains the
+mixed queue faster. Fig.~\ref{fig:size} shows latency, delay breakdown and
+scaling per size.
 
 \begin{figure}[t]
 \centering
@@ -696,7 +713,7 @@ Solution & Compute & Total 6 mo \\
 Service footprint (1 master + 2 workers, HPA 1--2) & 455.83 & \textbf{\$513.43} \\
 Single t3.xlarge (4 vCPU, no autoscaling) & 729.33 & \$748.53 \\
 Experiment bench (1 master + 6 workers, HPA 1--6) & 1{,}192.18 & \textbf{\$1{,}326.58} \\
-Single m5.4xlarge (16 vCPU, no autoscaling) & 4{,}207.68 & \$4{,}226.88 \\
+Single m5.4xlarge (16 vCPU, no autoscaling) & 3{,}366.14 & \$3{,}385.34 \\
 AWS Lambda (same AI app) & 3{,}786.67 & \$3{,}787.24 \\
 \bottomrule
 \end{tabular}%
@@ -721,12 +738,13 @@ whose invocations last tens of seconds defeats the serverless pricing model.
 
 The bench tells the same story at the other scale. Even the six-worker
 cluster actually used here (\$1{,}326.58) undercuts its no-elasticity
-single-instance equivalent, an \code{m5.4xlarge} at \$4{,}226.88, by
-$\approx$3$\times$; Lambda remains $\approx$2.9$\times$ the bench. Two
+single-instance equivalent, an \code{m5.4xlarge} at \$3{,}385.34, by
+$\approx$2.6$\times$; Lambda remains $\approx$2.9$\times$ the bench. Two
 footprints, two no-elasticity singles, and one serverless option therefore
-order the same way: provisioned elasticity is cheapest, peak-sized
-single-node capacity is the most expensive, and per-second-billed serverless
-loses to both because each invocation is a long CPU-bound decode.
+order as follows: provisioned elasticity is cheapest, each footprint undercuts
+its matching single instance, and per-second-billed serverless is the most
+expensive option of the five because each invocation is a long CPU-bound
+decode.
 
 The comparison is best read as a capacity decision, not a duty cycle. At the
 design-load peak (two pods, 4 vCPU) the autoscaled footprint is cheaper than
@@ -817,7 +835,7 @@ Economically, the service at its operating footprint (1 master + 2 workers)
 costs \$513 over six months against \$3{,}787 for the equivalent Lambda
 deployment ($\approx$7$\times$); even the six-worker bench used here
 (\$1{,}327) undercuts both its no-elasticity single-instance equivalent
-(\$4{,}227 for an \code{m5.4xlarge}) and Lambda ($\approx$2.9$\times$). For
+(\$3{,}385 for an \code{m5.4xlarge}) and Lambda ($\approx$2.9$\times$). For
 this CPU-bound workload, CPU utilisation proved
 to be a useful scaling signal, provided the HPA ceiling is set to the
 worker count the load actually needs. Measured against the objectives fixed
