@@ -687,16 +687,16 @@ per six months) is costed once.
 \begin{table}[t]
 \caption{Six-month cost projection (service footprint and measurement bench)}
 \label{tab:cost}
-\centering\small
-\begin{tabular}{@{}lrr@{}}
+\centering\footnotesize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}p{3.4cm}rr@{}}
 \toprule
-Solution & Compute & Total 6 mo \\
+Solution & Compute (\$) & Total 6\,mo (\$) \\
 \midrule
-Service footprint (1 master + 2 workers, HPA 1--2) & 455.83 & \textbf{\$513.43} \\
-Single t3.xlarge (4 vCPU, no autoscaling) & 729.33 & \$748.53 \\
-Experiment bench (1 master + 6 workers, HPA 1--6) & 1{,}192.18 & \textbf{\$1{,}326.58} \\
-Single m5.4xlarge (16 vCPU, no autoscaling) & 4{,}207.68 & \$4{,}226.88 \\
-AWS Lambda (same AI app) & 3{,}786.67 & \$3{,}787.24 \\
+Service footprint (1\,master + 2\,workers, HPA 1--2) & 455.83 & \textbf{513.43} \\
+Single t3.xlarge (4\,vCPU, no autoscaling) & 729.33 & 748.53 \\
+Experiment bench (1\,master + 6\,workers, HPA 1--6) & 1{,}192.18 & \textbf{1{,}326.58} \\
+Single m5.4xlarge (16\,vCPU, no autoscaling) & 4{,}207.68 & 4{,}226.88 \\
+AWS Lambda (same AI app) & 3{,}786.67 & 3{,}787.24 \\
 \bottomrule
 \end{tabular}
 \end{table}
