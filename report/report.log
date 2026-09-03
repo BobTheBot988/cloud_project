@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.7.24)  3 SEP 2026 09:23
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.7.24)  3 SEP 2026 09:49
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -353,7 +353,7 @@ Package hyperref Info: Option `colorlinks' set `true' on input line 23.
 File: l3backend-pdftex.def 2026-02-18 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count320
 )
-No file report.aux.
+(./report.aux)
 \openout1 = `report.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 39.
@@ -374,6 +374,7 @@ LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 39.
 LaTeX Font Info:    ... okay on input line 39.
 LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 39.
 LaTeX Font Info:    ... okay on input line 39.
+
 -- Lines per column: 56 (exact).
 (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
@@ -398,62 +399,18 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
 Package hyperref Info: Link coloring ON on input line 39.
+
+(./report.out) (./report.out)
 \@outlinefile=\write3
 \openout3 = `report.out'.
 
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <9> not available
 (Font)              Font shape `T1/cmtt/m/n' tried instead on input line 45.
-
-
-LaTeX Warning: Reference `sec:elasticity' on page 1 undefined on input line 96.
-
-
-
-LaTeX Warning: Reference `sec:campaignB' on page 1 undefined on input line 104.
-
-
-
-LaTeX Warning: Reference `sec:background' on page 1 undefined on input line 118
-.
-
-
-LaTeX Warning: Reference `sec:sota' on page 1 undefined on input line 118.
-
-
-LaTeX Warning: Reference `sec:app' on page 1 undefined on input line 119.
-
-
-LaTeX Warning: Reference `sec:method' on page 1 undefined on input line 120.
-
-
-LaTeX Warning: Reference `sec:campaignA' on page 1 undefined on input line 120.
-
-
-
-LaTeX Warning: Reference `sec:campaignB' on page 1 undefined on input line 121.
-
-
-
-LaTeX Warning: Reference `sec:cost' on page 1 undefined on input line 122.
-
-[1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texmf-
-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}
+ [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texmf
+-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}
 
 
 ]
-
-LaTeX Warning: Citation `little' on page 2 undefined on input line 187.
-
-
-LaTeX Warning: Citation `adzic2017' on page 2 undefined on input line 192.
-
-
-LaTeX Warning: Citation `eivy2017' on page 2 undefined on input line 194.
-
-
-LaTeX Warning: Reference `sec:cost' on page 2 undefined on input line 196.
-
-
 Underfull \hbox (badness 4242) in paragraph at lines 221--231
 \T1/cmr/m/n/10 re-quest to the FastAPI proxy in-side a pod. The
  []
@@ -464,42 +421,14 @@ Underfull \hbox (badness 2426) in paragraph at lines 243--246
  []
 
 [2]
-
-LaTeX Warning: Reference `tab:procedure' on page 3 undefined on input line 259.
-
-
-
 Underfull \hbox (badness 10000) in paragraph at lines 271--271
 []\T1/cmr/m/n/9 1. Pur-pose,
  []
 
 
-LaTeX Warning: Reference `sec:method' on page 3 undefined on input line 271.
-
-
-LaTeX Warning: Reference `sec:metrics' on page 3 undefined on input line 274.
-
-
 Underfull \hbox (badness 3343) in paragraph at lines 275--277
 \T1/cmtt/m/n/9 LoadTestShape \T1/cmr/m/n/9 pro-files (saw-tooth,
  []
-
-
-LaTeX Warning: Reference `sec:design' on page 3 undefined on input line 277.
-
-
-LaTeX Warning: Reference `sec:env' on page 3 undefined on input line 280.
-
-
-LaTeX Warning: Reference `sec:campaignA' on page 3 undefined on input line 281.
-
-
-
-LaTeX Warning: Reference `sec:campaignB' on page 3 undefined on input line 281.
-
-
-
-LaTeX Warning: Reference `sec:slasum' on page 3 undefined on input line 340.
 
 
 Underfull \hbox (badness 1838) in paragraph at lines 346--355
@@ -529,11 +458,7 @@ Underfull \hbox (badness 1635) in paragraph at lines 376--387
 \T1/cmr/m/n/10 de-scend through 35 and 10 users, idle drain), with
  []
 
-
-LaTeX Warning: Reference `fig:elasticity' on page 4 undefined on input line 388
-.
-
-<figures/plot1_elasticity.png, id=62, 794.97pt x 361.35pt>
+<figures/plot1_elasticity.png, id=205, 794.97pt x 361.35pt>
 File: figures/plot1_elasticity.png Graphic file (type png)
 <use figures/plot1_elasticity.png>
 Package pdftex.def Info: figures/plot1_elasticity.png  used on input line 408.
@@ -543,87 +468,29 @@ Underfull \hbox (badness 5077) in paragraph at lines 419--427
 \T1/cmr/m/n/10 time into llama de-code (up-stream) and or-ches-tra-
  []
 
-
-LaTeX Warning: Reference `sec:elasticity' on page 4 undefined on input line 432
-.
-
-
-LaTeX Warning: Reference `sec:slasum' on page 4 undefined on input line 435.
-
-
-LaTeX Warning: Reference `sec:slasum' on page 4 undefined on input line 437.
-
-
-LaTeX Warning: Reference `fig:capacity_variant' on page 4 undefined on input li
-ne 451.
-
-
-LaTeX Warning: Reference `tab:variants' on page 4 undefined on input line 467.
-
-
-LaTeX Warning: Reference `fig:capacity_variant' on page 4 undefined on input li
-ne 472.
-
-
-LaTeX Warning: Reference `fig:delay_variant' on page 4 undefined on input line 
-473.
-
 [4 <./figures/plot1_elasticity.png>]
-<figures/variant_capacity.png, id=80, 1084.05pt x 289.08pt>
+<figures/variant_capacity.png, id=225, 1084.05pt x 289.08pt>
 File: figures/variant_capacity.png Graphic file (type png)
 <use figures/variant_capacity.png>
 Package pdftex.def Info: figures/variant_capacity.png  used on input line 477.
 (pdftex.def)             Requested size: 252.0pt x 67.19716pt.
-<figures/variant_delay_breakdown.png, id=81, 794.97pt x 361.35pt>
+<figures/variant_delay_breakdown.png, id=226, 794.97pt x 361.35pt>
 File: figures/variant_delay_breakdown.png Graphic file (type png)
 <use figures/variant_delay_breakdown.png>
 Package pdftex.def Info: figures/variant_delay_breakdown.png  used on input lin
 e 485.
 (pdftex.def)             Requested size: 252.0pt x 114.54263pt.
-
-
-LaTeX Warning: Reference `tab:size' on page 5 undefined on input line 504.
-
-
-LaTeX Warning: Reference `tab:cross' on page 5 undefined on input line 549.
-
-
-LaTeX Warning: Reference `fig:size' on page 5 undefined on input line 554.
-
-<figures/plot5_size.png, id=82, 1156.32pt x 361.35pt>
+<figures/plot5_size.png, id=230, 1156.32pt x 361.35pt>
 File: figures/plot5_size.png Graphic file (type png)
 <use figures/plot5_size.png>
 Package pdftex.def Info: figures/plot5_size.png  used on input line 559.
 (pdftex.def)             Requested size: 252.0pt x 78.74738pt.
-
-LaTeX Warning: Reference `tab:burst' on page 5 undefined on input line 576.
-
-
-LaTeX Warning: Reference `sec:background' on page 5 undefined on input line 598
-.
-
-
-LaTeX Warning: Reference `fig:burst' on page 5 undefined on input line 600.
-
-
-LaTeX Warning: Reference `sec:limits' on page 5 undefined on input line 613.
-
-[5 <./figures/variant_capacity.png> <./figures/variant_delay_breakdown.png>]
-<figures/plot7_burst.png, id=95, 794.97pt x 361.35pt>
+ [5 <./figures/variant_capacity.png> <./figures/variant_delay_breakdown.png>]
+<figures/plot7_burst.png, id=247, 794.97pt x 361.35pt>
 File: figures/plot7_burst.png Graphic file (type png)
 <use figures/plot7_burst.png>
 Package pdftex.def Info: figures/plot7_burst.png  used on input line 618.
 (pdftex.def)             Requested size: 252.0pt x 114.54263pt.
-
-
-LaTeX Warning: Reference `tab:sla' on page 6 undefined on input line 627.
-
-
-LaTeX Warning: Reference `sec:sla' on page 6 undefined on input line 627.
-
-
-LaTeX Warning: Reference `sec:sla' on page 6 undefined on input line 630.
-
 
 Underfull \hbox (badness 10000) in paragraph at lines 637--637
 []\T1/cmr/m/n/9 Elasticity scale-
@@ -650,58 +517,23 @@ Underfull \hbox (badness 10000) in paragraph at lines 642--642
  []
 
 
-LaTeX Warning: Reference `sec:env' on page 6 undefined on input line 671.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 695--695
-[]\T1/cmr/m/n/8 Service foot-print
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 695--695
-\T1/cmr/m/n/8 (1master + 2workers,
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 697--697
-[]\T1/cmr/m/n/8 Experiment bench
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 697--697
-\T1/cmr/m/n/8 (1master + 6workers,
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 698--698
-[]\T1/cmr/m/n/8 Single m5.4xlarge
- []
-
-
-Underfull \hbox (badness 1655) in paragraph at lines 704--719
+Underfull \hbox (badness 1655) in paragraph at lines 706--721
 []\T1/cmr/m/n/10 The ser-vice foot-print is cheap-est ($513.43; mas-ter
  []
 
 [6 <./figures/plot5_size.png> <./figures/plot7_burst.png>]
-Underfull \hbox (badness 1616) in paragraph at lines 720--728
+Underfull \hbox (badness 1616) in paragraph at lines 722--730
 \T1/cmtt/m/n/10 m5.4xlarge \T1/cmr/m/n/10 at $4,226.88, by $\OMS/cmsy/m/n/10 ^^
 Y$\T1/cmr/m/n/10 3$\OMS/cmsy/m/n/10 ^^B$\T1/cmr/m/n/10 ; Lambda re-mains
  []
 
 
-LaTeX Warning: Reference `sec:elasticity' on page 7 undefined on input line 733
-.
-
-
-LaTeX Warning: Reference `sec:size' on page 7 undefined on input line 757.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 762--769
+Underfull \hbox (badness 10000) in paragraph at lines 764--771
 []\T1/cmr/m/it/10 llama.cpp mem-ory leak un-der sus-tained load.
  []
 
 
-Underfull \hbox (badness 1472) in paragraph at lines 762--769
+Underfull \hbox (badness 1472) in paragraph at lines 764--771
 \T1/cmtt/m/n/10 llama-server \T1/cmr/m/n/10 grows to  2.9GiB (of a 3GiB limit)
  []
 
@@ -717,32 +549,32 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-[leftcolumn badness]: 1000000 on 5.67053pt
-[rightcolumn badness]: 1000000 on 5.67053pt
-[leftcolumn badness]: 1000000 on 5.67053pt
-[rightcolumn badness]: 1000000 on 5.67053pt
-[leftcolumn badness]: 1000000 on 5.67053pt
-[rightcolumn badness]: 1000000 on 5.67053pt
-[leftcolumn badness]: 1000000 on 5.67053pt
-[rightcolumn badness]: 1000000 on 5.67053pt
-[leftcolumn badness]: 1000000 on 5.67053pt
-[rightcolumn badness]: 1000000 on 5.67053pt
-[leftcolumn badness]: 1000000 on 5.67053pt
-[rightcolumn badness]: 1000000 on 5.67053pt
-[leftcolumn badness]: 1000000 on 5.67053pt
-[rightcolumn badness]: 1000000 on 5.67053pt
-[leftcolumn badness]: 1000000 on 5.67053pt
-[rightcolumn badness]: 1000000 on 5.67053pt
+[leftcolumn badness]: 1000000 on 6.22595pt
+[rightcolumn badness]: 1000000 on 6.22595pt
+[leftcolumn badness]: 1000000 on 6.22595pt
+[rightcolumn badness]: 1000000 on 6.22595pt
+[leftcolumn badness]: 1000000 on 6.22595pt
+[rightcolumn badness]: 1000000 on 6.22595pt
+[leftcolumn badness]: 1000000 on 6.22595pt
+[rightcolumn badness]: 1000000 on 6.22595pt
+[leftcolumn badness]: 1000000 on 6.22595pt
+[rightcolumn badness]: 1000000 on 6.22595pt
+[leftcolumn badness]: 1000000 on 6.22595pt
+[rightcolumn badness]: 1000000 on 6.22595pt
+[leftcolumn badness]: 1000000 on 6.22595pt
+[rightcolumn badness]: 1000000 on 6.22595pt
+[leftcolumn badness]: 1000000 on 6.22595pt
+[rightcolumn badness]: 1000000 on 6.22595pt
 - LAST -
-Extra skip:18.32947pt
-Left:276.0pt/2.49939pt
-Right:260.16992pt/0.0pt
-Split: 276.08496pt
-Output:276.08496pt
+Extra skip:17.77405pt
+Left:228.0pt/1.94397pt
+Right:212.16992pt/0.0pt
+Split: 228.08496pt
+Output:228.08496pt
 Pageshrink: 0.0pt
 Pagestretch: 0.0pt
 @colht:672.0pt
-FLUSHEND [output]: 276.08496pt
+FLUSHEND [output]: 228.08496pt
 FLUSHEND [leftcolumn badness]: 0
 FUSHEND [rightcolumn badness]: 131
 [8] (./report.aux)
@@ -750,27 +582,14 @@ FUSHEND [rightcolumn badness]: 131
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
  ***********
-
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
-
-Package rerunfilecheck Warning: File `report.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `report.out':
-(rerunfilecheck)             Before: <no file>
-(rerunfilecheck)             After:  C727B55FFED06EAF9C09883C4DCAD263;5956.
+Package rerunfilecheck Info: File `report.out' has not changed.
+(rerunfilecheck)             Checksum: C727B55FFED06EAF9C09883C4DCAD263;5956.
  ) 
 Here is how much of TeX's memory you used:
- 11042 strings out of 469296
- 172651 string characters out of 5465561
- 616812 words of memory out of 6000000
- 39666 multiletter control sequences out of 15000+600000
+ 11085 strings out of 469296
+ 173256 string characters out of 5465561
+ 619605 words of memory out of 6000000
+ 39703 multiletter control sequences out of 15000+600000
  675300 words of font info for 134 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
  75i,16n,79p,395b,586s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -786,22 +605,21 @@ nts/cm/cmsy6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/
 cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.p
 fb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbi0900.pfb></usr/share
-/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx0800.pfb></usr/share/texliv
-e/texmf-dist/fonts/type1/public/cm-super/sfbx0900.pfb></usr/share/texlive/texmf
--dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/share/texlive/texmf-dist/f
-onts/type1/public/cm-super/sfbx1200.pfb></usr/share/texlive/texmf-dist/fonts/ty
-pe1/public/cm-super/sfcc0800.pfb></usr/share/texlive/texmf-dist/fonts/type1/pub
-lic/cm-super/sfcc1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-
-super/sfrm0800.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/s
-frm0900.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm1000
-.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfti0900.pfb></
-usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfti1000.pfb></usr/sha
-re/texlive/texmf-dist/fonts/type1/public/cm-super/sftt0900.pfb></usr/share/texl
-ive/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb>
-Output written on report.pdf (8 pages, 908721 bytes).
+/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx0900.pfb></usr/share/texliv
+e/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/share/texlive/texmf
+-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/share/texlive/texmf-dist/f
+onts/type1/public/cm-super/sfcc0800.pfb></usr/share/texlive/texmf-dist/fonts/ty
+pe1/public/cm-super/sfcc1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/pub
+lic/cm-super/sfrm0800.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-
+super/sfrm0900.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/s
+frm1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfti0900
+.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfti1000.pfb></
+usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sftt0900.pfb></usr/sha
+re/texlive/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb>
+Output written on report.pdf (8 pages, 892784 bytes).
 PDF statistics:
- 258 PDF objects out of 1000 (max. 8388607)
- 180 compressed objects within 2 object streams
+ 400 PDF objects out of 1000 (max. 8388607)
+ 322 compressed objects within 4 object streams
  60 named destinations out of 1000 (max. 500000)
- 26 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 298 words of extra memory for PDF output out of 10000 (max. 10000000)
 
