@@ -28,11 +28,11 @@
 CPU-Driven Elasticity of a llama.cpp Service under HPA\vspace{-0.3em}}
 
 \author{\normalsize
-\begin{tabular}{c@{\hspace{3em}}c}
-Student Name 1 & Student Name 2\\
-\small Matricola XXXXXXX & \small Matricola XXXXXXX\\
-\small Sapienza University of Rome & \small Sapienza University of Rome\\
-\small \url{name1.XXXXXXX@studenti.uniroma1.it} & \small \url{name2.XXXXXXX@studenti.uniroma1.it}
+\begin{tabular}{c@{\hspace{2em}}c@{\hspace{2em}}c}
+Roberto Di Rosa & Irene Di Timoteo & Marco Mazzella\\
+\small Matricola XXXXXXX & \small 2059632 & \small 2026514\\
+\small Sapienza University of Rome & \small Sapienza University of Rome & \small Sapienza University of Rome\\
+\small \url{dirosa.XXXXXXX@studenti.uniroma1.it} & \small \url{ditimoteo.2059632@studenti.uniroma1.it} & \small \url{mazzella.2026514@studenti.uniroma1.it}
 \end{tabular}}
 \date{}
 
@@ -54,7 +54,8 @@ between 1 and 6 pods. Test~A drives it with a sawtooth user profile
 $6{\to}5{\to}4{\to}3{\to}2{\to}1$ in every run: a repeated bidirectional
 elasticity cycle that includes mid-run scale-in, not only a single
 out-and-back. Raising the HPA ceiling from 4 to 6 pods (exp4/exp6, $N{=}20$
-per level) keeps availability $\ge$0.76 and keeps exp6's p95 below 100\,s,
+per level) keeps exp6's availability $\ge$0.76 and its p95 below 100\,s
+(exp4 dips as low as 0.73),
 though saturation persists: at level 50 the six-pod deployment still reports a
 16.6\% error rate, while processing $7\times$ the requests of the four-pod
 one (1{,}299 vs 178) by absorbing the queue instead of dropping it. Attributing end-to-end delay per
@@ -62,10 +63,10 @@ request shows that the llama decode dominates ($\approx$40\,s) while the
 orchestrator and transport path contribute only $\approx$11\,ms, so the
 bottleneck is the model container, not Kubernetes. Size-isolated runs
 (Test~C, six fixed pods) isolate the effect of request size and expose
-cross-size interference: a small request takes ~7.7\,s in isolation but
-~10.9\,s when mixed with medium and large ones (a 1.4$\times$ penalty), with
+cross-size interference: a small request takes $\sim$7.7\,s in isolation but
+$\sim$10.9\,s when mixed with medium and large ones (a 1.4$\times$ penalty), with
 zero errors across 5{,}227 requests. A bursty workload (Test~D) shows the HPA reacts
-to a sudden $6\times$ step in users within ~27\,s (CPU, reported as a fraction
+to a sudden $6\times$ step in users within $\sim$27\,s (CPU, reported as a fraction
 of the pod's 1800\,m request, jumps $0\%{\to}86\text{--}106\%$) with zero
 errors over 145 requests, although short bursts are absorbed by the service
 queue rather than rejected. Projected over six months, the service at its
@@ -101,7 +102,7 @@ mid-run scale-in is less commonly reported; many published profiles do not
 include a long idle period, and fewer still a descent that brings the
 cluster back down while the run is still live. Delay attribution over
 per-request timestamps establishes where the time goes and isolates the
-bottleneck. Test B (Sec.~\ref{sec:campaignB}) varies the HPA
+bottleneck. Test~B (Sec.~\ref{sec:campaignB}) varies the HPA
 ceiling between 4 and 6 pods and shows monotonic improvement in latency,
 errors and availability as the ceiling rises.
 
@@ -109,7 +110,7 @@ That experiment produced the result we expected to see confirmed rather than
 discovered: the elasticity variable is the per-request service time, set
 almost entirely by the model, with the orchestrator contributing a constant
 $\approx$11\,ms. Varying request size isolates this cleanly: a small
-generation takes ~7\,s, a large one ~52\,s, at the same pod count, and the
+generation takes $\sim$7\,s, a large one $\sim$52\,s, at the same pod count, and the
 mixed workload shows the queueing penalty a long tail imposes on short
 requests. A burst experiment shows the practical edge of the design: a
 sudden $6\times$ step in users is absorbed without a single error, because
@@ -118,7 +119,7 @@ the queue drains during the following lull.
 Section~\ref{sec:background} gives the background, Sec.~\ref{sec:sota}
 positions the work, Sec.~\ref{sec:app} describes the application,
 Sec.~\ref{sec:method} the methodology, Sec.~\ref{sec:campaignA} the sawtooth
-elasticity experiment, Sec.~\ref{sec:campaignB} Test B at N=20 and the
+elasticity experiment, Sec.~\ref{sec:campaignB} Test~B at N=20 and the
 remaining tests, and Sec.~\ref{sec:cost} the cost evaluation.
 
 \section{Background}
@@ -195,7 +196,7 @@ correct capacity input rather than arrival rate alone.
 
 Adzic and Chatley~\cite{adzic2017} report 66--95\% savings moving
 low-duty-cycle enterprise workloads to serverless, and Eivy and
-Weinman~\cite{eivy2017} show that the benefit depends on execution behavior
+Weinman~\cite{eivy2017} show that the benefit depends on execution behaviour
 and volumes and can reverse as traffic grows. Our R4 evaluation
 (Sec.~\ref{sec:cost}) finds the same trade-off on an LLM workload: a
 serverless deployment is roughly $7\times$ the cost of the autoscaled
@@ -323,9 +324,8 @@ HPA ceilings of 4 (exp4) and 6 (exp6); \code{exp-b.sh}.
 \textbf{Test C} (size isolation) fixes the workload size per
 run (small/medium/large/mix) at 20 users with a 3-minute steady phase, 10
 runs per size, on six fixed pods (12 parallel decode slots); \code{day-run.sh}.
-\textbf{Test D} (burst) alternates a 2-user
-baseline with 12-user bursts, 120\,s normal / 60\,s burst, two cycles per
-run, $N{=}3$; \code{burst\_shape.py}.
+\textbf{Test D} (burst) alternates a 2-user baseline with 12-user bursts, 120\,s
+normal / 60\,s burst, two cycles per run, $N{=}3$; \code{burst\_shape.py}.
 
 \subsection{Service level objectives}
 \label{sec:sla}
@@ -348,9 +348,9 @@ results because an objective chosen after seeing the data is not an objective.
 \label{sec:env}
 
 All runs used 1 master \code{t3.small} and 6 workers \code{t3.medium} (Amazon
-Linux 2023, Kubernetes v1.36, Flannel, Metrics Server). Test A and the
-Test B's ceilings (exp4, exp6) ran on this same six-worker cluster, differing
-only in the HPA \code{maxReplicas} ceiling (6 for Test A and exp6, 4 for
+Linux 2023, Kubernetes v1.36, Flannel, Metrics Server). Test~A and the
+Test~B's ceilings (exp4, exp6) ran on this same six-worker cluster, differing
+only in the HPA \code{maxReplicas} ceiling (6 for Test~A and exp6, 4 for
 exp4). The model is \code{unsloth/Qwen3.5-0.8B-MTP-GGUF:UD-Q6\_K\_XL}, served
 by \code{ghcr.io/ggml-org/llama.cpp:server} build 10380 with
 \code{--threads 2 --parallel 2 --reasoning off}. The load generator ran on a
@@ -359,15 +359,15 @@ teardown (\code{just cluster-down}).
 
 A robustness note: llama-server (build 10380) degrades into a deadlock under
 sustained concurrent load (node CPU falls to single digits while every
-request times out at the proxy), so each Test A run starts from a freshly
-restarted pod (\code{FRESH\_POD}); a single generation returns in ~5\,s after
+request times out at the proxy), so each Test~A run starts from a freshly
+restarted pod (\code{FRESH\_POD}); a single generation returns in $\sim$5\,s after
 the restart. The restart doubles as a controlled cold start: every run
 begins with a cold model and builds up from an empty cluster.
 
 All conclusions apply to a 0.8B CPU-bound model on t-series instances; GPU
 serving, batched inference or a larger model would change service time,
 hence the elasticity axis, though not the method. Our self-enforced caps (8
-instances / 31 vCPU) bound Test B to $N{=}20$ and six workers,
+instances / 31 vCPU) bound Test~B to $N{=}20$ and six workers,
 and the lab's temporary, region-scoped credentials meant runs span two
 regions (us-east-1, us-west-2).
 
@@ -418,14 +418,17 @@ valleys.}
 \label{fig:elasticity}
 \end{figure}
 
-\subsection{Where the response time goes}
+\subsection{Where the response time goes (Test~B delay split)}
 \label{sec:delay}
 
-The proxy's \code{X-Upstream-Ms} header splits client wait time into llama
-decode (upstream) and orchestrator+transport. Across the Test B runs the
-split is stable: from exp4 (HPA max 4) and exp6 (HPA max 6) the total and
+Although this section otherwise reports on the Test~A sawtooth, the delay
+split below uses Test~B data: Test~A carries no per-level delay breakdown of
+its own, and Test~B's larger, level-controlled sample is what the split
+requires. The proxy's \code{X-Upstream-Ms} header splits client wait time
+into llama decode (upstream) and orchestrator+transport. Across the Test~B
+runs the split is stable: from exp4 (HPA max 4) and exp6 (HPA max 6) the total and
 upstream means coincide at 44.6\,s / 44.6\,s (exp4) and 40.1\,s / 40.1\,s
-(exp6), leaving an orchestrator+transport share of $10.9$~ms and $10.6$~ms
+(exp6), leaving an orchestrator+transport share of 10.9\,ms and 10.6\,ms
 respectively. The hot spot is the model container; Kubernetes scheduling,
 networking and the proxy contribute $\approx$11\,ms, three orders of
 magnitude below the work.
@@ -435,13 +438,13 @@ magnitude below the work.
 Test~A meets the elasticity SLO outright: scale-out to the six-pod ceiling
 within the 60\,s horizon in every run, and scale-in back to one pod after
 each valley (Sec.~\ref{sec:elasticity}). The capacity SLOs are evaluated on
-Test B: the 10\% error-rate target is met by exp6 only at
+Test~B: the 10\% error-rate target is met by exp6 only at
 levels 10 and 30 (2.8\% and 0\%) and missed elsewhere: 24.2\% at level 20
 (a cold-start artifact discussed in Sec.~\ref{sec:slasum}), 13.2\% at level
 40, and 16.6\% and 26.4\% at level 50 for exp6 and exp4. We return to this in
 Sec.~\ref{sec:slasum}.
 
-\section{Test B at N=20: the HPA ceiling (exp4 and exp6)}
+\section{Capacity, Size, and Burst Experiments (Tests B--D)}
 \label{sec:campaignB}
 
 \subsection{Capacity at ceilings 4 and 6}
@@ -495,7 +498,7 @@ upstream lines remain separately visible.}
 \label{fig:delay_variant}
 \end{figure}
 
-A methodological caveat applies to the Test B runs: there is no warm-up
+A methodological caveat applies to the Test~B runs: there is no warm-up
 phase. Runs ramp users immediately (\code{-r 5}), so the figures include cold
 starts and the HPA cold-starting pods mid-run after scaling down between runs
 (level 30: 6 of 20 runs started at one pod). Delay and pod figures are
@@ -534,7 +537,7 @@ twelve parallel slots (6 pods $\times$ \code{--parallel 2}) remove the queue
 collapse that a two-slot deployment showed at the same intensity. The service
 time scales with the request: throughput drops from 1.56\,req/s (small) to
 0.25\,req/s (large) while p50 grows from 7.4\,s to 52.4\,s, and the
-orchestrator adds only ~9--10\,ms. \textbf{The bottleneck is therefore the
+orchestrator adds only $\sim$9--10\,ms. \textbf{The bottleneck is therefore the
 number of parallel decode slots, not raw CPU capacity:} raising the slot count
 from two to twelve turned a collapsing queue into zero-error service at the
 same 20-user intensity, while the per-request service time remains dominated by
@@ -561,7 +564,7 @@ meaningful. Isolated values here differ slightly from Table~\ref{tab:size}
 \end{table}
 
 The mix still exposes cross-size interference: Table~\ref{tab:cross} shows a
-\emph{small} request ~1.4\,$\times$ slower inside the mix (p50 10.9\,s vs
+\emph{small} request $\sim$1.4\,$\times$ slower inside the mix (p50 10.9\,s vs
 7.7\,s isolated) because it queues behind longer ones. Medium and large are
 unaffected within noise (0.9\,$\times$ and 1.0\,$\times$); the sub-1
 medium figure is not a mix speedup but run-to-run variance -- isolated medium
@@ -575,13 +578,13 @@ scaling per size.
 \centering
 \includegraphics[width=\columnwidth]{figures/plot5_size}
 \caption{Test C: latency and delay breakdown per size class. Small is served
-fast in isolation but is penalised ~1.4\,$\times$ inside the mixed queue; all
+fast in isolation but is penalised $\sim$1.4\,$\times$ inside the mixed queue; all
 classes complete with zero errors on six fixed pods.}
 \label{fig:size}
 \end{figure}
 
 One operational caveat: \code{llama-server} leaks memory under sustained load
-(~2.9\,GiB in ~45 min, limit 3\,GiB) and stops completing requests once it
+($\sim$2.9\,GiB in $\sim$45\,min, limit 3\,GiB) and stops completing requests once it
 degrades. The campaign restarts the pods every five runs (and drains 90\,s
 between runs) to stay out of that region; a production deployment would need a
 leak fix or a memory-triggered restart policy.
@@ -609,11 +612,11 @@ Total & 145 & 0 & -- & -- & -- \\
 \end{tabular}
 \end{table}
 
-All 145 requests succeeded. The HPA reacted to the first burst in ~27\,s,
- reading CPU $0\%{\to}86\%{\to}106\%$, utilisation reported as a
- fraction of the pod's 1800\,m CPU request (1700\,m llama + 100\,m proxy,
- Sec.~\ref{sec:background}), so values above 100\% are expected whenever a pod
- decodes at more than its request, and issuing \code{SuccessfulRescale} to
+All 145 requests succeeded. The HPA reacted to the first burst in $\sim$27\,s,
+reading CPU $0\%{\to}86\%{\to}106\%$, utilisation reported as a
+fraction of the pod's 1800\,m CPU request (1700\,m llama + 100\,m proxy,
+Sec.~\ref{sec:background}), so values above 100\% are expected whenever a pod
+decodes at more than its request, and issuing \code{SuccessfulRescale} to
 two pods (Fig.~\ref{fig:burst}); CPU falls to 49--53\% between bursts but the
 HPA holds two pods, because its 300\,s scale-\emph{in} stabilisation window
 exceeds the 120\,s lull, so scale-\emph{in} is not observable within a run.
@@ -626,7 +629,7 @@ light class (small, 32 tokens) at 20 users and shows zero errors because
 each request is short, on the six fixed pods used there. Sustained mixed
 load, bursty load with idle recovery, and light isolated load are different
 points on the same queueing curve, not conflicting measurements. Pod memory
-grew from ~0.4 to ~2.3\,GiB across the three runs; the leak documented in
+grew from $\sim$0.4 to $\sim$2.3\,GiB across the three runs; the leak documented in
 Sec.~\ref{sec:limits} stayed below the degradation threshold, so the bursts
 still completed with zero errors.
 
@@ -651,25 +654,38 @@ Table~\ref{tab:sla} evaluates the objectives of Sec.~\ref{sec:sla}.
 \toprule
 Objective & Target & Measured & Verdict \\
 \midrule
-Elasticity scale-out & $\le$60 s & within first 60\,s sample (Test A) & pass \\
-Elasticity scale-in  & after load recedes & every run, $\approx$740 s mean (Test A) & pass \\
-Availability (2xx) @20u & $\ge$99\% & 100\% (Test C, six pods) & pass \\
+Elasticity scale-out & $\le$60\,s & within first 60\,s sample (Test~A) & pass \\
+Elasticity scale-in  & after load recedes & every run, $\approx$740\,s mean (Test~A) & pass \\
+Availability (2xx) @20u & $\ge$99\% & 100\% (Test~C, six pods) & pass$^{\dagger}$ \\
 Error rate @20u      & $<$10\%  & 24\% (exp6 level 20) & \textbf{fail} \\
-p95, small class     & $<$300 s  & 15.7 s (Test C) & pass \\
-p95 @40--50 users    & $<$300 s  & 66--101 s (exp4/exp6) & pass$^{*}$ \\
+p95, small class     & $<$300\,s  & 15.7\,s (Test~C) & pass \\
+p95 @40--50 users    & $<$300\,s  & 66--101\,s (exp4/exp6) & pass$^{*}$ \\
 \bottomrule
 \end{tabular}
+
+\vspace{2pt}\footnotesize $^{\dagger}$Measured on the warm, fully-scaled
+configuration; the same intensity on the elastic system during an HPA
+cold start (exp6, level 20) yields only 76\% availability, the scenario
+the Error-rate row below reports as a fail.
 \end{table}
 
 The verdict is mixed in an informative way. Elasticity, the behaviour the
 architecture exists to provide, passes cleanly in both directions, and
-availability at design load passes (100\% on the warm six-pod Test~C
-configuration at 20 users). The error-rate objective fails even at design
-load in the elastic variant: exp6 at level 20 reports 24\% errors, a
-cold-start artifact of the no-warm-up protocol (that level completed only 99
-requests across 20 runs, $\approx$5 per run) rather than a steady-state
-capacity limit, since the warm six-pod configuration at the same intensity is
-error-free. Interactive latency passes for the small class (15.7\,s).
+availability at design load passes on the warm, fully-scaled configuration
+(100\% on the six-pod Test~C run at 20 users)$^{\dagger}$. The dagger marks
+a genuine caveat, not a rounding note: the elastic system as actually
+deployed does \emph{not} clear this bar at the same intensity --- exp6 at
+level 20 (HPA cold-starting from one pod) reports 24\% errors, i.e.\ 76\%
+availability, which is a cold-start artifact of the no-warm-up protocol
+(that level completed only 99 requests across 20 runs, $\approx$5 per run)
+rather than a steady-state capacity limit, since the warm six-pod
+configuration at the same intensity is error-free. In other words, the
+availability objective is met once the deployment is warm, but not yet
+during the scale-up transient itself; a production rollout that must hold
+the SLO from a cold cluster would need a warm-up or pre-scaling policy.
+The error-rate objective, read at face value against the elastic system's
+own cold-start behaviour, fails even at design load: exp6 at level 20 is the
+same 24\% figure just discussed. Interactive latency passes for the small class (15.7\,s).
 The high-load p95 row passes numerically against the 300\,s bound
 (66--101\,s)$^{*}$, but with an asterisk: at the ceiling the tail is cut short
 by timeouts, and the error-rate SLO, 26.4\% (exp4) and 16.6\% (exp6) at 50
@@ -681,12 +697,12 @@ and elastic; its ceiling is the number of workers.
 
 Per recommendation~R4 we project six months of operation and compare against
 alternatives achieving the same objective. Every input is measured rather than
-assumed (instance prices, 24/7 runtime; `r4\_cost.py`).
+assumed (instance prices, 24/7 runtime; \code{r4\_cost.py}).
 
 \subsection{Method}
 
 The cluster of Sec.~\ref{sec:env} is a bench: six workers exist to give the
-HPA headroom for the 1$\to$6 elasticity cycle and Test B's ceilings, and the
+HPA headroom for the 1$\to$6 elasticity cycle and Test~B's ceilings, and the
 lab caps bound the campaign. R4 prices the service, not only the bench: we
 cost two EC2 footprints for six months, plus a no-elasticity single instance
 for each and a serverless alternative. The service footprint is what the
@@ -694,8 +710,11 @@ deployment would run in production: 1 master \code{t3.small} (\$0.02/h) + 2
 workers \code{t3.medium} (\$0.042/h each), a 40\,GB gp3 root volume each,
 with the HPA placing between 1 and 2 pods on those two workers (4 vCPU of
 peak compute). The bench is the six-worker cluster actually used for every
-measurement (12 vCPU of peak). The single instances match each footprint's
-peak (a \code{t3.xlarge} at 4 vCPU, an \code{m5.4xlarge} at 16 vCPU), and
+measurement (12 vCPU of peak). Each single instance is the nearest
+available EC2 size at or above that peak (a \code{t3.xlarge} at 4 vCPU is an
+exact match for the 4-vCPU footprint; an \code{m5.4xlarge} at 16 vCPU is the
+closest size above the bench's 12-vCPU peak, since AWS offers no 12-vCPU
+instance type), and
 the Lambda function (2\,GB memory, 40\,s mean invocation, 2.84M invocations
 per six months) is costed once.
 
@@ -732,7 +751,7 @@ the same instances), not a reduction in running instances. The footprint is
 the minimum always-on configuration for the cost comparison; a deployment
 that must hold the design-load error SLO at $\le$20 users needs more than the
 two pods it can host, so the bench below is the SLO-compliant scale. Lambda
-is $7\times$ the footprint (\$3{,}787.24): a long CPU-bound inference is
+is $\approx$7$\times$ the footprint (\$3{,}787.24): a long CPU-bound inference is
 billed at serverless unit prices for every second of decode, so a workload
 whose invocations last tens of seconds defeats the serverless pricing model.
 
@@ -748,13 +767,13 @@ decode.
 
 The comparison is best read as a capacity decision, not a duty cycle. At the
 design-load peak (two pods, 4 vCPU) the autoscaled footprint is cheaper than
-the peak-sized instance on on-demand prices, and the \code{t3.xlarge} has no
+the peak-sized instance at on-demand prices, and the \code{t3.xlarge} has no
 way to express the pod-level elasticity the deployment shows under load
 (Sec.~\ref{sec:elasticity}); scaling instances down when idle would extend
 the same logic further, but that needs a node autoscaler, which we do not
 implement. The serverless alternative is the mirror image: at low and bursty
 volumes Lambda is competitive, but its unit cost per second of compute is so
-high that sustaining ~0.2~req/s of 40\,s LLM decode for six months
+high that sustaining $\sim$0.2\,req/s of 40\,s LLM decode for six months
 ($\approx$1.1$\times$10$^{8}$\,s of compute) reaches \$3{,}787. The crossing
 point is far below the utilisation a production service would target, so for
 this workload, long, CPU-bound, and always-on, provisioned capacity wins.
@@ -764,32 +783,32 @@ which is identical across solutions.
 \section{Limitations and Threats to Validity}
 \label{sec:limits}
 
-\emph{No warm-up in Test B.} Runs ramp users immediately
+\emph{No warm-up in Test~B.} Runs ramp users immediately
 (\code{-r 5}), so the data include cold starts and the HPA cold-starting pods
 mid-run after scaling down between runs (level 30: 6/20 runs started at one
 pod). Delay and pod figures are therefore full autoscaling behaviour, not clean
-steady state; Test A, which has an explicit warm-up and idle drain, is the
+steady state; Test~A, which has an explicit warm-up and idle drain, is the
 clean case. This is stated explicitly rather than hidden.
 
-\emph{Test C large was underpowered at two slots.} The earlier two-slot run
+\emph{Test~C large was underpowered at two slots.} The earlier two-slot run
 collected ten requests in ten runs (seven empty) because the protocol is
-shorter than the ~90--120\,s service time. The six-pod run reported in
+shorter than the $\sim$90--120\,s service time. The six-pod run reported in
 Sec.~\ref{sec:size} removes this: 441 large requests across ten full runs.
-Test C is therefore a \emph{capacity} measurement at a fixed configuration
+Test~C is therefore a \emph{capacity} measurement at a fixed configuration
 (six pods, HPA pinned); reactive autoscaling behaviour is covered by the
-exp4/exp6 variants, Test A and Test~D.
+exp4/exp6 variants, Test~A and Test~D.
 
 \emph{llama.cpp memory leak under sustained load.} \code{llama-server} grows
-to ~2.9\,GiB (of a 3\,GiB limit) after ~45 min of continuous load and stops
+to $\sim$2.9\,GiB (of a 3\,GiB limit) after $\sim$45\,min of continuous load and stops
 completing requests once degraded; no reset command exists in the server API,
 so a fresh process is required. The campaign stays out of the degraded region
 with a 90\,s drain between runs and a pod restart every five runs. Without a
 leak fix or a memory-triggered restart policy, sustained campaigns will
 eventually stall.
 
-\emph{No scale-in observable in Test D.} The HPA's 300\,s scale-in
+\emph{No scale-in observable in Test~D.} The HPA's 300\,s scale-in
 stabilisation window exceeds the 120\,s lull, so the burst experiment cannot
-show a step down in replicas. The evidence for scale-in rests on Test A.
+show a step down in replicas. The evidence for scale-in rests on Test~A.
 
 \emph{Error rates are real saturation data.} At level 50, exp4 (four-pod
 ceiling) shows 26.4\% errors and exp6 (six-pod ceiling) still shows 16.6\%;
@@ -802,7 +821,7 @@ larger model would change service time, hence the elasticity axis, though not
 the method.
 
 \emph{Learner Lab constraints.} Hard caps (8 instances / 31 vCPU) bound the
-Test B to $N{=}20$ and six workers; a full factorial would need more
+Test~B to $N{=}20$ and six workers; a full factorial would need more
 headroom. Credentials are temporary and region-scoped; runs span two regions
 (us-east-1, us-west-2).
 
@@ -818,16 +837,16 @@ per request showed that llama decode accounts for the whole latency budget
 while the orchestrator and transport contribute $\approx$11\,ms, so the
 bottleneck is the model container, not Kubernetes.
 
-The Test B ceiling experiment asked whether the ceiling, not the autoscaler,
+The Test~B ceiling experiment asked whether the ceiling, not the autoscaler,
 limits the service. Raising the HPA ceiling from four to six pods kept p95
 below 100\,s and availability $\ge$0.76 at every level, although the ceiling
 does not remove saturation: at level 50 the six-pod deployment still drops
 16.6\% of requests while processing seven times the requests of the four-pod
 one by absorbing the queue. Size isolation at six fixed pods showed a
 request's service time scales with its length and that a mixed queue
-penalises short requests $\approx$1.4\,$\times$, with zero errors across
+penalises short requests $\approx$1.4$\times$, with zero errors across
 5{,}227 requests. The burst experiment showed the edge of the design: a
-sudden 6\,$\times$ step in users is absorbed with zero errors across 145
+sudden 6$\times$ step in users is absorbed with zero errors across 145
 requests because the queue drains during the lull, while the same intensity
 sustained under the six-pod ceiling (exp6, level 50) reaches 16.6\% errors.
 
