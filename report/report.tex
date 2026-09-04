@@ -64,7 +64,7 @@ orchestrator and transport path contribute only $\approx$11\,ms, so the
 bottleneck is the model container, not Kubernetes. Size-isolated runs
 (Test~C, six fixed pods) isolate the effect of request size and expose
 cross-size interference: a small request takes $\sim$7.7\,s in isolation but
-$\sim$10.9\,s when mixed with medium and large ones (a 1.4$\times$ penalty), with
+$\sim$10.8\,s when mixed with medium and large ones (a 1.4$\times$ penalty), with
 zero errors across 5{,}227 requests. A bursty workload (Test~D) shows the HPA reacts
 to a sudden $6\times$ step in users within $\sim$27\,s (CPU, reported as a fraction
 of the pod's 1800\,m request, jumps $0\%{\to}86\text{--}106\%$) with zero
@@ -120,7 +120,9 @@ Section~\ref{sec:background} gives the background, Sec.~\ref{sec:sota}
 positions the work, Sec.~\ref{sec:app} describes the application,
 Sec.~\ref{sec:method} the methodology, Sec.~\ref{sec:campaignA} the sawtooth
 elasticity experiment, Sec.~\ref{sec:campaignB} Test~B at N=20 and the
-remaining tests, and Sec.~\ref{sec:cost} the cost evaluation.
+remaining tests, Sec.~\ref{sec:cost} the cost evaluation,
+Sec.~\ref{sec:limits} the limitations and threats to validity, and
+Sec.~\ref{sec:conclusion} the conclusions.
 
 \section{Background}
 \label{sec:background}
@@ -128,7 +130,7 @@ remaining tests, and Sec.~\ref{sec:cost} the cost evaluation.
 \subsection{Kubernetes and the Horizontal Pod Autoscaler}
 
 Kubernetes schedules application instances (pods) on worker nodes. The
-Horizontal Pod Autoscaler (HPA) reads a resource signal, here average CPU
+Horizontal Pod Autoscaler (HPA)~\cite{k8s} reads a resource signal, here average CPU
 utilisation across the pods of a deployment, and, when the utilisation
 crosses a configured target, changes the number of replicas between a
 configured minimum and maximum. Scaling is governed by two stabilisation
@@ -145,11 +147,12 @@ bounded by how long the CPU has already been saturated.
 
 \subsection{llama.cpp and CPU-based LLM inference}
 
-llama.cpp is a CPU-first inference engine for quantised transformer models.
+llama.cpp~\cite{llamacpp} is a CPU-first inference engine for quantised
+transformer models.
 Generation is autoregressive: the model emits one token at a time, and each
 token consumes the full model compute. On two virtual cores, our 0.8B-parameter
-model (Q6\_K quantisation, 791\,MB) decodes at $\approx$26\,tok/s
-(\code{MEASURE.md}), so a 256-token response takes roughly 10--20\,s of
+model (in its \code{UD-Q6\_K\_XL} 6-bit quantisation, a 791\,MB GGUF) decodes
+at $\approx$26\,tok/s (\code{MEASURE.md}), so a 256-token response takes roughly 10--20\,s of
 sustained single-core work. This is the decode bound of a single generation
 on an otherwise idle slot, not the latency a request sees under concurrent
 load: once the queue fills, requests also wait for a free slot, so the
@@ -427,11 +430,12 @@ its own, and Test~B's larger, level-controlled sample is what the split
 requires. The proxy's \code{X-Upstream-Ms} header splits client wait time
 into llama decode (upstream) and orchestrator+transport. Across the Test~B
 runs the split is stable: from exp4 (HPA max 4) and exp6 (HPA max 6) the total and
-upstream means coincide at 44.6\,s / 44.6\,s (exp4) and 40.1\,s / 40.1\,s
+upstream means sit at 44.61\,s / 44.59\,s (exp4) and 40.06\,s / 40.05\,s
 (exp6), leaving an orchestrator+transport share of 10.9\,ms and 10.6\,ms
-respectively. The hot spot is the model container; Kubernetes scheduling,
-networking and the proxy contribute $\approx$11\,ms, three orders of
-magnitude below the work.
+respectively (the gap between total and upstream, $\approx$11\,ms, is only
+visible at this precision). The hot spot is the model container; Kubernetes
+scheduling, networking and the proxy contribute $\approx$11\,ms, three orders
+of magnitude below the work.
 
 \subsection{Compliance with the elasticity objective}
 
@@ -551,24 +555,29 @@ llama's sequential token decode.
 \toprule
 Size & Isolated (s) & Mix (s) & Penalty \\
 \midrule
-small  & 7.7 & 10.9 & 1.4\,$\times$ \\
-medium & 30.5 & 27.4 & 0.9\,$\times$ \\
+small  & 7.7 & 10.8 & 1.4\,$\times$ \\
+medium & 30.4 & 27.4 & 0.9\,$\times$ \\
 large  & 47.6 & 48.0 & 1.0\,$\times$ \\
 \bottomrule
 \end{tabular}
 
 \vspace{2pt}\footnotesize Medians pooled over the successful per-request
 samples (ten runs); isolated and mix are computed identically, so the ratio is
-meaningful. Isolated values here differ slightly from Table~\ref{tab:size}
-(7.4/30.1/52.4\,s), which averages the per-run Locust percentiles instead.
+meaningful. These pooled medians differ from Table~\ref{tab:size}
+(7.4/30.1/52.4\,s), which reports the mean of the \emph{per-run} percentiles
+logged by Locust; we re-checked the raw per-request detail, so the pooled
+figures are correct. The gap is largest for the large class (47.6 vs 52.4\,s,
+$\approx$10\%): each run contributes only $\sim$44 large samples, so its
+per-run median is noisy and the deeper-queued runs pull the mean of per-run
+medians above the pooled median over all 442 samples.
 \end{table}
 
 The mix still exposes cross-size interference: Table~\ref{tab:cross} shows a
-\emph{small} request $\sim$1.4\,$\times$ slower inside the mix (p50 10.9\,s vs
+\emph{small} request $\sim$1.4\,$\times$ slower inside the mix (p50 10.8\,s vs
 7.7\,s isolated) because it queues behind longer ones. Medium and large are
 unaffected within noise (0.9\,$\times$ and 1.0\,$\times$); the sub-1
 medium figure is not a mix speedup but run-to-run variance -- isolated medium
-medians range 21--39\,s across the ten runs -- so 27.4\,s vs 30.5\,s is well
+medians range 21--39\,s across the ten runs -- so 27.4\,s vs 30.4\,s is well
 inside that spread. The interference penalty is much weaker than the
 3.5\,$\times$ measured with two slots, because the larger slot pool drains the
 mixed queue faster. Fig.~\ref{fig:size} shows latency, delay breakdown and
@@ -826,6 +835,7 @@ headroom. Credentials are temporary and region-scoped; runs span two regions
 (us-east-1, us-west-2).
 
 \section{Conclusion}
+\label{sec:conclusion}
 
 We evaluated a CPU-based HPA as the elasticity mechanism for an LLM inference
 service on AWS Learner Lab, with a six-pod ceiling. Test~A drives the
